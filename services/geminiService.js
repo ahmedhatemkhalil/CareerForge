@@ -20,7 +20,7 @@
  * WHAT EACH MEMBER SHOULD ADD:
  * - Amany: None (auth doesn't need AI)
  * - Hager: analyzeCV() function
- * - Eilaf: generateQuestion(), scoreAnswer(), generateSummary() functions
+ * - Elaf: generateQuestion(), scoreAnswer(), generateSummary() functions
  * - Ahmed: generateRoadmap() function
  * 
  * API KEY NEEDED:
