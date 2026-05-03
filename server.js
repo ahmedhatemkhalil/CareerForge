@@ -1,8 +1,8 @@
-const express = require('express');
-const dotenv = require('dotenv');
-const cors = require('cors');
-const connectDB = require('./config/db');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+import express from 'express';
+import dotenv from 'dotenv';
+import cors from 'cors';
+import connectDB from './config/db.js';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Load environment variables
 dotenv.config();
@@ -30,10 +30,14 @@ app.get('/', (req, res) => {
 });
 
 // Import routes (will add later)
-// app.use('/api/auth', require('./routes/auth'));
-// app.use('/api/analyses', require('./routes/analyses'));
-// app.use('/api/interviews', require('./routes/interviews'));
-// app.use('/api/roadmaps', require('./routes/roadmaps'));
+// import authRoutes from './Modules/Auth/auth.route.js';
+// app.use('/api/auth', authRoutes);
+// import analysesRoutes from './Modules/Analysis/analyses.routes.js';
+// app.use('/api/analyses', analysesRoutes);
+// import interviewsRoutes from './Modules/Interview/interviews.routes.js';
+// app.use('/api/interviews', interviewsRoutes);
+// import roadmapsRoutes from './Modules/Roadmap/roadmaps..routes.js';
+// app.use('/api/roadmaps', roadmapsRoutes);
 
 // Start server
 const PORT = process.env.PORT || 5000;
