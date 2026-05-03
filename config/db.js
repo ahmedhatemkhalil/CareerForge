@@ -21,8 +21,8 @@
  */
 
 
-const mongoose = require('mongoose');
-const dns = require('dns');
+import mongoose from 'mongoose';
+import dns from 'dns';
 
 const connectDB = async () => {
   try {
@@ -48,4 +48,4 @@ const connectDB = async () => {
   }
 };
 
-module.exports = connectDB;
+export default connectDB;
