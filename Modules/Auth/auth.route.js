@@ -16,3 +16,15 @@
  *               ↑              ↑
  *            URL path      controller function
  */ 
+import express from "express";
+import { register, login,verifyEmail,updateTheme,forgotPassword,resetPassword} from "./auth.controller.js";
+import { verifyToken } from "../../middleware/auth.js";
+const authRoutes = express.Router();
+
+authRoutes.post("/register", register);
+authRoutes.post("/login", login);
+authRoutes.get("/verify/:token", verifyEmail);
+authRoutes.put("/update-theme", verifyToken, updateTheme);
+authRoutes.post("/forgot-password", forgotPassword);
+authRoutes.put("/reset-password/:token", resetPassword); 
+export default authRoutes;

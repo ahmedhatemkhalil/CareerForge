@@ -3,8 +3,11 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import connectDB from './config/db.js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-
+import authRoutes from "./Modules/Auth/auth.route.js";
+import userRoutes from "./Modules/User/userRoutes.js";
+import sendEmail from "./Email/email.js";
 // Load environment variables
+
 dotenv.config();
 
 // Initialize Gemini API
@@ -23,6 +26,8 @@ const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash-exp" });
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use("/api/auth", authRoutes);
+app.use("/api/users",userRoutes);
 
 // Simple test route
 app.get('/', (req, res) => {

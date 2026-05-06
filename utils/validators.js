@@ -15,3 +15,55 @@
  * - Validate name length
  */
 
+// ================= EMAIL VALIDATION =================
+/**
+ * ================= EMAIL VALIDATION =================
+ * Accepts real email format and ensures it ends with .com
+ */
+export const isValidEmail = (email) => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.com$/;
+   const allowedDomains = ["gmail.com", "yahoo.com", "test.com"];
+   if (!email || typeof email !== "string") return false;
+
+ 
+  if (!emailRegex.test(email)) return false;
+
+   const domain = email.split("@")[1].toLowerCase();
+
+
+  return allowedDomains.includes(domain);
+};
+
+/**
+ * ================= PASSWORD VALIDATION =================
+ * Strong password rules:
+ * - At least 8 characters
+ * - At least 1 uppercase letter
+ * - At least 1 lowercase letter
+ * - At least 1 number
+ * - At least 1 special character (@, #, $, etc.)
+ */
+export const isStrongPassword = (password) => {
+  const passwordRegex =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$%^&*!]).{8,}$/;
+
+  return passwordRegex.test(password);
+};
+
+/**
+ * ================= NAME VALIDATION (optional but useful) =================
+ * Only letters and spaces
+ */
+export const isValidName = (name) => {
+  const nameRegex = /^[a-zA-Z\s]{2,}$/;
+  return nameRegex.test(name);
+};
+// ================= PASSWORD MATCH =================
+export const passwordsMatch = (
+  password,
+  confirmPassword
+) => {
+
+  return password === confirmPassword;
+
+};
