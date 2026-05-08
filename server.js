@@ -5,7 +5,7 @@ import connectDB from './config/db.js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import authRoutes from "./Modules/Auth/auth.route.js";
 import userRoutes from "./Modules/User/userRoutes.js";
-import roadmapsRoutes from "./Modules/Roadmap/roadmaps..routes.js";
+import roadmapsRoutes from "./Modules/Roadmap/roadmaps.routes.js";
   import sendEmail from "./Email/email.js";
 // Load environment variables
 

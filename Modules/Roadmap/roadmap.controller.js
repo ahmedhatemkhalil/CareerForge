@@ -149,3 +149,116 @@ export const updateRoadmapProgress = async (req, res) => {
         return res.status(500).json({ error: err.message });
     }
 };
+
+export const markWeekCompleted = async (req, res) => {
+    try {
+        if (!req.user || !req.user.id) {
+            return res.status(401).json({ error: "Please authenticate" });
+        }
+
+        const { id, weekNum } = req.params;
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(404).json({ error: "Roadmap not found" });
+        }
+
+        const roadmap = await Roadmap.findOne({ _id: id, userId: req.user.id });
+        if (!roadmap) {
+            return res.status(404).json({ error: "Roadmap not found" });
+        }
+
+        const weekNumber = Number(weekNum);
+        const weekToUpdate = roadmap.weeklyPlan.find((week) => week.week === weekNumber);
+        if (!weekToUpdate) {
+            return res.status(404).json({ error: "Week not found" });
+        }
+
+        weekToUpdate.completed = true;
+        // roadmap.calculateProgress();
+        await roadmap.save();
+
+        return res.status(200).json({
+            _id: roadmap._id,
+            currentRole: roadmap.currentRole,
+            targetRole: roadmap.targetRole,
+            weeklyPlan: roadmap.weeklyPlan,
+            progress: roadmap.progress,
+            timeline: roadmap.timeline,
+            createdAt: roadmap.createdAt,
+        });
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    }
+};
+
+export const unmarkWeekCompleted = async (req, res) => {
+    try {
+        if (!req.user || !req.user.id) {
+            return res.status(401).json({ error: "Please authenticate" });
+        }
+
+        const { id, weekNum } = req.params;
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(404).json({ error: "Roadmap not found" });
+        }
+
+        const roadmap = await Roadmap.findOne({ _id: id, userId: req.user.id });
+        if (!roadmap) {
+            return res.status(404).json({ error: "Roadmap not found" });
+        }
+
+        const weekNumber = Number(weekNum);
+        const weekToUpdate = roadmap.weeklyPlan.find((week) => week.week === weekNumber);
+        if (!weekToUpdate) {
+            return res.status(404).json({ error: "Week not found" });
+        }
+
+        weekToUpdate.completed = false;
+        await roadmap.save();
+
+        return res.status(200).json({
+            _id: roadmap._id,
+            currentRole: roadmap.currentRole,
+            targetRole: roadmap.targetRole,
+            weeklyPlan: roadmap.weeklyPlan,
+            progress: roadmap.progress,
+            timeline: roadmap.timeline,
+            createdAt: roadmap.createdAt,
+        });
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    }
+};
+
+export const deleteRoadmap = async (req, res) => {
+    try {
+        if (!req.user || !req.user.id) {
+            return res.status(401).json({ error: "Please authenticate" });
+        }
+
+        const { id } = req.params;
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(404).json({ error: "Roadmap not found" });
+        }
+
+        const deletedRoadmap = await Roadmap.findOneAndDelete({ _id: id, userId: req.user.id });
+        if (!deletedRoadmap) {
+            return res.status(404).json({ error: "Roadmap not found" });
+        }
+
+        return res.status(200).json({ message: "Roadmap deleted successfully" });
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    }
+};
+export const deleteAllRoadmaps = async (req, res) => {
+    try {
+        if (!req.user || !req.user.id) {
+            return res.status(401).json({ error: "Please authenticate" });
+        }
+
+        await Roadmap.deleteMany({ userId: req.user.id });
+        return res.status(200).json({ message: "All roadmaps deleted successfully" });
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    }
+};

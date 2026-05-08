@@ -89,6 +89,5 @@ roadmapSchema.pre("save", function preSave() {
 
 
 
-roadmapSchema.index({ userId: 1 });
 
 export default mongoose.model("Roadmap", roadmapSchema); 
