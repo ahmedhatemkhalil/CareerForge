@@ -1,5 +1,6 @@
 
 import Roadmap from "../../models/Roadmap.js";
+import mongoose from "mongoose";
 
 const buildFakeRoadmapData = (currentRole, targetRole) => ({
     skillGaps: [
@@ -13,8 +14,8 @@ const buildFakeRoadmapData = (currentRole, targetRole) => ({
     weeklyPlan: [
         {
             week: 1,
-            focus: "TypeScript Advanced Features",
-            resource: "TypeScript Official Handbook",
+            focus: ["System Design and Architecture", "Team Leadership", "Advanced TypeScript", "Performance Optimization", "Mentoring junior developers"],
+            resource: ["Udemy: System Design and Architecture", "Udemy: Team Leadership", "Udemy: Advanced TypeScript", "Udemy: Performance Optimization", "Udemy: Mentoring junior developers"],
             completed: false,
         },
         {
@@ -89,6 +90,28 @@ export const getAllRoadmaps = async (req, res) => {
             .select("_id currentRole targetRole timeline progress createdAt");
 
         return res.status(200).json(roadmaps);
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    }
+};
+
+export const getRoadmapById = async (req, res) => {
+    try {
+        if (!req.user || !req.user.id) {
+            return res.status(401).json({ error: "Please authenticate" });
+        }
+
+        const { id } = req.params;
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(404).json({ error: "Roadmap not found" });
+        }
+
+        const roadmap = await Roadmap.findOne({ _id: id, userId: req.user.id });
+        if (!roadmap) {
+            return res.status(404).json({ error: "Roadmap not found" });
+        }
+
+        return res.status(200).json(roadmap);
     } catch (err) {
         return res.status(500).json({ error: err.message });
     }

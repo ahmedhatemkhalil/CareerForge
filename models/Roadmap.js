@@ -8,12 +8,12 @@ const weeklyPlanSchema = new mongoose.Schema(
             min: 1,
         },
         focus: {
-            type: String,
+            type: [String],
             required: true,
             trim: true,
         },
         resource: {
-            type: String,
+            type: [String],
             required: true,
             trim: true,
         },
