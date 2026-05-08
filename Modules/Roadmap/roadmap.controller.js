@@ -116,3 +116,36 @@ export const getRoadmapById = async (req, res) => {
         return res.status(500).json({ error: err.message });
     }
 };
+
+export const updateRoadmapProgress = async (req, res) => {
+    try {
+        if (!req.user || !req.user.id) {
+            return res.status(401).json({ error: "Please authenticate" });
+        }
+
+        const { id } = req.params;
+        const { progress } = req.body;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(404).json({ error: "Roadmap not found" });
+        }
+
+        if (typeof progress !== "number" || progress < 0 || progress > 100) {
+            return res.status(400).json({ error: "Progress must be between 0 and 100" });
+        }
+
+        const roadmap = await Roadmap.findOneAndUpdate(
+            { _id: id, userId: req.user.id },
+            { progress },
+            { new: true, runValidators: true }
+        ).select("_id currentRole targetRole progress timeline createdAt");
+
+        if (!roadmap) {
+            return res.status(404).json({ error: "Roadmap not found" });
+        }
+
+        return res.status(200).json(roadmap);
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    }
+};
