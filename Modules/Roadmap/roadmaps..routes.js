@@ -18,3 +18,13 @@
  * - The {id} in URL is a placeholder (replace with actual roadmap ID)
  * - The {weekNum} in URL is a number (1, 2, 3, etc.)
  */
+import express from "express";
+import { createRoadmap, getAllRoadmaps } from "./roadmap.controller.js";
+import { verifyToken } from "../../middleware/auth.js";
+
+const roadmapRoutes = express.Router();
+
+roadmapRoutes.post("/", verifyToken, createRoadmap);
+roadmapRoutes.get("/", verifyToken, getAllRoadmaps);
+
+export default roadmapRoutes;

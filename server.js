@@ -5,7 +5,8 @@ import connectDB from './config/db.js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import authRoutes from "./Modules/Auth/auth.route.js";
 import userRoutes from "./Modules/User/userRoutes.js";
-import sendEmail from "./Email/email.js";
+import roadmapsRoutes from "./Modules/Roadmap/roadmaps..routes.js";
+  import sendEmail from "./Email/email.js";
 // Load environment variables
 
 dotenv.config();
@@ -28,23 +29,16 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/api/auth", authRoutes);
 app.use("/api/users",userRoutes);
+app.use("/api/roadmaps", roadmapsRoutes);
+
+
+
 
 // Simple test route
 app.get('/', (req, res) => {
   res.json({ message: 'CareerForge API is running!' });
 });
 
-// Import routes (will add later)
-// import authRoutes from './Modules/Auth/auth.route.js';
-// app.use('/api/auth', authRoutes);
-// import analysesRoutes from './Modules/Analysis/analyses.routes.js';
-// app.use('/api/analyses', analysesRoutes);
-// import interviewsRoutes from './Modules/Interview/interviews.routes.js';
-// app.use('/api/interviews', interviewsRoutes);
-// import roadmapsRoutes from './Modules/Roadmap/roadmaps..routes.js';
-// app.use('/api/roadmaps', roadmapsRoutes);
-
-// Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
