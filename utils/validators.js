@@ -1,21 +1,21 @@
-/**
- * VALIDATION UTILITIES
- * ====================
- * 
- * PURPOSE:
- * This file contains reusable validation functions.
- * Used across multiple controllers to validate user input.
- * 
- * WHO SHOULD TOUCH THIS FILE:
- * - Anyone (add validation functions as needed)
- * 
- * COMMON USAGES:
- * - Validate email format before signup
- * - Check password strength
- * - Validate name length
- */
+// /**
+//  * VALIDATION UTILITIES
+//  * ====================
+//  * 
+//  * PURPOSE:
+//  * This file contains reusable validation functions.
+//  * Used across multiple controllers to validate user input.
+//  * 
+//  * WHO SHOULD TOUCH THIS FILE:
+//  * - Anyone (add validation functions as needed)
+//  * 
+//  * COMMON USAGES:
+//  * - Validate email format before signup
+//  * - Check password strength
+//  * - Validate name length
+//  */
 
-// ================= EMAIL VALIDATION =================
+// // ================= EMAIL VALIDATION =================
 /**
  * ================= EMAIL VALIDATION =================
  * Accepts real email format and ensures it ends with .com
@@ -66,4 +66,39 @@ export const passwordsMatch = (
 
   return password === confirmPassword;
 
+};
+
+// /**
+//  * VALIDATION UTILITIES
+//  * ====================
+//  * 
+//  * PURPOSE:
+//  * This file contains reusable validation functions.
+//  * Used across multiple controllers to validate user input.
+//  * 
+//  * WHO SHOULD TOUCH THIS FILE:
+//  * - Anyone (add validation functions as needed)
+//  * 
+//  * COMMON USAGES:
+//  * - Validate email format before signup
+//  * - Check password strength
+//  * - Validate name length
+//  */
+
+// // utils/appError.js
+export class AppError extends Error {
+  constructor(message, statusCode) {
+    super(message);
+    this.statusCode = statusCode;
+    this.status = `${statusCode}`.startsWith('4') ? 'fail' : 'error';
+    this.isOperational = true; 
+    Error.captureStackTrace(this, this.constructor);
+  }
+}
+
+// utils/catchAsync.js
+export const catchAsync = (fn) => {
+  return (req, res, next) => {
+    fn(req, res, next).catch(next); 
+  };
 };
