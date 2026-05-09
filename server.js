@@ -10,6 +10,8 @@ import userRoutes from "./Modules/User/userRoutes.js";
 import sendEmail from "./Email/email.js";
 import { AppError } from './utils/validators.js';
 import { globalErrorHandler } from './Modules/Error/error.controller.js';
+import roadmapsRoutes from "./Modules/Roadmap/roadmaps.routes.js";
+  import sendEmail from "./Email/email.js";
 // Load environment variables
 
 dotenv.config();
@@ -32,6 +34,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/auth", authRoutes);
 app.use("/api/users",userRoutes);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use("/api/roadmaps", roadmapsRoutes);
+
+
 
 
 // Simple test route
