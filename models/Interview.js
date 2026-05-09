@@ -1,21 +1,53 @@
-/**
- * INTERVIEW MODEL (TABLE)
- * =======================
- * 
- * PURPOSE:
- * This file defines the structure of the 'interviews' table in MongoDB.
- * It stores all mock interview sessions and their Q&A pairs.
- * 
- * ASSIGNED TO: Eilaf
- * 
- 
- * WHAT YOU NEED TO IMPLEMENT:
- * 1. Define the main schema with all fields above
- * 2. Create nested schema for questionsAndAnswers
- * 3. Add pre-save middleware to auto-calculate averageScore
- * 4. Add index for userId to speed up queries
- * 
- * RELATED FILES:
- * - routes/interviews.js (uses this model)
- * - controllers/interviewController.js (uses this model)
- */
+import mongoose from "mongoose";
+
+const interviewSchema = new mongoose.Schema({
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+    },
+
+    jobDescription: {
+        type: String,
+        required: true,
+        trim: true,
+    },
+
+    status: {
+        type: String,
+        enum: ["in_progress", "completed"],
+        default: "in_progress",
+    },
+
+    totalQuestions: {
+        type: Number,
+        default: 8,
+        immutable: true,
+    },
+
+    currentQuestionIndex: {
+        type: Number,
+        default: 0,
+    },
+
+    qaList: [
+        {
+            question: { type: String, required: true },
+            userAnswer: { type: String },
+            feedback: { type: String, default: null },
+            score: { type: Number, min: 0, max: 10, default: null },
+        },
+    ],
+
+    summary: {
+        overallScore: { type: Number, min: 0, max: 10, default: null },
+        generalFeedback: { type: String },
+        tipsForImprovement: [String],
+    },
+    },
+    { 
+        timestamps: true,
+        versionKey: false
+});
+
+export const interviewModel = mongoose.model("Interview", interviewSchema);
