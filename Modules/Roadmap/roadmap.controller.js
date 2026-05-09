@@ -137,7 +137,7 @@ export const updateRoadmapProgress = async (req, res) => {
         const roadmap = await Roadmap.findOneAndUpdate(
             { _id: id, userId: req.user.id },
             { progress },
-            { new: true, runValidators: true }
+            { returnDocument: "after", runValidators: true }
         ).select("_id currentRole targetRole progress timeline createdAt");
 
         if (!roadmap) {
