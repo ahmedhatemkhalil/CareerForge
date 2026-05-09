@@ -1,20 +1,15 @@
-/**
- * INTERVIEW ROUTES
- * ================
- * 
- * PURPOSE:
- * This file defines all API endpoints for mock interviews.
- * It maps URLs to controller functions.
- * 
- * ASSIGNED TO: Elaf
- * 
+import express from "express";
+import {createInterview, submitAnswer, completeInterview, getAllInterviews, getInterviewById, deleteInterview} from "./interview.controller.js";
+import { verifyToken } from "../../middleware/auth.js";
+import checkInterview from "../../middleware/checkInterview.js";
 
- * INTERVIEW FLOW:
- * 1. POST /interviews → get first question
- * 2. POST /interviews/{id}/answer (repeat 5 times)
- * 3. POST /interviews/{id}/complete → get summary
- * 
- * NOTES:
- * - All routes require authentication (auth middleware)
- * - The {id} in URL is a placeholder (replace with actual interview ID)
- */
+const interviewRouter = express.Router();
+interviewRouter.use(verifyToken);
+interviewRouter.post("/", createInterview);
+interviewRouter.post("/:id/answer", checkInterview, submitAnswer);
+interviewRouter.post("/:id/complete", checkInterview, completeInterview);
+interviewRouter.get("/", getAllInterviews);
+interviewRouter.get("/:id", checkInterview, getInterviewById);
+interviewRouter.delete("/:id", checkInterview, deleteInterview);
+
+export default interviewRouter;

@@ -6,6 +6,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import authRoutes from "./Modules/Auth/auth.route.js";
 import userRoutes from "./Modules/User/userRoutes.js";
 import sendEmail from "./Email/email.js";
+import interviewRouter from './Modules//Interview/interviews.routes.js';
 // Load environment variables
 
 dotenv.config();
@@ -28,7 +29,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/api/auth", authRoutes);
 app.use("/api/users",userRoutes);
-
+app.use('/api/interviews', interviewRouter);
 // Simple test route
 app.get('/', (req, res) => {
   res.json({ message: 'CareerForge API is running!' });
