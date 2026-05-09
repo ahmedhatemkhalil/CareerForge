@@ -11,7 +11,8 @@ import sendEmail from "./Email/email.js";
 import { AppError } from './utils/validators.js';
 import { globalErrorHandler } from './Modules/Error/error.controller.js';
 import roadmapsRoutes from "./Modules/Roadmap/roadmaps.routes.js";
-  import sendEmail from "./Email/email.js";
+import analysesRoutes from './Modules/Analysis/analyses.routes.js';
+import sendEmail from "./Email/email.js";
 // Load environment variables
 
 dotenv.config();
@@ -35,8 +36,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users",userRoutes);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use("/api/roadmaps", roadmapsRoutes);
-
-
+app.use('/api/analyses', analysesRoutes);
 
 
 // Simple test route
@@ -44,15 +44,6 @@ app.get('/', (req, res) => {
   res.json({ message: 'CareerForge API is running!' });
 });
 
-// Import routes (will add later)
-// import authRoutes from './Modules/Auth/auth.route.js';
-// app.use('/api/auth', authRoutes);
-import analysesRoutes from './Modules/Analysis/analyses.routes.js';
-app.use('/api/analyses', analysesRoutes);
-// import interviewsRoutes from './Modules/Interview/interviews.routes.js';
-// app.use('/api/interviews', interviewsRoutes);
-// import roadmapsRoutes from './Modules/Roadmap/roadmaps..routes.js';
-// app.use('/api/roadmaps', roadmapsRoutes);
 
 app.all(/(.*)/, (req, res, next) => {
     next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
