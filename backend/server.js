@@ -7,13 +7,11 @@ import { fileURLToPath } from 'url';
 import connectDB from './config/db.js';
 import authRoutes from "./Modules/Auth/auth.route.js";
 import userRoutes from "./Modules/User/userRoutes.js";
-import sendEmail from "./Email/email.js";
-import interviewRouter from './Modules//Interview/interviews.routes.js';
+import interviewRouter from './Modules/Interview/interviews.routes.js';
 import { AppError } from './utils/validators.js';
 import { globalErrorHandler } from './Modules/Error/error.controller.js';
 import roadmapsRoutes from "./Modules/Roadmap/roadmaps.routes.js";
 import analysesRoutes from './Modules/Analysis/analyses.routes.js';
-import sendEmail from "./Email/email.js";
 // Load environment variables
 
 dotenv.config();
