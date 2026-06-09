@@ -1,4 +1,5 @@
 import User from "../../models/User.js";
+import UserSettings from "../../models/UserSettings.js";
 import bcrypt from "bcrypt";
 import { isStrongPassword } from "../../utils/validators.js";
 
@@ -68,6 +69,8 @@ export const deleteCurrentUser = async (req, res) => {
   try {
     const user = await User.findByIdAndDelete(req.user.id);
     if (!user) return res.status(404).json({ message: "User not found" });
+
+    await UserSettings.deleteOne({ user_id: req.user.id });
     res.json({ message: "Your account has been deleted successfully" });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -115,6 +118,8 @@ export const deleteUserByAdmin = async (req, res) => {
   try {
     const user = await User.findByIdAndDelete(req.params.id);
     if (!user) return res.status(404).json({ message: "User not found" });
+
+    await UserSettings.deleteOne({ user_id: req.params.id });
     res.json({ message: "User deleted successfully" });
   } catch (err) {
     res.status(500).json({ message: err.message });

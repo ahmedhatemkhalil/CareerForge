@@ -1,4 +1,5 @@
 import User from "../../models/User.js";
+import UserSettings from "../../models/UserSettings.js";
 import {
   isValidEmail,
   isStrongPassword,
@@ -63,6 +64,8 @@ export const signup = async (req, res) => {
       password_hash: hashedPassword,
       is_verified: false,
     });
+
+    await UserSettings.create({ user_id: user._id });
 
     return res.status(201).json({
       message: "User registered successfully",
