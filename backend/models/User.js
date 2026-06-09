@@ -27,6 +27,11 @@ const userSchema = new mongoose.Schema(
       default: "active",
     },
 
+    // customColors: {
+    //   type: Object,
+    //   default: {},
+    // },
+
     ban_reason: { type: String, default: null },
 
     is_verified: { type: Boolean, default: false },

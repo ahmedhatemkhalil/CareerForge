@@ -9,6 +9,7 @@ import authRoutes from "./Modules/Auth/auth.route.js";
 import userRoutes from "./Modules/User/userRoutes.js";
 import adminRoutes from "./Modules/User/adminRoutes.js";
 import interviewRouter from './Modules/Interview/interviews.routes.js';
+import forgotPasswordRoutes from './Modules/ForgotPassword/forgotPassword.routes.js';
 import { AppError } from './utils/validators.js';
 import { globalErrorHandler } from './Modules/Error/error.controller.js';
 import roadmapsRoutes from "./Modules/Roadmap/roadmaps.routes.js";

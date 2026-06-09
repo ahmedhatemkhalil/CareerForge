@@ -1,3 +1,31 @@
+/**
+ * AUTHENTICATION CONTROLLER
+ * =========================
+ * 
+ * PURPOSE:
+ * This file contains the actual logic for authentication endpoints.
+ * It handles signup, login, profile management, and account deletion.
+ * 
+ * ASSIGNED TO: AMANY
+ * 
+ * WHAT EACH FUNCTION DOES:
+ * -------------------------------------------------
+ * | Function        | Purpose                              |
+ * |-----------------|--------------------------------------|
+ * | signup          | Creates new user + returns JWT token |
+ * | login           | Authenticates user + returns JWT token|
+ * | getProfile      | Returns logged-in user's data         |
+ * | updateProfile   | Updates user's name/email/preferences |
+ * | changePassword  | Updates user's password               |
+ * | deleteAccount   | Deletes user + all related data       |
+ * -------------------------------------------------
+ * 
+ * RELATED FILES:
+ * - models/User.js (database operations)
+ * - routes/auth.js (endpoint definitions)
+ * - middleware/auth.js (authentication)
+ */
+import crypto from "crypto";
 import User from "../../models/User.js";
 import UserSettings from "../../models/UserSettings.js";
 import {
@@ -5,6 +33,7 @@ import {
   isStrongPassword,
   isValidName,
   passwordsMatch,
+ 
 } from "../../utils/validators.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -68,15 +97,88 @@ export const signup = async (req, res) => {
     await UserSettings.create({ user_id: user._id });
 
     return res.status(201).json({
-      message: "User registered successfully",
-      userId: user._id,
+      message: "Check your email to verify your account",
+    });
+
+  } catch (err) {
+    res.status(500).json(err.message);
+  }
+};
+// Update User Theme
+export const updateTheme = async (req, res) => {
+  try {
+    const { theme } = req.body;
+
+    // Validate theme input
+    if (!["light", "dark"].includes(theme)) {
+      return res.status(400).json({ message: "Invalid theme selection" });
+    }
+
+    // req.user.id comes from your auth middleware
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.id, 
+      { theme }, 
+      { new: true } // Returns the updated document
+    );
+
+    res.status(200).json({
+      message: "Theme updated successfully",
+      theme: updatedUser.theme
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
+//verifyEmail
+export const verifyEmail = async (req, res) => {
+  try {
+    const { token } = req.params;
 
-// POST /api/auth/login
+    // 1. Find user by the verification token
+    const user = await User.findOne({ verifyToken: token });
+
+    if (!user) {
+      return res.status(400).send(`
+        <div style="font-family: Arial; text-align: center; padding: 50px;">
+          <h1 style="color: red;">Invalid or Expired Token</h1>
+          <p>The verification link is invalid or has already been used.</p>
+        </div>
+      `);
+    }
+
+    // 2. Update user status
+    user.isVerified = true;
+    user.verifyToken = undefined; // Remove token so it can't be used again
+
+    await user.save();
+
+    // 3. Return success response with a link to your Frontend Login page
+    return res.send(`
+      <div style="font-family: Arial; text-align: center; padding: 50px;">
+        <h1 style="color: green;">✔ Email Verified Successfully</h1>
+        <p>Your account is now active. You can proceed to login.</p>
+        
+        // <a href="http://localhost:5000/login" 
+        //    style="
+        //      display: inline-block;
+        //      margin-top: 20px;
+        //      padding: 12px 20px;
+        //      background: #000;
+        //      color: #fff;
+        //      text-decoration: none;
+        //      border-radius: 8px;
+        //      font-weight: bold;
+        //    ">
+        //   Go to Login
+        // </a>
+      </div>
+    `);
+
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+// LOGIN
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -143,8 +245,11 @@ export const refresh = async (req, res) => {
 
     const accessToken = createAccessToken(user);
 
-    res.json({ accessToken });
-  } catch {
-    res.status(401).json({ message: "Invalid or expired refresh token" });
+    res.status(200).json({ message: "Password updated successfully! You can login now." });
+  } catch (err) {
+    res.status(500).json(err.message);
   }
 };
+
+//Update User
+

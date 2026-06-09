@@ -5,7 +5,7 @@ import Footer from './Footer'
 const shell =
   'mx-auto w-full max-w-8xl px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12'
 
-const Layout = () => {
+ const Layout = () => {
   return (
     <div className="flex min-h-screen flex-col">
       <div className={shell}>
