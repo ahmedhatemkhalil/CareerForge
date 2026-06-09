@@ -36,6 +36,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/users", forgotPasswordRoutes);
 app.use("/api/admin", adminRoutes);
 app.use('/api/interviews', interviewRouter);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));

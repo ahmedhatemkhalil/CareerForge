@@ -35,9 +35,8 @@ import {
   passwordsMatch,
  
 } from "../../utils/validators.js";
-import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import crypto from "crypto";
+
 import sendEmail from "../../Email/email.js";
 import { template } from "../../Email/emailTemplate.js";
 import EmailVerification from "../../models/EmailVerification.js";

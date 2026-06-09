@@ -21,6 +21,7 @@
 import crypto from "crypto";
 import ForgotPassword from "../../models/ForgotPassword.js";
 import User from "../../models/User.js";
+// import UserSettings from "../../models/UserSettings.js";
 import sendEmail from "../../Email/email.js";
 import { resetPasswordOtpTemplate } from "../../Email/emailTemplate.js";
 import {
@@ -59,12 +60,14 @@ console.log("OTP from frontend:", otp);
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
     // Save OTP to database
-    const forgotPasswordRecord = await ForgotPassword.create({
-      email,
-      otpHash,
-      otp,
-      expiresAt,
-    });
+    
+  const forgotPasswordRecord = await ForgotPassword.create({
+  user_id: user._id,
+  email,
+  otpHash,
+  otp,
+  expiresAt,
+});
 
     // Send email with OTP
     try {
@@ -122,10 +125,11 @@ export const verifyResetOtp = async (req, res) => {
     }
 
     // OTP is valid
-    res.status(200).json({
-      message: "OTP verified successfully",
-      success: true,
-    });
+   res.status(200).json({
+  message: "OTP verified successfully",
+  success: true,
+  userId: forgotPasswordRecord.user_id,
+});
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -177,7 +181,7 @@ export const resetPasswordWithOtp = async (req, res) => {
 
     // Hash new password
     const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(password, salt);
+   user.password_hash = await bcrypt.hash(password, 10);
 
     // Clear any existing reset tokens
     user.resetPasswordToken = undefined;
@@ -225,12 +229,13 @@ export const resendOtp = async (req, res) => {
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
     // Save new OTP record
-    const forgotPasswordRecord = await ForgotPassword.create({
-      email,
-      otpHash,
-      otp,
-      expiresAt,
-    });
+  const forgotPasswordRecord = await ForgotPassword.create({
+  user_id: user._id,
+  email,
+  otpHash,
+  otp,
+  expiresAt,
+});
 
     // Send email with new OTP
     try {
