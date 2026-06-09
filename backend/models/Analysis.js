@@ -12,10 +12,19 @@ const analysisSchema = new mongoose.Schema({
     jobDescription: { type: String, trim: true },
     strengths: [String],
     weaknesses: [String],
-    matchedJobs: [String],
+    matchedJobs: [{
+    title: String,
+    company: String,
+    url: String
+    }],    
     missingSkills: [String],
     recommendedActions: [String],
-    atsScore: { type: Number, min: 0, max: 100 }
+    atsScore: { type: Number, min: 0, max: 100 },
+    improvedSuggestions: [{
+        original: String,
+        improved: String,
+    }], 
+
 }, { timestamps: true });
 
 export const Analysis = mongoose.model('Analysis', analysisSchema);

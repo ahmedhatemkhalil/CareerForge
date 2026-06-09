@@ -1,4 +1,5 @@
 import User from "../../models/User.js";
+import UserSettings from "../../models/UserSettings.js";
 import {
   isValidEmail,
   isStrongPassword,
@@ -88,6 +89,7 @@ export const signup = async (req, res) => {
       subject: "Verify Your Email - CareerForge",
       html: template(verifyUrl),
     }).catch(err => console.error("Email send failed:", err));
+    await UserSettings.create({ user_id: user._id });
 
     return res.status(201).json({
       message: "User registered successfully. Please check your email to verify your account.",

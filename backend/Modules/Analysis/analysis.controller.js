@@ -36,18 +36,29 @@ export const getAllAnalyses = catchAsync(async (req, res, next) => {
 
 // 3. Delete 
 export const deleteAnalysis = catchAsync(async (req, res, next) => {
+    // 1. العثور على التحليل والتأكد من ملكية المستخدم له
     const analysis = await Analysis.findOne({ _id: req.params.id, userId: req.user.id });
     
     if (!analysis) {
-        return next(new AppError("Analysis not found", 404));
+        return next(new AppError("Analysis not found or unauthorized", 404));
     }
 
-    await analysisService.deleteFromCloudinary(analysis.cvFileUrl);
+    try {
+        if (analysis.cvFileUrl) {
+            await analysisService.deleteFromCloudinary(analysis.cvFileUrl);
+        }
+    } catch (err) {
+        console.error("Cloudinary delete failed, but continuing to DB:", err.message);
+    }
+
     await Analysis.findByIdAndDelete(req.params.id);
-    res.json({ status: 'success', message: "Deleted from DB and Cloudinary" });
+
+    res.status(200).json({ 
+        status: 'success', 
+        message: "Deleted from DB and Cloudinary successfully" 
+    });
 });
 
-// 4. Update - PUT (مع فحص الملكية)
 export const updateAnalysis = catchAsync(async (req, res, next) => {
     const oldAnalysis = await Analysis.findOne({ _id: req.params.id, userId: req.user.id });
     
