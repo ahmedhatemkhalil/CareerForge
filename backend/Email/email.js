@@ -17,9 +17,9 @@ export default async function sendEmail({ email, subject, html }) {
       html,
     });
 
-    console.log("📧 Message sent:", info.messageId);
+    console.log("Message sent:", info.messageId);
 
   } catch (error) {
-    console.log("❌ Email error:", error.message);
+    console.log("Email error:", error.message);
   }
 }

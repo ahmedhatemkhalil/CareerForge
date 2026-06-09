@@ -24,8 +24,7 @@ const fileFilter = (req, file, cb) => {
     if (allowedExtensions.includes(ext) && allowedMimeTypes.includes(file.mimetype)) {
         cb(null, true);
     } else {
-        cb(new Error('Unsupported file type. Only PDF and DOCX are allowed!'), false);
-    }
+      cb(new Error('Unsupported file type. Only PDF, DOCX, and DOC are allowed!'), false);    }
 };
 
 export const upload = multer({ 
