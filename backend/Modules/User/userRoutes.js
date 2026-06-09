@@ -1,24 +1,17 @@
 import express from "express";
-
 import {
   getCurrentUser,
   updateCurrentUser,
-  getUsers,
+  changePassword,
   deleteCurrentUser,
-   changePassword,
-  //  updateTheme
 } from "./userController.js";
-
 import { verifyToken } from "../../middleware/auth.js";
 
 const userRoutes = express.Router();
 
-userRoutes.get("/profile", verifyToken, getCurrentUser);
-
-userRoutes.put("/profile", verifyToken, updateCurrentUser);
-userRoutes.delete("/profile", verifyToken, deleteCurrentUser);
-userRoutes.put("/pasword", verifyToken, changePassword);
-userRoutes.get("/", getUsers);
-// userRoutes.put("/theme", updateTheme);
+userRoutes.get("/me", verifyToken, getCurrentUser);
+userRoutes.put("/me", verifyToken, updateCurrentUser);
+userRoutes.put("/me/password", verifyToken, changePassword);
+userRoutes.delete("/me", verifyToken, deleteCurrentUser);
 
 export default userRoutes;
