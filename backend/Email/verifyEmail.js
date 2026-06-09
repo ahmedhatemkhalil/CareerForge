@@ -6,6 +6,5 @@ export const verifyEmail = async (req, res) => {
   user.isVerified = true;
   user.verifyToken = undefined; // Remove token once used
   await user.save();
-
   res.status(200).send("Email verified! You can now log in.");
 };
