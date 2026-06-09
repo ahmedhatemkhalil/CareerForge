@@ -8,6 +8,11 @@ import {
 } from "../../utils/validators.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
+import sendEmail from "../../Email/email.js";
+import { template } from "../../Email/emailTemplate.js";
+import EmailVerification from "../../models/EmailVerification.js";
+import Session from "../../models/Session.js";
 
 const createAccessToken = (user) =>
   jwt.sign(
@@ -65,10 +70,29 @@ export const signup = async (req, res) => {
       is_verified: false,
     });
 
+    //verification email 
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 24);
+
+    await EmailVerification.create({
+      user_id: user._id,
+      token: verificationToken,
+      is_used: false,
+      expires_at: expiresAt,
+    });
+
+    const verifyUrl = `http://localhost:5000/api/auth/verify-email/${verificationToken}`;
+    
+    sendEmail({
+      email: user.email,
+      subject: "Verify Your Email - CareerForge",
+      html: template(verifyUrl),
+    }).catch(err => console.error("Email send failed:", err));
     await UserSettings.create({ user_id: user._id });
 
     return res.status(201).json({
-      message: "User registered successfully",
+      message: "User registered successfully. Please check your email to verify your account.",
       userId: user._id,
     });
   } catch (err) {
@@ -107,6 +131,16 @@ export const login = async (req, res) => {
     const accessToken = createAccessToken(user);
     const refreshToken = createRefreshToken(user);
 
+    //refresh token in Session 
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7); 
+
+    await Session.create({
+      user_id: user._id,
+      refresh_token: refreshToken,
+      expires_at: expiresAt,
+    });
+
     res.json({
       accessToken,
       refreshToken,
@@ -119,7 +153,26 @@ export const login = async (req, res) => {
 
 // POST /api/auth/logout
 export const logout = async (req, res) => {
-  res.json({ message: "Logged out successfully" });
+  try {
+    const { refreshToken } = req.body;
+    if (!refreshToken) {
+      return res.status(400).json({ message: "Refresh token is required" });
+    }
+
+    const session = await Session.findOne({ refresh_token: refreshToken });
+    if (!session) {
+      return res.status(404).json({ message: "Session not found" });
+    }
+
+    if (session.user_id.toString() !== req.user.id) {
+      return res.status(403).json({ message: "Unauthorized to delete this session" });
+    }
+
+    await Session.deleteOne({ _id: session._id });
+    res.json({ message: "Logged out successfully" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
 
 // POST /api/auth/refresh
@@ -128,6 +181,15 @@ export const refresh = async (req, res) => {
     const { refreshToken } = req.body;
     if (!refreshToken) {
       return res.status(400).json({ message: "Refresh token is required" });
+    }
+
+    const existingSession = await Session.findOne({
+      refresh_token: refreshToken,
+      expires_at: { $gt: new Date() },
+    });
+
+    if (!existingSession) {
+      return res.status(401).json({ message: "Invalid or expired refresh token" });
     }
 
     const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
@@ -140,11 +202,127 @@ export const refresh = async (req, res) => {
     if (user.status === "banned" || user.status === "suspended") {
       return res.status(403).json({ message: "Account is not active" });
     }
+    await Session.deleteOne({ refresh_token: refreshToken });
 
     const accessToken = createAccessToken(user);
+    const newRefreshToken = createRefreshToken(user);
+    
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7);
 
-    res.json({ accessToken });
+    await Session.create({
+      user_id: user._id,
+      refresh_token: newRefreshToken,
+      expires_at: expiresAt,
+    });
+
+    res.json({ accessToken, refreshToken: newRefreshToken });
   } catch {
     res.status(401).json({ message: "Invalid or expired refresh token" });
+  }
+};
+
+// GET /api/auth/sessions
+export const getSessions = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const sessions = await Session.find({
+      user_id: userId,
+      expires_at: { $gt: new Date() },
+    }).select("-refresh_token");
+
+    res.json({
+      sessions: sessions.map(session => ({
+        id: session._id,
+        created_at: session.created_at,
+        expires_at: session.expires_at,
+      })),
+      total: sessions.length,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// DELETE /api/auth/sessions/:sessionId
+export const deleteSession = async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const userId = req.user.id;
+    const { refreshToken } = req.body;
+
+    const session = await Session.findOne({
+      _id: sessionId,
+      user_id: userId,
+    });
+
+    if (!session) {
+      return res.status(404).json({ message: "Session not found" });
+    }
+
+    if (session.refresh_token === refreshToken) {
+      return res.status(403).json({
+        message: "Cannot delete current session. Use logout instead",
+      });
+    }
+
+    await Session.deleteOne({ _id: sessionId });
+
+    res.json({ message: "Session terminated successfully" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// POST /api/auth/resend-verification
+export const resendVerification = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    const user = await User.findOne({ email });
+    
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });  
+    }
+
+    if (user.is_verified) {
+      return res.status(400).json({ message: "Email already verified" });
+    }
+
+    await EmailVerification.updateMany(
+      { user_id: user._id, is_used: false },
+      { is_used: true }
+    );
+
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 24);
+
+    await EmailVerification.create({
+      user_id: user._id,
+      token: verificationToken,
+      is_used: false,
+      expires_at: expiresAt,
+    });
+
+    const verifyUrl = `http://localhost:5000/api/auth/verify-email/${verificationToken}`;
+    
+    await sendEmail({
+      email: user.email,
+      subject: "Verify Your Email - CareerForge",
+      html: template(verifyUrl),
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Verification email sent successfully",
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
