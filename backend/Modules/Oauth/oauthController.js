@@ -5,7 +5,6 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 
-// دالة توليد التوكنز بناءً على بيانات المستخدم الحقيقي
 const generateAuthTokens = (user) => {
   const accessToken = jwt.sign(
     { userId: user._id, role: user.role }, 
@@ -21,7 +20,6 @@ const generateAuthTokens = (user) => {
 };
 
 // ==========================================
-// 1. تسجيل الدخول أو إنشاء حساب جديد عبر OAuth
 // POST /api/auth/oauth/{provider}
 // ==========================================
 export const oauthLoginOrRegister = async (req, res) => {
@@ -29,40 +27,31 @@ export const oauthLoginOrRegister = async (req, res) => {
   const { code, redirectUri } = req.body;
 
   try {
-    // جلب بيانات المستخدم من جوجل باستخدام الكود
     const oauthData = await getOauthUserData(provider, code, redirectUri);
 
     let isNewUser = false;
     let currentUser = null;
 
-    // الخطوة أ: البحث في جدول الـ OAuthAccount عن الـ providerId الخاص بجوجل
     let oauthAccount = await OAuthAccount.findOne({ provider, provider_id: oauthData.providerId });
 
     if (oauthAccount) {
-      // الحساب مربوط مسبقاً، نجلب بيانات المستخدم الفعلي من جدول الـ users
       currentUser = await User.findById(oauthAccount.user_id);
       
-      // حماية ضد الحسابات اليتيمة: لو السجل موجود بس اليوزر ممسوح من الداتابيز
       if (!currentUser) {
         await OAuthAccount.deleteOne({ _id: oauthAccount._id });
-        oauthAccount = null; // نُصفر المتغير ليتحول المسار لإنشاء مستخدم جديد
+        oauthAccount = null;
       }
     }
 
-    // الخطوة ب: إذا كان مستخدم جديد (لم نجد سجل OAuth أو قمنا بتصفيره لأنه يتيم)
     if (!oauthAccount) {
-      // نتحقق أولاً بالإيميل المبعوث من جوجل في جدول الـ users
       let user = await User.findOne({ email: oauthData.email });
 
       if (!user) {
-        // 🔥 حالة مستخدم جديد تماماً لأول مرة في السيستم 🔥
         isNewUser = true;
 
-        // توليد كلمة مرور عشوائية مشفرة لتأمين الحقل في السكيما
         const randomPassword = crypto.randomBytes(16).toString('hex');
         const hashedPassword = await bcrypt.hash(randomPassword, 10);
 
-        // 1. حفظ المستخدم الجديد في كولكشن الـ users
         user = await User.create({
           name: oauthData.name || 'OAuth User',
           email: oauthData.email,
@@ -73,7 +62,6 @@ export const oauthLoginOrRegister = async (req, res) => {
           role: 'user'
         });
 
-        // 2. ربط المستخدم الجديد بسجل الـ OAuthAccount وحفظ الـ user_id الصحيح
         await OAuthAccount.create({ 
           user_id: user._id, 
           provider, 
@@ -82,7 +70,6 @@ export const oauthLoginOrRegister = async (req, res) => {
 
         currentUser = user;
       } else {
-        // المستخدم موجود مسبقاً بالإيميل (سجل قبل كده تقليدي)، نربطه فقط بحساب جوجل
         const existingLink = await OAuthAccount.findOne({ user_id: user._id, provider });
         if (!existingLink) {
           await OAuthAccount.create({ user_id: user._id, provider, provider_id: oauthData.providerId });
@@ -91,20 +78,16 @@ export const oauthLoginOrRegister = async (req, res) => {
       }
     }
 
-    // التحقق النهائي الصارم من وجود كائن المستخدم والـ ID بتاعه
     if (!currentUser || !currentUser._id) {
       return res.status(404).json({ success: false, error: "User not found" });
     }
     
-    // التحقق من حالة الحساب
     if (currentUser.status === 'banned') return res.status(403).json({ success: false, error: "Account is banned" });
     if (currentUser.status === 'suspended') return res.status(403).json({ success: false, error: "Account is suspended" });
 
-    // تحديث تاريخ آخر تسجيل دخول في الداتابيز
     currentUser.last_login_at = new Date();
     await currentUser.save();
 
-    // توليد التوكنز بناءً على الـ User ID الحقيقي
     const tokens = generateAuthTokens(currentUser);
 
     return res.status(200).json({
@@ -114,7 +97,7 @@ export const oauthLoginOrRegister = async (req, res) => {
         ...tokens,
         isNewUser,
         user: {
-          id: currentUser._id, // 🎯 تم التثبيت على الـ ID الخاص بالمستخدم الحقيقي
+          id: currentUser._id, 
           name: currentUser.name,
           email: currentUser.email,
           avatarUrl: currentUser.avatar_url,
@@ -134,7 +117,6 @@ export const oauthLoginOrRegister = async (req, res) => {
 };
 
 // ==========================================
-// 2. ربط حساب OAuth بحساب مسجل دخول حالياً
 // POST /api/auth/oauth/{provider}/link
 // ==========================================
 export const linkOauthAccount = async (req, res) => {
@@ -168,7 +150,6 @@ export const linkOauthAccount = async (req, res) => {
 };
 
 // ==========================================
-// 3. إلغاء ربط حساب الـ OAuth
 // DELETE /api/auth/oauth/{provider}/unlink
 // ==========================================
 export const unlinkOauthAccount = async (req, res) => {
