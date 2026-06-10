@@ -13,7 +13,6 @@ export const verifyEmail = async (req, res) => {
     
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
 
-    // 1. حالة التوكن غير صالح أو منتهي الصلاحية
     if (!verification) {
       return res.status(400).send(`
         <!DOCTYPE html>
@@ -59,7 +58,6 @@ export const verifyEmail = async (req, res) => {
 
     const user = await User.findById(verification.user_id);
 
-    // 2. حالة عدم العثور على المستخدم
     if (!user) {
       return res.status(400).send(`
         <!DOCTYPE html>
@@ -87,14 +85,12 @@ export const verifyEmail = async (req, res) => {
       `);
     }
 
-    // تفعيل الحساب
     user.is_verified = true;
     await user.save();
 
     verification.is_used = true;
     await verification.save();
 
-    // 3. صفحة النجاح الكاملة والتحويل التلقائي
     return res.send(`
       <!DOCTYPE html>
       <html>
