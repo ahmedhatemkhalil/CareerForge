@@ -1,30 +1,3 @@
-/**
- * AUTHENTICATION CONTROLLER
- * =========================
- * 
- * PURPOSE:
- * This file contains the actual logic for authentication endpoints.
- * It handles signup, login, profile management, and account deletion.
- * 
- * ASSIGNED TO: AMANY
- * 
- * WHAT EACH FUNCTION DOES:
- * -------------------------------------------------
- * | Function        | Purpose                              |
- * |-----------------|--------------------------------------|
- * | signup          | Creates new user + returns JWT token |
- * | login           | Authenticates user + returns JWT token|
- * | getProfile      | Returns logged-in user's data         |
- * | updateProfile   | Updates user's name/email/preferences |
- * | changePassword  | Updates user's password               |
- * | deleteAccount   | Deletes user + all related data       |
- * -------------------------------------------------
- * 
- * RELATED FILES:
- * - models/User.js (database operations)
- * - routes/auth.js (endpoint definitions)
- * - middleware/auth.js (authentication)
- */
 import crypto from "crypto";
 import User from "../../models/User.js";
 import UserSettings from "../../models/UserSettings.js";
@@ -33,10 +6,9 @@ import {
   isStrongPassword,
   isValidName,
   passwordsMatch,
- 
 } from "../../utils/validators.js";
 import jwt from "jsonwebtoken";
-
+import bcrypt from "bcrypt";
 import sendEmail from "../../Email/email.js";
 import { template } from "../../Email/emailTemplate.js";
 import EmailVerification from "../../models/EmailVerification.js";
@@ -122,7 +94,6 @@ export const signup = async (req, res) => {
     return res.status(201).json({
       message: "User registered successfully. Please check your email to verify your account.",
       userId: user._id,
-      message: "Check your email to verify your account",
     });
 
   } catch (err) {
@@ -154,55 +125,7 @@ export const updateTheme = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
-//verifyEmail
-export const verifyEmail = async (req, res) => {
-  try {
-    const { token } = req.params;
 
-    // 1. Find user by the verification token
-    const user = await User.findOne({ verifyToken: token });
-
-    if (!user) {
-      return res.status(400).send(`
-        <div style="font-family: Arial; text-align: center; padding: 50px;">
-          <h1 style="color: red;">Invalid or Expired Token</h1>
-          <p>The verification link is invalid or has already been used.</p>
-        </div>
-      `);
-    }
-
-    // 2. Update user status
-    user.isVerified = true;
-    user.verifyToken = undefined; // Remove token so it can't be used again
-
-    await user.save();
-
-    // 3. Return success response with a link to your Frontend Login page
-    return res.send(`
-      <div style="font-family: Arial; text-align: center; padding: 50px;">
-        <h1 style="color: green;">✔ Email Verified Successfully</h1>
-        <p>Your account is now active. You can proceed to login.</p>
-        
-        // <a href="http://localhost:5000/login" 
-        //    style="
-        //      display: inline-block;
-        //      margin-top: 20px;
-        //      padding: 12px 20px;
-        //      background: #000;
-        //      color: #fff;
-        //      text-decoration: none;
-        //      border-radius: 8px;
-        //      font-weight: bold;
-        //    ">
-        //   Go to Login
-        // </a>
-      </div>
-    `);
-
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
 // LOGIN
 export const login = async (req, res) => {
   try {
