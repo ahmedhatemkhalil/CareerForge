@@ -35,7 +35,7 @@ const AppRouter = () => {
           <Route index element={<Landing />} />
         </Route>
 
-        {/* <Route element={<AuthLayout />}>
+        <Route element={<AuthLayout />}>
           <Route path="login" element={<Login />} />
           <Route path="forgot-password" element={<ForgotPassword />} />
           <Route path="reset-password/:token" element={<ResetPassword />} />
@@ -45,9 +45,9 @@ const AppRouter = () => {
         </Route>
 
         <Route path="auth/callback" element={<GoogleCallback />} />
-        <Route path="oauth/github/callback" element={<GithubCallback />} /> */}
+        <Route path="oauth/github/callback" element={<GithubCallback />} />
 
-        {/* <Route element={<ProtectedRoute />}> */}
+        <Route element={<ProtectedRoute />}>
           <Route element={<Layout />}>
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="profile" element={<Profile />} />
@@ -55,7 +55,7 @@ const AppRouter = () => {
             <Route path="interview" element={<Interview />} />
             <Route path="roadmap" element={<Roadmap />} />
           </Route>
-        {/* </Route> */}
+        </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
