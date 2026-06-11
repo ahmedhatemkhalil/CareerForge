@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { githubLogin } from "../../services/authService";
+import { loadUserTheme } from "../../utils/theme";
 
 export default function GithubCallback() {
   const navigate = useNavigate();
@@ -28,6 +29,8 @@ export default function GithubCallback() {
           "user",
           JSON.stringify(result.data.user)
         );
+
+        await loadUserTheme();
 
         navigate("/dashboard");
       } catch (error) {

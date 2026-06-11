@@ -29,3 +29,13 @@ export const changePassword = async ({ currentPassword, newPassword }) => {
 
   return data;
 };
+
+export const getUserSettings = async () => {
+  const { data } = await api.get("/users/me/settings");
+  return data;
+};
+
+export const updateUserSettings = async (theme) => {
+  const { data } = await api.put("/users/me/settings", { theme });
+  return data;
+};

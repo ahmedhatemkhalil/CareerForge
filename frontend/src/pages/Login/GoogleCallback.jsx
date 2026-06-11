@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { googleLogin } from "../../services/authService";
+import { loadUserTheme } from "../../utils/theme";
 import toast from "react-hot-toast";
 
 export default function GoogleCallback() {
@@ -30,6 +31,8 @@ export default function GoogleCallback() {
           "user",
           JSON.stringify(response.data.user)
         );
+
+        await loadUserTheme();
 
         toast.success("Login with Google successful");
 

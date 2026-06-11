@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { loginUser } from "../../services/authService";
+import { loadUserTheme } from "../../utils/theme";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
@@ -25,6 +26,7 @@ export default function Login() {
       const data = await loginUser(formData);
       localStorage.setItem("token", data.accessToken);
       localStorage.setItem("user", JSON.stringify(data.user));
+      await loadUserTheme();
       toast.success("Login successful");
       navigate("/dashboard");
     } catch (error) {

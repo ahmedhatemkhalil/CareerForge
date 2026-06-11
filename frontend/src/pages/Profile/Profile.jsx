@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { AlertTriangle, Sun } from 'lucide-react'
+import { AlertTriangle } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -8,13 +8,12 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
+import AppearanceCard from './components/AppearanceCard'
 import ChangePasswordCard from './components/ChangePasswordCard'
 import ProfileInformationCard from './components/ProfileInformationCard'
 import { actionButtonClassName } from './profileStyles'
 
 const Profile = () => {
-  const [lightMode, setLightMode] = useState(true)
-
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6 pb-2 sm:space-y-8 sm:pb-0">
       <div>
@@ -29,41 +28,7 @@ const Profile = () => {
       <ProfileInformationCard />
       <ChangePasswordCard />
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base sm:text-lg">Appearance</CardTitle>
-        </CardHeader>
-
-        <CardContent>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex min-w-0 items-start gap-3 sm:items-center">
-              <Sun size={20} className="mt-0.5 shrink-0 text-status-warning sm:mt-0" />
-              <div className="min-w-0">
-                <p className="font-semibold text-foreground">Light Mode</p>
-                <p className="text-sm text-muted-foreground">
-                  Toggle between light and dark themes
-                </p>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              role="switch"
-              aria-checked={lightMode}
-              onClick={() => setLightMode((prev) => !prev)}
-              className={`relative h-7 w-12 shrink-0 self-end rounded-full transition-colors sm:self-auto ${
-                lightMode ? 'bg-switch-background' : 'bg-primary'
-              }`}
-            >
-              <span
-                className={`absolute top-0.5 left-0.5 h-6 w-6 rounded-full bg-white shadow-sm transition-transform ${
-                  lightMode ? 'translate-x-5' : 'translate-x-0'
-                }`}
-              />
-            </button>
-          </div>
-        </CardContent>
-      </Card>
+      <AppearanceCard />
 
       <Card className="border-status-error/40">
         <CardHeader>
