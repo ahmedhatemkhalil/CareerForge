@@ -5,7 +5,12 @@ import { loginUser } from "../../services/authService";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
+import { GoogleIcon, GithubIcon } from "../../components/icons/SocialIcons";
 import { loginSchema } from "../../schemas/loginSchema";
+
+const socialButtonClassName =
+  "flex w-full h-12 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-semibold hover:opacity-90 transition";
+
 export default function Login() {
   const navigate = useNavigate();
 
@@ -36,7 +41,6 @@ export default function Login() {
 };
 const handleGoogleLogin = () => {
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
- console.log(import.meta.env.VITE_GOOGLE_CLIENT_ID);
   const redirectUri = "http://localhost:3000/auth/callback";
 
   const url =
@@ -49,44 +53,43 @@ const handleGoogleLogin = () => {
   window.location.href = url;
 };
   return (
-     <div className="min-h-screen bg-background flex items-center justify-center p-8 bg-card">
-  <div className="w-full lg:w-[40vw] lg:w-1/2     p-6 ">
+    <div className="min-h-screen bg-background flex items-center justify-center p-8">
+      <div className="w-full lg:w-[45vw] lg:w-1/2 bg-card rounded-xl p-10">
         {/* Title */}
-        <div className="mb-5">
-        <h1 className="text-2xl font-semibold text-foreground ">
-         Welcome Back
+        <h1 className="text-1xl font-semibold text-foreground">
+          Welcome Back
         </h1>
 
         <p className="text-sm text-muted-foreground mt-2">
-         Sign in to continue your career journey
-        </p></div>
+          Sign in to continue your career journessssy
+        </p>
 
+        {/* Social Buttons */}
+        <div className="grid grid-cols-2 gap-3 mt-6">
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            className={socialButtonClassName}
+          >
+            <GoogleIcon />
+            Google
+          </button>
 
-       {/* Social Buttons */}
-<div className="grid grid-cols-2 gap-3 mt-6">
-  <button
-    type="button"
-  onClick={handleGoogleLogin}
-    className="w-full h-12 rounded-xl bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-semibold hover:opacity-90 transition"
-  >
-      <span className="text-1xl">Ⓖ</span>
- Google
-  </button>
-
-  <button
-    type="button"
-     onClick={handleGithubLogin}
-    className="w-full h-12 rounded-xl bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-semibold hover:opacity-90 transition"
-  >
-   💻 GitHub
-  </button>
-</div>
+          <button
+            type="button"
+            onClick={handleGithubLogin}
+            className={socialButtonClassName}
+          >
+            <GithubIcon />
+            GitHub
+          </button>
+        </div>
 
  <div className="flex items-center my-6">
           <div className="flex-1 h-px bg-border"></div>
 
           <span className="px-3 text-[11px] uppercase tracking-widest text-muted-foreground">
-            OR CONTINUE WITH EMAIL
+            Or sign in with email
           </span>
 
           <div className="flex-1 h-px bg-border"></div>
@@ -181,8 +184,7 @@ const handleGoogleLogin = () => {
               Register
             </Link>
           </div>
-        </div>
       </div>
-  
+    </div>
   );
 }

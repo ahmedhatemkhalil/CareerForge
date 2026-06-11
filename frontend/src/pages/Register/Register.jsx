@@ -8,8 +8,12 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
 
+import { GoogleIcon, GithubIcon } from "../../components/icons/SocialIcons";
 import { registerSchema } from "../../schemas/registerSchema";
 import { registerUser } from "../../services/authService";
+
+const socialButtonClassName =
+  "flex w-full h-12 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-semibold hover:opacity-90 transition";
 export default function Register() {
   const navigate = useNavigate();
 
@@ -76,19 +80,14 @@ const {
 
       {/* Social Buttons */}
 <div className="grid grid-cols-2 gap-3 mt-6">
-  <button
-    type="button"
-    className="w-full h-12 rounded-xl bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-semibold hover:opacity-90 transition"
-  >
-    <span className="text-1xl">Ⓖ</span>
- Google
+  <button type="button" className={socialButtonClassName}>
+    <GoogleIcon />
+    Google
   </button>
 
-  <button
-    type="button"
-    className="w-full h-12 rounded-xl bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-semibold hover:opacity-90 transition"
-  >
-   💻 GitHub
+  <button type="button" className={socialButtonClassName}>
+    <GithubIcon />
+    GitHub
   </button>
 </div>
 
