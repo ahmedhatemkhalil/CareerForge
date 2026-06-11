@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { AlertTriangle, Camera, Eye, EyeOff, Save, Sun } from 'lucide-react'
+import toast from 'react-hot-toast'
 
 import { Button } from '@/components/ui/button'
+import { changePassword } from '@/services/user/user'
 import {
   Card,
   CardContent,
@@ -17,7 +19,34 @@ const actionButtonClassName = 'h-10 w-full sm:w-auto'
 const Profile = () => {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false)
   const [lightMode, setLightMode] = useState(true)
+
+  const handleChangePassword = async () => {
+    if (!currentPassword || !newPassword) {
+      toast.error('Current and new password are required')
+      return
+    }
+
+    setIsUpdatingPassword(true)
+
+    try {
+      const data = await changePassword({ currentPassword, newPassword })
+      toast.success(data.message || 'Password updated successfully')
+      setCurrentPassword('')
+      setNewPassword('')
+    } catch (error) {
+      toast.error(
+        error?.response?.data?.message ||
+          error?.message ||
+          'Failed to update password',
+      )
+    } finally {
+      setIsUpdatingPassword(false)
+    }
+  }
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6 pb-2 sm:space-y-8 sm:pb-0">
@@ -88,6 +117,9 @@ const Profile = () => {
               <input
                 type={showCurrentPassword ? 'text' : 'password'}
                 placeholder="••••••••"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                disabled={isUpdatingPassword}
                 className={`${inputClassName} pr-12`}
               />
               <button
@@ -108,6 +140,9 @@ const Profile = () => {
               <input
                 type={showNewPassword ? 'text' : 'password'}
                 placeholder="••••••••"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                disabled={isUpdatingPassword}
                 className={`${inputClassName} pr-12`}
               />
               <button
@@ -120,8 +155,13 @@ const Profile = () => {
             </div>
           </div>
 
-          <Button type="button" className={`${actionButtonClassName} px-4`}>
-            Update Password
+          <Button
+            type="button"
+            onClick={handleChangePassword}
+            disabled={isUpdatingPassword}
+            className={`${actionButtonClassName} px-4`}
+          >
+            {isUpdatingPassword ? 'Updating...' : 'Update Password'}
           </Button>
         </CardContent>
       </Card>
