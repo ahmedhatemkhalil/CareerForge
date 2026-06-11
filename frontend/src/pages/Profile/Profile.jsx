@@ -1,76 +1,19 @@
-import { useEffect, useState } from 'react'
-import { AlertTriangle, Camera, Eye, EyeOff, Save, Sun } from 'lucide-react'
-import toast from 'react-hot-toast'
+import { useState } from 'react'
+import { AlertTriangle, Sun } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
-import { changePassword, getCurrentUser } from '@/services/user/user'
-import { getInitials } from '@/utils/helpers'
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-
-const inputClassName =
-  'w-full h-11 rounded-xl bg-input-background border border-border px-4 text-foreground outline-none focus:border-brand-primary transition disabled:cursor-not-allowed disabled:opacity-70'
-
-const actionButtonClassName = 'h-10 w-full sm:w-auto'
+import ChangePasswordCard from './components/ChangePasswordCard'
+import ProfileInformationCard from './components/ProfileInformationCard'
+import { actionButtonClassName } from './profileStyles'
 
 const Profile = () => {
-  const [user, setUser] = useState(null)
-  const [name, setName] = useState('')
-  const [isLoadingProfile, setIsLoadingProfile] = useState(true)
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false)
-  const [showNewPassword, setShowNewPassword] = useState(false)
-  const [currentPassword, setCurrentPassword] = useState('')
-  const [newPassword, setNewPassword] = useState('')
-  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false)
   const [lightMode, setLightMode] = useState(true)
-
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const data = await getCurrentUser()
-        setUser(data)
-        setName(data.name || '')
-      } catch (error) {
-        toast.error(
-          error?.response?.data?.message ||
-            error?.message ||
-            'Failed to load profile',
-        )
-      } finally {
-        setIsLoadingProfile(false)
-      }
-    }
-
-    fetchProfile()
-  }, [])
-
-  const handleChangePassword = async () => {
-    if (!currentPassword || !newPassword) {
-      toast.error('Current and new password are required')
-      return
-    }
-
-    setIsUpdatingPassword(true)
-
-    try {
-      const data = await changePassword({ currentPassword, newPassword })
-      toast.success(data.message || 'Password updated successfully')
-      setCurrentPassword('')
-      setNewPassword('')
-    } catch (error) {
-      toast.error(
-        error?.response?.data?.message ||
-          error?.message ||
-          'Failed to update password',
-      )
-    } finally {
-      setIsUpdatingPassword(false)
-    }
-  }
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6 pb-2 sm:space-y-8 sm:pb-0">
@@ -83,126 +26,8 @@ const Profile = () => {
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base sm:text-lg">Profile Information</CardTitle>
-        </CardHeader>
-
-        <CardContent className="space-y-6">
-          {isLoadingProfile ? (
-            <p className="text-sm text-muted-foreground">Loading profile...</p>
-          ) : (
-            <>
-              <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-center sm:text-left">
-                <div className="relative shrink-0">
-                  {user?.avatar_url ? (
-                    <img
-                      src={user.avatar_url}
-                      alt={user.name}
-                      className="h-16 w-16 rounded-2xl object-cover sm:h-20 sm:w-20"
-                    />
-                  ) : (
-                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-lg font-semibold text-primary-foreground sm:h-20 sm:w-20 sm:text-xl">
-                      {getInitials(user?.name)}
-                    </div>
-                  )}
-                  <div className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-sm">
-                    <Camera size={14} />
-                  </div>
-                </div>
-
-                <div className="min-w-0">
-                  <p className="font-semibold text-foreground">{user?.name}</p>
-                  <p className="text-sm text-muted-foreground">{user?.email}</p>
-                 
-                </div>
-              </div>
-
-              <div className="space-y-5">
-                <div>
-                  <label className="mb-2 block text-sm text-muted-foreground">
-                    Full Name
-                  </label>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className={inputClassName}
-                  />
-                </div>
-
-                <Button type="button" className={`${actionButtonClassName} gap-2 px-4`}>
-                  <Save size={16} />
-                  Save Profile
-                </Button>
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base sm:text-lg">Change Password</CardTitle>
-        </CardHeader>
-
-        <CardContent className="space-y-5">
-          <div>
-            <label className="mb-2 block text-sm text-muted-foreground">
-              Current Password
-            </label>
-            <div className="relative">
-              <input
-                type={showCurrentPassword ? 'text' : 'password'}
-                placeholder="••••••••"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                disabled={isUpdatingPassword}
-                className={`${inputClassName} pr-12`}
-              />
-              <button
-                type="button"
-                onClick={() => setShowCurrentPassword((prev) => !prev)}
-                className="absolute top-1/2 right-3 -translate-y-1/2 p-1 text-muted-foreground sm:right-4"
-              >
-                {showCurrentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm text-muted-foreground">
-              New Password
-            </label>
-            <div className="relative">
-              <input
-                type={showNewPassword ? 'text' : 'password'}
-                placeholder="••••••••"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                disabled={isUpdatingPassword}
-                className={`${inputClassName} pr-12`}
-              />
-              <button
-                type="button"
-                onClick={() => setShowNewPassword((prev) => !prev)}
-                className="absolute top-1/2 right-3 -translate-y-1/2 p-1 text-muted-foreground sm:right-4"
-              >
-                {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-          </div>
-
-          <Button
-            type="button"
-            onClick={handleChangePassword}
-            disabled={isUpdatingPassword}
-            className={`${actionButtonClassName} px-4`}
-          >
-            {isUpdatingPassword ? 'Updating...' : 'Update Password'}
-          </Button>
-        </CardContent>
-      </Card>
+      <ProfileInformationCard />
+      <ChangePasswordCard />
 
       <Card>
         <CardHeader>

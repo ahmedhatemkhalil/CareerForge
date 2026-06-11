@@ -2,7 +2,22 @@ import api from "../api";
 
 export const getCurrentUser = async () => {
   const { data } = await api.get("/users/me");
-  console.log(data);
+  return data;
+};
+
+export const updateCurrentUser = async ({ name, avatar_url }) => {
+  const { data } = await api.put("/users/me", { name, avatar_url });
+  return data;
+};
+
+export const uploadAvatar = async (file) => {
+  const formData = new FormData();
+  formData.append("avatar", file);
+
+  const { data } = await api.post("/users/me/avatar", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+
   return data;
 };
 
