@@ -10,11 +10,13 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { getCurrentUser, updateCurrentUser, uploadAvatar } from '@/services/user/user'
+import useAuthStore from '@/stores/authStore'
 import { getInitials } from '@/utils/helpers'
 import { actionButtonClassName, inputClassName } from '../profileStyles'
 import { useAvatarPicker } from '../useAvatarPicker'
 
 const ProfileInformationCard = () => {
+  const setAuthUser = useAuthStore((state) => state.setUser)
   const [user, setUser] = useState(null)
   const [name, setName] = useState('')
   const [isLoadingProfile, setIsLoadingProfile] = useState(true)
@@ -71,6 +73,7 @@ const ProfileInformationCard = () => {
       })
 
       setUser(updatedUser)
+      setAuthUser(updatedUser)
       setName(updatedUser.name || '')
       clearAvatarSelection()
       toast.success('Profile updated successfully')

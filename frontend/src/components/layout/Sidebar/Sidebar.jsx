@@ -6,6 +6,7 @@ import ConfirmModal from '@/components/common/ConfirmModal'
 import { cn } from '@/lib/utils'
 import { logoutUser } from '@/services/authService'
 import useAuthStore from '@/stores/authStore'
+import { getInitials } from '@/utils/helpers'
 import { navItems } from './static'
 import toast from 'react-hot-toast'
 
@@ -13,6 +14,7 @@ export default function Sidebar() {
   const location = useLocation()
   const navigate = useNavigate()
   const logout = useAuthStore((state) => state.logout)
+  const user = useAuthStore((state) => state.user)
   const [collapsed, setCollapsed] = useState(false)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
@@ -131,18 +133,23 @@ export default function Sidebar() {
             collapsed && 'justify-center',
           )}
         >
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sidebar-primary text-sm font-semibold text-sidebar-primary-foreground">
-            AH
-          </div>
+          {user?.avatar_url ? (
+            <img
+              src={user.avatar_url}
+              alt={user.name}
+              className="h-10 w-10 shrink-0 rounded-full object-cover"
+            />
+          ) : (
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sidebar-primary text-sm font-semibold text-sidebar-primary-foreground">
+              {getInitials(user?.name)}
+            </div>
+          )}
 
           {!collapsed && (
             <>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-sidebar-foreground">
-                  Ahmed Hatem
-                </p>
-                <p className="truncate text-xs text-muted-foreground">
-                ahmedhatemkhalil@gmail.com
+                  {user?.name}
                 </p>
               </div>
 

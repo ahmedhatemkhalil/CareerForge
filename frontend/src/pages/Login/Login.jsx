@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { loginUser } from "../../services/authService";
 import { loadUserTheme } from "../../utils/theme";
+import { loadCurrentUser } from "../../utils/userProfile";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
@@ -26,7 +27,7 @@ export default function Login() {
       const data = await loginUser(formData);
       localStorage.setItem("token", data.accessToken);
       localStorage.setItem("refreshToken", data.refreshToken);
-      localStorage.setItem("user", JSON.stringify(data.user));
+      await loadCurrentUser();
       await loadUserTheme();
       toast.success("Login successful");
       navigate("/dashboard");

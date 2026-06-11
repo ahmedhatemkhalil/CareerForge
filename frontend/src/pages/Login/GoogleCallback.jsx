@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { googleLogin } from "../../services/authService";
 import { loadUserTheme } from "../../utils/theme";
+import { loadCurrentUser } from "../../utils/userProfile";
 import toast from "react-hot-toast";
 
 export default function GoogleCallback() {
@@ -30,11 +31,7 @@ export default function GoogleCallback() {
           localStorage.setItem("refreshToken", response.data.refreshToken);
         }
 
-        localStorage.setItem(
-          "user",
-          JSON.stringify(response.data.user)
-        );
-
+        await loadCurrentUser();
         await loadUserTheme();
 
         toast.success("Login with Google successful");
