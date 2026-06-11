@@ -16,6 +16,7 @@ import EmailVerification from './pages/Login/EmailVerification'
 import GithubCallback from './pages/Login/GithubCallback'
 import GoogleCallback from './pages/Login/GoogleCallback'
 import VerifyNotice from './pages/Register/verify-notice'
+import Profile from './pages/Profile/Profile'
 
 const AppRouter = () => {
   return (
@@ -39,7 +40,8 @@ const AppRouter = () => {
           <Route element={<ProtectedRoute />}>
            </Route>
         <Route path="/" element={<Layout />}>
-         
+          <Route index element={<Landing />} />
+          <Route path="profile" element={<Profile />} />
             <Route path="analyze" element={<Analyze />} />
             <Route path="interview" element={<Interview />} />
             <Route path="roadmap" element={<Roadmap />} />
