@@ -6,13 +6,15 @@ import Landing from './pages/Landing/Landing'
 import Analyze from './pages/Analyze/Analyze'
 import Interview from './pages/Interview/Interview'
 import Roadmap from './pages/Roadmap/Roadmap'
-import RoadmapResult from './pages/Roadmap/RoadmapResult'
 import Dashboard from './pages/Dashboard/Dashboard'
 import Login from './pages/Login/login'
 import Register from './pages/Register/Register'
 import ForgotPassword from './pages/Login/ForgotPassword'
 import ResetPassword from './pages/Login/ResetPassword'
 import EmailVerification from './pages/Login/EmailVerification'
+import GithubCallback from './pages/Login/GithubCallback'
+import GoogleCallback from './pages/Login/GoogleCallback'
+import VerifyNotice from './pages/Register/verify-notice'
 
 const AppRouter = () => {
   return (
@@ -22,10 +24,17 @@ const AppRouter = () => {
 
          <Route element={<AuthLayout />}>
          <Route path="login" element={<Login />} />
+         <Route path="/auth/callback" element={<GoogleCallback />} />
           <Route path="forgot-password" element={<ForgotPassword />}/>
           <Route path="reset-password/:token" element={<ResetPassword />}/>
           <Route path="verify-email/:token" element={<EmailVerification />}/>
           <Route path="register" element={<Register />} />
+          <Route path="/verify-notice" element={<VerifyNotice />}
+/>
+          <Route
+  path="/oauth/github/callback"
+  element={<GithubCallback />}
+/>
           <Route element={<ProtectedRoute />}>
            </Route>
         <Route path="/" element={<Layout />}>
@@ -33,7 +42,6 @@ const AppRouter = () => {
             <Route path="analyze" element={<Analyze />} />
             <Route path="interview" element={<Interview />} />
             <Route path="roadmap" element={<Roadmap />} />
-            <Route path="roadmap/result" element={<RoadmapResult />} />
             <Route path="dashboard" element={<Dashboard />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />

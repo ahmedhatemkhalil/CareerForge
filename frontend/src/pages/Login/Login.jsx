@@ -15,51 +15,6 @@ export default function Login() {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm({ resolver: zodResolver(loginSchema) });
-  // const [formData, setFormData] = useState({
-  //   email: "",
-  //   password: "",
-  // });
-
-  // const [loading, setLoading] = useState(false);
-
-  // Handle Input Change
-  // const handleChange = (e) => {
-  //   setFormData({
-  //     ...formData,
-  //     [e.target.name]: e.target.value,
-  //   });
-  // };
-
-  // Handle Login
-  // const handleLogin = async (e) => {
-  //   e.preventDefault();
-
-  //   try {
-  //     setLoading(true);
-
-  //     const data = await loginUser(formData);
-
-  //     console.log(data);
-
-  //     // Save Token
-  //     localStorage.setItem("token", data.token);
-
-  //     // Save User
-  //     localStorage.setItem(
-  //       "user",
-  //       JSON.stringify(data.user)
-  //     );
-
-  //     alert("Login Success");
-
-  //     navigate("/dashboard");
-  //   } catch (error) {
-  //     console.log(error.message);
-  //     alert(error.message);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
   const onSubmit = async (formData) => {
     try {
       const data = await loginUser(formData);
@@ -73,33 +28,73 @@ export default function Login() {
       );
     }
   };
+  const handleGithubLogin = () => {
+  const clientId = import.meta.env.VITE_GITHUB_CLIENT_ID;
+
+  window.location.href =
+    `https://github.com/login/oauth/authorize?client_id=${clientId}`;
+};
+const handleGoogleLogin = () => {
+  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+ console.log(import.meta.env.VITE_GOOGLE_CLIENT_ID);
+  const redirectUri = "http://localhost:3000/auth/callback";
+
+  const url =
+    `https://accounts.google.com/o/oauth2/v2/auth` +
+    `?client_id=${clientId}` +
+    `&redirect_uri=${redirectUri}` +
+    `&response_type=code` +
+    `&scope=openid email profile`;
+
+  window.location.href = url;
+};
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-5 relative overflow-hidden">
-      {/* Glow Effects */}
-      <div className="absolute top-[-100px] left-[-100px] bg-brand-primary/30 blur-3xl rounded-full"></div>
+     <div className="min-h-screen bg-background flex items-center justify-center p-8 bg-card">
+  <div className="w-full lg:w-[40vw] lg:w-1/2     p-6 ">
+        {/* Title */}
+        <div className="mb-5">
+        <h1 className="text-2xl font-semibold text-foreground ">
+         Welcome Back
+        </h1>
 
-      <div className="absolute bottom-[-100px] right-[-100px]   rounded-full"></div>
+        <p className="text-sm text-muted-foreground mt-2">
+         Sign in to continue your career journey
+        </p></div>
 
-      {/* Card */}
-      <div className="w-full max-w-md relative">
-        <div className="absolute inset-0  from-brand-primary to-brand-secondary rounded-3xl blur-xl opacity-20"></div>
 
-        <div className="relative bg-card/80 backdrop-blur-xl border border-border rounded-3xl p-8 shadow-2xl">
-          {/* Logo */}
-          <div className="flex justify-center mb-6">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-r from-brand-primary to-brand-secondary flex items-center justify-center text-white text-2xl font-bold shadow-lg">
-              ✦
-            </div>
-          </div>
+       {/* Social Buttons */}
+<div className="grid grid-cols-2 gap-3 mt-6">
+  <button
+    type="button"
+  onClick={handleGoogleLogin}
+    className="w-full h-12 rounded-xl bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-semibold hover:opacity-90 transition"
+  >
+      <span className="text-1xl">Ⓖ</span>
+ Google
+  </button>
 
-          {/* Heading */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-foreground">Welcome Back</h1>
+  <button
+    type="button"
+     onClick={handleGithubLogin}
+    className="w-full h-12 rounded-xl bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-semibold hover:opacity-90 transition"
+  >
+   💻 GitHub
+  </button>
+</div>
 
-            <p className="text-muted-foreground mt-2 text-sm">
-              Sign in to continue your career journey
-            </p>
-          </div>
+ <div className="flex items-center my-6">
+          <div className="flex-1 h-px bg-border"></div>
+
+          <span className="px-3 text-[11px] uppercase tracking-widest text-muted-foreground">
+            OR CONTINUE WITH EMAIL
+          </span>
+
+          <div className="flex-1 h-px bg-border"></div>
+        </div>
+
+
+     
+         
 
           {/* Form */}
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
@@ -188,6 +183,6 @@ export default function Login() {
           </div>
         </div>
       </div>
-    </div>
+  
   );
 }
