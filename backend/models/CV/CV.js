@@ -16,7 +16,7 @@ const cvSchema = new mongoose.Schema({
         default: 'processing' 
     },
     version: { type: Number, default: 1 },
-    isActive: { type: boolean, default: true },
+    isActive: { type: Boolean, default: true },
     fileSizeKb: { type: Number, required: true }
 }, { timestamps: true });
 
