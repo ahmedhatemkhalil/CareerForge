@@ -13,6 +13,9 @@ import Register from './pages/Register/Register'
 import ForgotPassword from './pages/Login/ForgotPassword'
 import ResetPassword from './pages/Login/ResetPassword'
 import EmailVerification from './pages/Login/EmailVerification'
+import GithubCallback from './pages/Login/GithubCallback'
+import GoogleCallback from './pages/Login/GoogleCallback'
+import VerifyNotice from './pages/Register/verify-notice'
 
 const AppRouter = () => {
   return (
@@ -20,10 +23,17 @@ const AppRouter = () => {
       <Routes>
          <Route element={<AuthLayout />}>
          <Route path="login" element={<Login />} />
+         <Route path="/auth/callback" element={<GoogleCallback />} />
           <Route path="forgot-password" element={<ForgotPassword />}/>
           <Route path="reset-password/:token" element={<ResetPassword />}/>
           <Route path="verify-email/:token" element={<EmailVerification />}/>
           <Route path="register" element={<Register />} />
+          <Route path="/verify-notice" element={<VerifyNotice />}
+/>
+          <Route
+  path="/oauth/github/callback"
+  element={<GithubCallback />}
+/>
           <Route element={<ProtectedRoute />}>
            </Route>
         <Route path="/" element={<Layout />}>
