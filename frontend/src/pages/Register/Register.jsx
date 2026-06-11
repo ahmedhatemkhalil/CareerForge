@@ -45,11 +45,13 @@ const {
   const handleRegister = async (formData) => {
     try {
       const data = await registerUser(formData);
-      toast.success(
-        "Account created! Check your email to verify your account."
-      );
+      toast.success("Account created successfully!");
 
-      navigate("/login");
+      navigate("/verify-notice", {
+      state: {
+        email: formData.email,
+      },
+    });
     } catch (error) {
       toast.error(
         error?.response?.data?.message ||
@@ -60,38 +62,46 @@ const {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4 relative overflow-hidden ">
-      
-      {/* Background Glow */}
-      <div className="absolute rounded-full"></div>
+    <div className="min-h-screen bg-background flex items-center justify-center p-8 ">
+  <div className="w-full lg:w-[45vw] lg:w-1/2 bg-card rounded-xl   p-10">
+        {/* Title */}
+        <h1 className="text-1xl font-semibold text-foreground ">
+          Create Account
+        </h1>
 
-      <div className="absolute  rounded-full"></div>
+        <p className="text-sm text-muted-foreground mt-2">
+          Start your career transformation today
+        </p>
 
-      {/* Card */}
-  <div className="w-full max-w-lg md:max-w-xl relative">
 
-        <div className="absolute inset-0  from-brand-primary to-brand-secondary rounded-3xl blur-xl opacity-20"></div>
+      {/* Social Buttons */}
+<div className="grid grid-cols-2 gap-3 mt-6">
+  <button
+    type="button"
+    className="w-full h-12 rounded-xl bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-semibold hover:opacity-90 transition"
+  >
+    <span className="text-1xl">Ⓖ</span>
+ Google
+  </button>
 
-        <div className="relative bg-card/100 backdrop-blur-xl border border-border rounded-3xl p-10 md:p-12 shadow-2xl">
-          
-          {/* Logo */}
-          <div className="flex justify-center mb-6">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-r from-brand-primary to-brand-secondary flex items-center justify-center text-white text-2xl font-bold">
-              ✦
-            </div>
-          </div>
+  <button
+    type="button"
+    className="w-full h-12 rounded-xl bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-semibold hover:opacity-90 transition"
+  >
+   💻 GitHub
+  </button>
+</div>
 
-          {/* Title */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-foreground">
-              Create Account
-            </h1>
 
-            <p className="text-muted-foreground mt-2 text-sm">
-              Start your career transformation today
-            </p>
-          </div>
+ <div className="flex items-center my-6">
+          <div className="flex-1 h-px bg-border"></div>
 
+          <span className="px-3 text-[11px] uppercase tracking-widest text-muted-foreground">
+            Or register with email
+          </span>
+
+          <div className="flex-1 h-px bg-border"></div>
+        </div>
           {/* Form */}
           <form
       onSubmit={handleSubmit(handleRegister)}
@@ -129,7 +139,7 @@ const {
       type="email"
       placeholder="m@example.com"
         {...register("email")}
-       className="w-full h-12 rounded-xlbg-input-background border border-border px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-primary/40 transition"
+       className="w-full h-12 rounded-xl bg-input-background border border-border px-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-primary/40 transition"
         />
 
      {errors.email && (
@@ -228,6 +238,6 @@ const {
           </div>
         </div>
       </div>
-    </div>
+   
   );
 }

@@ -140,19 +140,9 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4 relative overflow-hidden">
-      <div className="absolute  bg-brand-primary/30 blur-3xl rounded-full"></div>
-      <div className="absolute  bg-brand-secondary/30 blur-3xl rounded-full"></div>
-
-      <div className="w-full max-w-md relative">
-        <div className="absolute inset-0  from-brand-primary to-brand-secondary rounded-3xl blur-xl opacity-20"></div>
-
-        <div className="relative bg-card/80 backdrop-blur-xl border border-border rounded-3xl p-8 shadow-2xl">
-          <div className="flex justify-center mb-6">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-r from-brand-primary to-brand-secondary flex items-center justify-center text-white text-2xl font-bold">
-              ✦
-            </div>
-          </div>
+   <div className="min-h-screen bg-background flex items-center justify-center p-8 ">
+  <div className="w-full lg:w-[45vw] lg:w-1/2 bg-card rounded-xl shadow-sm border border-border p-10">
+      
 
           <div className="text-center mb-6">
             <h1 className="text-3xl font-bold text-foreground">
@@ -313,6 +303,6 @@ export default function ForgotPassword() {
           </div>
         </div>
       </div>
-    </div>
+   
   );
 }
