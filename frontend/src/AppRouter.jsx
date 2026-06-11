@@ -7,6 +7,7 @@ import Analyze from './pages/Analyze/Analyze'
 import Interview from './pages/Interview/Interview'
 import Roadmap from './pages/Roadmap/Roadmap'
 import Dashboard from './pages/Dashboard/Dashboard'
+import Profile from './pages/Profile/Profile'
 import Login from './pages/Login/login'
 import Register from './pages/Register/Register'
 import ForgotPassword from './pages/Login/ForgotPassword'
@@ -42,6 +43,7 @@ const AppRouter = () => {
             <Route path="interview" element={<Interview />} />
             <Route path="roadmap" element={<Roadmap />} />
             <Route path="dashboard" element={<Dashboard />} />
+            <Route path="profile" element={<Profile />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
