@@ -6,7 +6,6 @@ import Landing from './pages/Landing/Landing'
 import Analyze from './pages/Analyze/Analyze'
 import Interview from './pages/Interview/Interview'
 import Roadmap from './pages/Roadmap/Roadmap'
-import RoadmapResult from './pages/Roadmap/RoadmapResult'
 import Dashboard from './pages/Dashboard/Dashboard'
 import Login from './pages/Login/login'
 import Register from './pages/Register/Register'
@@ -32,7 +31,6 @@ const AppRouter = () => {
             <Route path="analyze" element={<Analyze />} />
             <Route path="interview" element={<Interview />} />
             <Route path="roadmap" element={<Roadmap />} />
-            <Route path="roadmap/result" element={<RoadmapResult />} />
             <Route path="dashboard" element={<Dashboard />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
