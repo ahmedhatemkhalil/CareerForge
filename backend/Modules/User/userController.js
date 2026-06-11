@@ -21,13 +21,44 @@ export const updateCurrentUser = async (req, res) => {
   }
 
   const { name, avatar_url } = req.body;
+  const update = {};
+
+  if (name !== undefined) update.name = name;
+  if (avatar_url !== undefined) update.avatar_url = avatar_url;
+
+  if (Object.keys(update).length === 0) {
+    return res.status(400).json({ message: "Nothing to update" });
+  }
 
   try {
     const updatedUser = await User.findByIdAndUpdate(
       req.user.id,
-      { name, avatar_url},
+      update,
       { new: true, runValidators: true }
     ).select("-password_hash");
+
+    res.json(updatedUser);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// POST /api/users/me/avatar
+export const uploadUserAvatar = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "Please upload an image" });
+    }
+
+    const avatar_url = `${req.protocol}://${req.get("host")}/uploads/avatars/${req.file.filename}`;
+
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.id,
+      { avatar_url },
+      { new: true, runValidators: true }
+    ).select("-password_hash");
+
+    if (!updatedUser) return res.status(404).json({ message: "User not found" });
 
     res.json(updatedUser);
   } catch (err) {
