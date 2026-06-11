@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { AlertTriangle, Camera, Eye, EyeOff, Save, Sun } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 import { Button } from '@/components/ui/button'
-import { changePassword } from '@/services/user/user'
+import { changePassword, getCurrentUser } from '@/services/user/user'
+import { getInitials } from '@/utils/helpers'
 import {
   Card,
   CardContent,
@@ -17,12 +18,35 @@ const inputClassName =
 const actionButtonClassName = 'h-10 w-full sm:w-auto'
 
 const Profile = () => {
+  const [user, setUser] = useState(null)
+  const [name, setName] = useState('')
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true)
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false)
   const [lightMode, setLightMode] = useState(true)
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const data = await getCurrentUser()
+        setUser(data)
+        setName(data.name || '')
+      } catch (error) {
+        toast.error(
+          error?.response?.data?.message ||
+            error?.message ||
+            'Failed to load profile',
+        )
+      } finally {
+        setIsLoadingProfile(false)
+      }
+    }
+
+    fetchProfile()
+  }, [])
 
   const handleChangePassword = async () => {
     if (!currentPassword || !newPassword) {
@@ -65,41 +89,55 @@ const Profile = () => {
         </CardHeader>
 
         <CardContent className="space-y-6">
-          <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-center sm:text-left">
-            <div className="relative shrink-0">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-lg font-semibold text-primary-foreground sm:h-20 sm:w-20 sm:text-xl">
-                AH
+          {isLoadingProfile ? (
+            <p className="text-sm text-muted-foreground">Loading profile...</p>
+          ) : (
+            <>
+              <div className="flex flex-col items-center gap-4 text-center sm:flex-row sm:items-center sm:text-left">
+                <div className="relative shrink-0">
+                  {user?.avatar_url ? (
+                    <img
+                      src={user.avatar_url}
+                      alt={user.name}
+                      className="h-16 w-16 rounded-2xl object-cover sm:h-20 sm:w-20"
+                    />
+                  ) : (
+                    <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary text-lg font-semibold text-primary-foreground sm:h-20 sm:w-20 sm:text-xl">
+                      {getInitials(user?.name)}
+                    </div>
+                  )}
+                  <div className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-sm">
+                    <Camera size={14} />
+                  </div>
+                </div>
+
+                <div className="min-w-0">
+                  <p className="font-semibold text-foreground">{user?.name}</p>
+                  <p className="text-sm text-muted-foreground">{user?.email}</p>
+                 
+                </div>
               </div>
-              <div className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-sm">
-                <Camera size={14} />
+
+              <div className="space-y-5">
+                <div>
+                  <label className="mb-2 block text-sm text-muted-foreground">
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className={inputClassName}
+                  />
+                </div>
+
+                <Button type="button" className={`${actionButtonClassName} gap-2 px-4`}>
+                  <Save size={16} />
+                  Save Profile
+                </Button>
               </div>
-            </div>
-
-            <div className="min-w-0">
-              <p className="font-semibold text-foreground">Ahmed Hatem</p>
-              <p className="text-sm text-muted-foreground">
-                Click the camera icon to upload a new profile picture
-              </p>
-            </div>
-          </div>
-
-          <div className="space-y-5">
-            <div>
-              <label className="mb-2 block text-sm text-muted-foreground">
-                Full Name
-              </label>
-              <input
-                type="text"
-                defaultValue="Ahmed Hatem"
-                className={inputClassName}
-              />
-            </div>
-
-            <Button type="button" className={`${actionButtonClassName} gap-2 px-4`}>
-              <Save size={16} />
-              Save Profile
-            </Button>
-          </div>
+            </>
+          )}
         </CardContent>
       </Card>
 
