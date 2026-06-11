@@ -18,6 +18,8 @@ const AppRouter = () => {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/" element={<Landing />} />
+
          <Route element={<AuthLayout />}>
          <Route path="login" element={<Login />} />
           <Route path="forgot-password" element={<ForgotPassword />}/>
@@ -27,7 +29,6 @@ const AppRouter = () => {
           <Route element={<ProtectedRoute />}>
            </Route>
         <Route path="/" element={<Layout />}>
-          <Route index element={<Landing />} />
          
             <Route path="analyze" element={<Analyze />} />
             <Route path="interview" element={<Interview />} />
