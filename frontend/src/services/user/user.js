@@ -39,3 +39,8 @@ export const updateUserSettings = async (theme) => {
   const { data } = await api.put("/users/me/settings", { theme });
   return data;
 };
+
+export const deleteCurrentUser = async () => {
+  const { data } = await api.delete("/users/me");
+  return data;
+};
