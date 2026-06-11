@@ -25,6 +25,10 @@ export default function GithubCallback() {
           result.data.accessToken
         );
 
+        if (result.data.refreshToken) {
+          localStorage.setItem("refreshToken", result.data.refreshToken);
+        }
+
         localStorage.setItem(
           "user",
           JSON.stringify(result.data.user)

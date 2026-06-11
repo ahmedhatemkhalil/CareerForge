@@ -26,7 +26,10 @@ export default function GoogleCallback() {
           response.data.accessToken
         );
 
-        // نحفظ بيانات اليوزر
+        if (response.data.refreshToken) {
+          localStorage.setItem("refreshToken", response.data.refreshToken);
+        }
+
         localStorage.setItem(
           "user",
           JSON.stringify(response.data.user)

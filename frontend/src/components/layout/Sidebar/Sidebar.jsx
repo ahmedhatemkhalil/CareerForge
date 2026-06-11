@@ -1,18 +1,46 @@
 import { useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { ChevronLeft, LogOut, Sparkles } from 'lucide-react'
 
+import ConfirmModal from '@/components/common/ConfirmModal'
 import { cn } from '@/lib/utils'
+import { logoutUser } from '@/services/authService'
+import useAuthStore from '@/stores/authStore'
 import { navItems } from './static'
-
-
+import toast from 'react-hot-toast'
 
 export default function Sidebar() {
   const location = useLocation()
+  const navigate = useNavigate()
+  const logout = useAuthStore((state) => state.logout)
   const [collapsed, setCollapsed] = useState(false)
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
 
+  const handleLogout = async () => {
+    setIsLoggingOut(true)
 
+    try {
+      const refreshToken = localStorage.getItem('refreshToken')
 
+      if (refreshToken) {
+        await logoutUser(refreshToken)
+      }
+
+      toast.success('Logged out successfully')
+    } catch (error) {
+      toast.error(
+        error?.response?.data?.message ||
+          error?.message ||
+          'Logout failed on server, clearing local session',
+      )
+    } finally {
+      logout()
+      setShowLogoutConfirm(false)
+      setIsLoggingOut(false)
+      navigate('/login')
+    }
+  }
   return (
     <aside
       className={cn(
@@ -121,6 +149,7 @@ export default function Sidebar() {
               <button
                 type="button"
                 aria-label="Logout"
+                onClick={() => setShowLogoutConfirm(true)}
                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-sidebar-accent hover:text-sidebar-foreground"
               >
                 <LogOut size={18} />
@@ -129,6 +158,18 @@ export default function Sidebar() {
           )}
         </div>
       </div>
+
+      <ConfirmModal
+        open={showLogoutConfirm}
+        onClose={() => setShowLogoutConfirm(false)}
+        title="Logout"
+        message="Are you sure you want to logout from your account?"
+        confirmLabel="Logout"
+        cancelLabel="Cancel"
+        onConfirm={handleLogout}
+        confirmVariant="destructive"
+        isLoading={isLoggingOut}
+      />
     </aside>
   )
 }

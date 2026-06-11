@@ -6,8 +6,11 @@ const useAuthStore = create((set) => ({
   user: null,
   token: localStorage.getItem("token"),
 
-  login: (user, token) => {
+  login: (user, token, refreshToken) => {
     localStorage.setItem("token", token);
+    if (refreshToken) {
+      localStorage.setItem("refreshToken", refreshToken);
+    }
 
     set({
       user,
@@ -17,6 +20,8 @@ const useAuthStore = create((set) => ({
 
   logout: () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("user");
 
     set({
       user: null,
