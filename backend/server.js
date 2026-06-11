@@ -15,6 +15,8 @@ import { globalErrorHandler } from './Modules/Error/error.controller.js';
 import roadmapsRoutes from "./Modules/Roadmap/roadmaps.routes.js";
 import analysesRoutes from './Modules/Analysis/analyses.routes.js';
 import oauthRoutes from './Modules/Oauth/oauthRoutes.js';
+import cvRoutes from './Modules/CV/cv.routes.js'; 
+import jobDescriptionRoutes from './Modules/jobDescription/job.routes.js'; 
 // Load environment variables
 
 dotenv.config();
@@ -43,6 +45,8 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use("/api/roadmaps", roadmapsRoutes);
 app.use('/api/analyses', analysesRoutes);
 app.use('/api', oauthRoutes);
+app.use('/api/cvs', cvRoutes);
+app.use('/api/job-descriptions', jobDescriptionRoutes);
 
 
 
