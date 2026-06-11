@@ -61,7 +61,7 @@ const handleGoogleLogin = () => {
         </h1>
 
         <p className="text-sm text-muted-foreground mt-2">
-          Sign in to continue your career journessssy
+          Sign in to continue your career journey
         </p>
 
         {/* Social Buttons */}
