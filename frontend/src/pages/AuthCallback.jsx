@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import API from '../api/axios'; // تأكدي من صحة مسار ملف الأكسيوس عندك
+import API from '../axios'; // تأكدي من صحة مسار ملف الأكسيوس عندك
 import { loadUserTheme } from "../utils/theme";
 import { loadCurrentUser } from "../utils/userProfile";
 import toast from "react-hot-toast";
