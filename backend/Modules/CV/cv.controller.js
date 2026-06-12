@@ -146,23 +146,29 @@ export const deleteCV = catchAsync(async (req, res, next) => {
         message: "CV deleted successfully"
     });
 });
-
-// 5. Set CV as Active
+// set active cv
 export const setActiveCv = catchAsync(async (req, res, next) => {
     const { cvId } = req.params;
 
-    const cv = await CV.findOne({ _id: cvId, userId: req.user.id });
-    if (!cv) {
+    const targetCv = await CV.findOne({ _id: cvId, userId: req.user.id });
+    if (!targetCv) {
         return next(new AppError("CV not found or unauthorized", 404));
     }
 
-    await CV.updateMany({ userId: req.user.id }, { isActive: false });
+    await CV.updateMany(
+        { userId: req.user.id }, 
+        { isActive: false }
+    );
 
-    cv.isActive = true;
-    await cv.save();
+    targetCv.isActive = true;
+    const savedCv = await targetCv.save(); 
 
     res.status(200).json({
         success: true,
-        message: `CV '${cv.fileName}' is now set as active.`
+        message: `Success: Previous CVs are now deactive, and '${savedCv.fileName}' is set to ACTIVE.`,
+        data: {
+            cvId: savedCv._id,
+            isActive: savedCv.isActive
+        }
     });
 });
