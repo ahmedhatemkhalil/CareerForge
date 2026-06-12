@@ -26,13 +26,12 @@ const providersConfig = {
     normalize: (data) => ({
       providerId: data.id.toString(),
       name: data.name || data.login,
-      email: data.email || `${data.login}@github.com`,
+      email: data.email, // هنسيبه يرجع زي ما هو ونعالجه تحت لو null
       avatarUrl: data.avatar_url
     })
   }
 };
 
-// التأكد من وجود كلمة export const هنا بالظبط عشان الكنترولر يشوفها
 export const getOauthUserData = async (provider, code, redirectUri) => {
   const config = providersConfig[provider];
   if (!config) throw new Error('INVALID_PROVIDER');
@@ -50,5 +49,25 @@ export const getOauthUserData = async (provider, code, redirectUri) => {
     headers: { Authorization: `Bearer ${providerAccessToken}` }
   });
 
-  return config.normalize(userResponse.data);
+  let userData = config.normalize(userResponse.data);
+
+  if (provider === 'github' && !userData.email) {
+    try {
+      const emailsResponse = await axios.get('https://api.github.com/user/emails', {
+        headers: { Authorization: `Bearer ${providerAccessToken}` }
+      });
+      const primaryEmailObj = emailsResponse.data.find(email => email.primary && email.verified) || emailsResponse.data[0];
+      if (primaryEmailObj) {
+        userData.email = primaryEmailObj.email;
+      }
+    } catch (emailError) {
+      console.error("Failed to fetch GitHub private email: ", emailError);
+    }
+    
+    if (!userData.email) {
+      userData.email = `${userResponse.data.login}@github.com`;
+    }
+  }
+
+  return userData;
 };
