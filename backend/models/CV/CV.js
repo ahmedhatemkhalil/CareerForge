@@ -20,15 +20,13 @@ const cvSchema = new mongoose.Schema({
     fileSizeKb: { type: Number, required: true }
 }, { timestamps: true });
 
-// Middleware لضمان وجود CV نشط واحد فقط للمستخدم عند التفعيل
-cvSchema.pre('save', async function(next) {
+cvSchema.pre('save', async function() {
     if (this.isModified('isActive') && this.isActive === true) {
         await mongoose.model('CV').updateMany(
             { userId: this.userId, _id: { $ne: this._id } },
             { $set: { isActive: false } }
         );
     }
-    next();
 });
 
 export const CV = mongoose.model('CV', cvSchema);
