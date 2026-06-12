@@ -30,6 +30,5 @@ router.post('/upload', verifyToken, upload.single('cvFile'), cvController.upload
 router.get('/', verifyToken, validate(queryCvSchema, 'query'), cvController.getAllCvs);
 router.get('/:cvId', verifyToken, validate(getCvByIdSchema, 'params'), cvController.getCvById);
 router.delete('/:cvId', verifyToken, validate(getCvByIdSchema, 'params'), cvController.deleteCV);
-router.patch('/:cvId/set-active', cvController.setActiveCv);
-
+router.patch('/:cvId/set-active', verifyToken, cvController.setActiveCv);
 export default router;
