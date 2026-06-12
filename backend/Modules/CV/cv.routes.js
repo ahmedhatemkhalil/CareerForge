@@ -6,18 +6,23 @@ import { getCvByIdSchema, queryCvSchema } from '../../models/CV/cv.validation.js
 
 const router = Router();
 
-const validate = (schema, source = 'body') => (req, res, next) => {
-    const { error, value } = schema.validate(req[source], { stripUnknown: true }); 
-    if (error) return res.status(400).json({ success: false, message: error.details[0].message });
-    req[source] = value; 
-    next();
+const validate = (schema, source = 'body') => {
+    return (req, res, next) => {
+        if (!schema) {
+            return next(); 
+        }
+        const { error, value } = schema.validate(req[source], { stripUnknown: true }); 
+        if (error) {
+            return res.status(400).json({ success: false, message: error.details[0].message });
+        }
+        req[source] = value; 
+        next();
+    };
 };
 
-router.use(verifyToken);
-
-router.post('/upload', upload.single('cvFile'), cvController.uploadCV);
-router.get('/', validate(queryCvSchema, 'query'), cvController.getAllCvs);
-router.get('/:cvId', validate(getCvByIdSchema, 'params'), cvController.getCvById);
-router.delete('/:cvId', validate(getCvByIdSchema, 'params'), cvController.deleteCV);
+router.post('/upload', verifyToken, upload.single('cvFile'), cvController.uploadCV);
+router.get('/', verifyToken, validate(queryCvSchema, 'query'), cvController.getAllCvs);
+router.get('/:cvId', verifyToken, validate(getCvByIdSchema, 'params'), cvController.getCvById);
+router.delete('/:cvId', verifyToken, validate(getCvByIdSchema, 'params'), cvController.deleteCV);
 
 export default router;
