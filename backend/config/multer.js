@@ -19,13 +19,26 @@ const fileFilter = (req, file, cb) => {
     const allowedExtensions = ['.pdf', '.docx', '.doc'];
     const ext = path.extname(file.originalname).toLowerCase();
     
-    const allowedMimeTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    const allowedMimeTypes = [
+        'application/pdf', 
+        'application/msword', 
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ];
     
     if (allowedExtensions.includes(ext) && allowedMimeTypes.includes(file.mimetype)) {
         cb(null, true);
     } else {
-      cb(new Error('Unsupported file type. Only PDF, DOCX, and DOC are allowed!'), false);    }
+        // ✅ الصح: بنعلم على الـ req بالإيرور ونرفض الملف بـ false لمنع ضرب الـ next
+        req.fileValidationError = 'Unsupported file type. Only PDF, DOCX, and DOC are allowed!';
+        cb(null, false); 
+    }
 };
+
+export const upload = multer({ 
+    storage, 
+    fileFilter,
+    limits: { fileSize: 5 * 1024 * 1024 } // حد أقصى 5 ميجا لحماية السيرفر
+});
 
 export const upload = multer({ 
     storage, 
