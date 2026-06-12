@@ -6,7 +6,15 @@ import fs from 'fs';
 
 // 1. Upload CV (POST)
 export const uploadCV = catchAsync(async (req, res, next) => {
-    if (!req.file) return next(new AppError("Please upload a CV file", 400));
+    // 1. التشيك الجديد: لو الملف امتداده غلط وامسكناه في الـ fileFilter
+    if (req.fileValidationError) {
+        return next(new AppError(req.fileValidationError, 400));
+    }
+
+    // 2. التشيك العادي: لو مبعتش ملف أصلاً
+    if (!req.file) {
+        return next(new AppError("Please upload a CV file", 400));
+    }
 
     const fileSizeKb = Math.round(req.file.size / 1024);
 
