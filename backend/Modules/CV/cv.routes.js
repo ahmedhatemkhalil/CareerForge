@@ -8,14 +8,20 @@ const router = Router();
 
 const validate = (schema, source = 'body') => {
     return (req, res, next) => {
-        if (!schema) {
-            return next(); 
-        }
+        if (!schema) return next();
+        
         const { error, value } = schema.validate(req[source], { stripUnknown: true }); 
         if (error) {
             return res.status(400).json({ success: false, message: error.details[0].message });
         }
-        req[source] = value; 
+        
+        if (source === 'body') {
+            req.body = value;
+        } else {
+            Object.keys(req[source]).forEach(key => delete req[source][key]);
+            Object.assign(req[source], value);
+        }
+        
         next();
     };
 };
