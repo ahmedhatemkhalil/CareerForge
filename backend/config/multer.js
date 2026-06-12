@@ -28,17 +28,10 @@ const fileFilter = (req, file, cb) => {
     if (allowedExtensions.includes(ext) && allowedMimeTypes.includes(file.mimetype)) {
         cb(null, true);
     } else {
-        // ✅ الصح: بنعلم على الـ req بالإيرور ونرفض الملف بـ false لمنع ضرب الـ next
         req.fileValidationError = 'Unsupported file type. Only PDF, DOCX, and DOC are allowed!';
         cb(null, false); 
     }
 };
-
-export const upload = multer({ 
-    storage, 
-    fileFilter,
-    limits: { fileSize: 5 * 1024 * 1024 } // حد أقصى 5 ميجا لحماية السيرفر
-});
 
 export const upload = multer({ 
     storage, 
