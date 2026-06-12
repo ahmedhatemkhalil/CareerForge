@@ -1,6 +1,8 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { githubLogin } from "../../services/authService";
+import { loadUserTheme } from "../../utils/theme";
+import { loadCurrentUser } from "../../utils/userProfile";
 
 export default function GithubCallback() {
   const navigate = useNavigate();
@@ -24,10 +26,12 @@ export default function GithubCallback() {
           result.data.accessToken
         );
 
-        localStorage.setItem(
-          "user",
-          JSON.stringify(result.data.user)
-        );
+        if (result.data.refreshToken) {
+          localStorage.setItem("refreshToken", result.data.refreshToken);
+        }
+
+        await loadCurrentUser();
+        await loadUserTheme();
 
         navigate("/dashboard");
       } catch (error) {
