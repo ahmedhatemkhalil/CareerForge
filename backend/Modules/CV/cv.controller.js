@@ -6,12 +6,10 @@ import fs from 'fs';
 
 // 1. Upload CV (POST)
 export const uploadCV = catchAsync(async (req, res, next) => {
-    // 1. التشيك الجديد: لو الملف امتداده غلط وامسكناه في الـ fileFilter
     if (req.fileValidationError) {
         return next(new AppError(req.fileValidationError, 400));
     }
 
-    // 2. التشيك العادي: لو مبعتش ملف أصلاً
     if (!req.file) {
         return next(new AppError("Please upload a CV file", 400));
     }
@@ -39,7 +37,7 @@ export const uploadCV = catchAsync(async (req, res, next) => {
         fileSizeKb,
         version: nextVersion,
         status: 'processing',
-        isActive: true // ستقوم الـ Pre-save hook بإلغاء تفعيل الباقي تلقائياً
+        isActive: true 
     });
 
     const localFilePath = req.file.path;
