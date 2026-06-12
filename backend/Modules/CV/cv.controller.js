@@ -16,8 +16,12 @@ export const uploadCV = catchAsync(async (req, res, next) => {
 
     const fileSizeKb = Math.round(req.file.size / 1024);
 
-    const latestCv = await CV.findOne({ userId: req.user.id }).sort({ version: -1 });
-    const nextVersion = latestCv ? latestCv.version + 1 : 1;
+const latestCv = await CV.findOne({ 
+    userId: req.user.id, 
+    fileName: req.file.originalname 
+}).sort({ version: -1 });
+
+const nextVersion = latestCv ? latestCv.version + 1 : 1;
 
     let uploadResult;
     try {
