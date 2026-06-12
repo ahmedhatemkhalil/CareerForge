@@ -129,12 +129,12 @@ export const linkOauthAccount = async (req, res) => {
 
     const existingLink = await OAuthAccount.findOne({ provider, provider_id: oauthData.providerId });
     if (existingLink) {
-      return res.status(400).json({ success: false, error: "Provider already linked to another account" });
+      return res.status(400).json({ success: false, error: "This social account is already linked to another user" });
     }
 
     const alreadyLinked = await OAuthAccount.findOne({ user_id: userId, provider });
     if (alreadyLinked) {
-      return res.status(400).json({ success: false, error: "Account already linked to another user" });
+      return res.status(400).json({ success: false, error: `You have already linked a ${provider} account` });
     }
 
     await OAuthAccount.create({ user_id: userId, provider, provider_id: oauthData.providerId });
@@ -162,14 +162,16 @@ export const unlinkOauthAccount = async (req, res) => {
       return res.status(404).json({ success: false, error: "Linked OAuth account not found" });
     }
 
-    const totalLinkedOauth = await OAuthAccount.countDocuments({ user_id: userId });
     const user = await User.findById(userId);
     
-    if (totalLinkedOauth === 1 && !user.password_hash) { 
-      return res.status(400).json({ 
-        success: false, 
-        error: "Cannot unlink the only login method. Set a password first" 
-      });
+    if (!user.password_hash) { 
+      const totalLinkedOauth = await OAuthAccount.countDocuments({ user_id: userId });
+      if (totalLinkedOauth <= 1) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Cannot unlink your only login method. Please set a password first to secure your account." 
+        });
+      }
     }
 
     await OAuthAccount.deleteOne({ _id: oauthAccount._id });
