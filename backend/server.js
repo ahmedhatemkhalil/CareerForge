@@ -13,24 +13,23 @@ import forgotPasswordRoutes from './Modules/ForgotPassword/forgotPassword.routes
 import { AppError } from './utils/validators.js';
 import { globalErrorHandler } from './Modules/Error/error.controller.js';
 import roadmapsRoutes from "./Modules/Roadmap/roadmaps.routes.js";
-import analysisRoutes from './Modules/Analysis/analyses.routes.js'
+import analysesRoutes from './Modules/Analysis/analyses.routes.js';
 import oauthRoutes from './Modules/Oauth/oauthRoutes.js';
 import cvRoutes from './Modules/CV/cv.routes.js'; 
 import jobDescriptionRoutes from './Modules/jobDescription/job.routes.js'; 
-// Load environment variables
+import sendEmail from "./Email/email.js";
+
 
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-
 // Connect to MongoDB
 connectDB();
 
 // Create Express app
 const app = express();
-
 
 // Middleware
 app.use(cors());
@@ -43,16 +42,12 @@ app.use("/api/admin", adminRoutes);
 app.use('/api/interviews', interviewRouter);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use("/api/roadmaps", roadmapsRoutes);
-app.use('/api/analysis', analysisRoutes);
+app.use('/api/analysis', analysesRoutes); 
 app.use('/api', oauthRoutes);
 app.use('/api/cvs', cvRoutes);
 app.use('/api/job-descriptions', jobDescriptionRoutes);
 
 
-
-
-
-// Simple test route
 app.get('/', (req, res) => {
   res.json({ message: 'CareerForge API is running!' });
 });
@@ -60,9 +55,9 @@ app.get('/', (req, res) => {
 app.all(/(.*)/, (req, res, next) => {
     next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
+
 console.log("Is globalErrorHandler a function?", typeof globalErrorHandler);
 app.use(globalErrorHandler);
-
 
 // Start server
 const PORT = process.env.PORT || 5000;
