@@ -7,24 +7,38 @@ const analysisSchema = new mongoose.Schema({
         required: true,
         index: true 
     },
-    cvText: { type: String, required: true, trim: true },
-    cvFileUrl: { type: String, required: true },
-    jobDescription: { type: String, trim: true },
+    cvId: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'CV', 
+        required: true 
+    },
+    jobId: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'JobDescription', 
+        required: true 
+    },
+    version: { type: Number, default: 1 },
+    matchScore: { type: Number, min: 0, max: 100, default: 0 }, 
     strengths: [String],
     weaknesses: [String],
-    matchedJobs: [{
-    title: String,
-    company: String,
-    url: String
-    }],    
-    missingSkills: [String],
+    skillGaps: [String], 
+    matchedJobs: [{ 
+        title: String,
+        company: String,
+        url: String
+    }],
     recommendedActions: [String],
-    atsScore: { type: Number, min: 0, max: 100 },
     improvedSuggestions: [{
         original: String,
-        improved: String,
-    }], 
-
+        improved: String
+    }],
+    status: { 
+        type: String, 
+        enum: ['pending', 'completed', 'failed'], 
+        default: 'pending' 
+    },
+    aiModelUsed: { type: String, default: 'Gemini-Langflow' },
+    tokensUsed: { type: Number, default: 0 }
 }, { timestamps: true });
 
 export const Analysis = mongoose.model('Analysis', analysisSchema);

@@ -13,7 +13,7 @@ import forgotPasswordRoutes from './Modules/ForgotPassword/forgotPassword.routes
 import { AppError } from './utils/validators.js';
 import { globalErrorHandler } from './Modules/Error/error.controller.js';
 import roadmapsRoutes from "./Modules/Roadmap/roadmaps.routes.js";
-import analysesRoutes from './Modules/Analysis/analyses.routes.js';
+import analysisRoutes from './Modules/Analysis/analyses.routes.js'
 import oauthRoutes from './Modules/Oauth/oauthRoutes.js';
 import cvRoutes from './Modules/CV/cv.routes.js'; 
 import jobDescriptionRoutes from './Modules/jobDescription/job.routes.js'; 
@@ -43,7 +43,7 @@ app.use("/api/admin", adminRoutes);
 app.use('/api/interviews', interviewRouter);
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use("/api/roadmaps", roadmapsRoutes);
-app.use('/api/analyses', analysesRoutes);
+app.use('/api/analysis', analysisRoutes);
 app.use('/api', oauthRoutes);
 app.use('/api/cvs', cvRoutes);
 app.use('/api/job-descriptions', jobDescriptionRoutes);
