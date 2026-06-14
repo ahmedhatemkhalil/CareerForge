@@ -57,12 +57,21 @@ const NewAnalysis = () => {
                 descriptionText: formData.description,
             });
 
-            const jobId = jobData._id;
+            const jobId = jobData.id;
             const analysisResult = await createAnalysis(selectedCV, jobId);
 
             if (analysisResult.success) {
-                toast.success("Analysis started successfully!");
-                navigate(`/analyze/results/${analysisResult.data._id}`);
+                const selectedCv = cvs.find((cv) => cv._id === selectedCV);
+
+                toast.success("Analysis completed successfully!");
+                navigate(`/analyze/results/${analysisResult.data._id}`, {
+                    state: {
+                        analysis: analysisResult.data,
+                        jobTitle: formData.title,
+                        jobDescription: formData.description,
+                        cvFileName: selectedCv?.fileName,
+                    },
+                });
             }
         } catch (error) {
             console.error("Analysis failed:", error);
