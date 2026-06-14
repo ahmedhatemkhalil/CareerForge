@@ -11,7 +11,7 @@ export const verifyEmail = async (req, res) => {
       expires_at: { $gt: new Date() },
     });
     
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
 
     if (!verification) {
       return res.status(400).send(`
