@@ -17,6 +17,8 @@ import GithubCallback from './pages/Login/GithubCallback'
 import GoogleCallback from './pages/Login/GoogleCallback'
 import VerifyNotice from './pages/Register/verify-notice'
 import Profile from './pages/Profile/Profile'
+import NewAnalysis from './pages/Analyze/NewAnalysis'
+import AnalysisResults from './pages/Analyze/AnalysisResults'
 
 const ConditionalLayout = () => {
   const token = localStorage.getItem('token')
@@ -56,6 +58,8 @@ const AppRouter = () => {
             <Route path="cv" element={<MyCv />} />
             <Route path="interview" element={<Interview />} />
             <Route path="roadmap" element={<Roadmap />} />
+            <Route path="analyze/results/:id" element={<AnalysisResults />} />
+            <Route path="new-analysis" element={<NewAnalysis />} />
           </Route>
         </Route>
 

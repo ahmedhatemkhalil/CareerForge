@@ -1,27 +1,23 @@
-import axios from 'axios';
+import api from "./api";
 
-const API_URL = 'http://localhost:5000/api/analysis'; // عدلي الروتر والبورت حسب مشروعك
-
-// أضيفي هذه الدالة في ملف السيرفيس الخاص بكِ (مثلاً cvService.js)
+// جلب كل التحليلات
 export const getAllAnalyses = async () => {
   try {
-    const token = localStorage.getItem("token"); // تأكدي من طريقة جلب التوكن عندك
-    const response = await axios.get("http://localhost:5000/api/analyses", {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
-    return response.data; // الباك إند بيرجع البيانات هنا
+    const response = await api.get("/analysis");
+    return response.data;
   } catch (error) {
     console.error("Error fetching analyses:", error);
     throw error;
   }
 };
 
+// حذف تحليل
 export const deleteAnalysis = async (id) => {
-    const token = localStorage.getItem('token');
-    const response = await axios.delete(`${API_URL}/${id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-    });
+  try {
+    const response = await api.delete(`/analysis/${id}`);
     return response.data;
+  } catch (error) {
+    console.error("Error deleting analysis:", error);
+    throw error;
+  }
 };
