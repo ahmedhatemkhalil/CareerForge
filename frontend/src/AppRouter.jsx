@@ -56,7 +56,7 @@ const AppRouter = () => {
             <Route path="analyze" element={<Analyze />} />
             <Route path="interview" element={<Interview />} />
             <Route path="roadmap" element={<Roadmap />} />
-            <Route path="analyze/results" element={<AnalysisResults />} />
+            <Route path="analyze/results/:id" element={<AnalysisResults />} />
             <Route path="new-analysis" element={<NewAnalysis />} />
           </Route>
         </Route>

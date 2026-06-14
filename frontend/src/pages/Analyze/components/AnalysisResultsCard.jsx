@@ -31,9 +31,9 @@ const getScoreSummary = (score) => {
 }
 
 const AnalysisResultsCard = ({
-  score = 82,
-  roleTitle = 'Software Engineer',
-  cvFileName = 'Elaf_Saad_Resume_2026.pdf',
+  score = 0,
+  roleTitle = '',
+  cvFileName = '',
   jobDescription = '',
   summary,
 }) => {
