@@ -57,7 +57,7 @@ const NewAnalysis = () => {
                 descriptionText: formData.description,
             });
 
-            const jobId = jobData._id;
+            const jobId = jobData.id;
             const analysisResult = await createAnalysis(selectedCV, jobId);
 
             if (analysisResult.success) {
