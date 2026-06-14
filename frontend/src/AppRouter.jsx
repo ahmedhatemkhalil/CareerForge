@@ -4,6 +4,7 @@ import AuthLayout from './components/layout/AuthLayout'
 import ProtectedRoute from './components/common/ProtectedRoute'
 import Landing from './pages/Landing/Landing'
 import Analyze from './pages/Analyze/Analyze'
+import MyCv from './pages/cv/CV'
 import Interview from './pages/Interview/Interview'
 import Roadmap from './pages/Roadmap/Roadmap'
 import Dashboard from './pages/Dashboard/Dashboard'
@@ -52,6 +53,7 @@ const AppRouter = () => {
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="profile" element={<Profile />} />
             <Route path="analyze" element={<Analyze />} />
+            <Route path="cv" element={<MyCv />} />
             <Route path="interview" element={<Interview />} />
             <Route path="roadmap" element={<Roadmap />} />
           </Route>

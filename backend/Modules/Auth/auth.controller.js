@@ -15,17 +15,15 @@ import EmailVerification from "../../models/EmailVerification.js";
 import Session from "../../models/Session.js";
 
 const createAccessToken = (user) =>
-  jwt.sign(
-    { id: user._id, role: user.role },
-    process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRES_IN || "1d" }
-  );
+  jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN || "1d",
+  });
 
 const createRefreshToken = (user) =>
   jwt.sign(
     { id: user._id, role: user.role, type: "refresh" },
     process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "7d" }
+    { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "7d" },
   );
 
 const toPublicUser = (user) => ({
@@ -49,9 +47,12 @@ export const signup = async (req, res) => {
     if (!name || !email || !password || !confirmPassword) {
       return res.status(400).json({ message: "All fields are required" });
     }
-    if (!isValidName(name)) return res.status(400).json({ message: "Name too short" });
-    if (!isValidEmail(email)) return res.status(400).json({ message: "Invalid email" });
-    if (!isStrongPassword(password)) return res.status(400).json({ message: "Weak password" });
+    if (!isValidName(name))
+      return res.status(400).json({ message: "Name too short" });
+    if (!isValidEmail(email))
+      return res.status(400).json({ message: "Invalid email" });
+    if (!isStrongPassword(password))
+      return res.status(400).json({ message: "Weak password" });
     if (!passwordsMatch(password, confirmPassword)) {
       return res.status(400).json({ message: "Passwords do not match" });
     }
@@ -70,7 +71,7 @@ export const signup = async (req, res) => {
       is_verified: false,
     });
 
-    //verification email 
+    //verification email
     const verificationToken = crypto.randomBytes(32).toString("hex");
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 24);
@@ -83,19 +84,19 @@ export const signup = async (req, res) => {
     });
 
     const verifyUrl = `http://localhost:5000/api/auth/verify-email/${verificationToken}`;
-    
+
     sendEmail({
       email: user.email,
       subject: "Verify Your Email - CareerForge",
       html: template(verifyUrl),
-    }).catch(err => console.error("Email send failed:", err));
+    }).catch((err) => console.error("Email send failed:", err));
     await UserSettings.create({ user_id: user._id });
 
     return res.status(201).json({
-      message: "User registered successfully. Please check your email to verify your account.",
+      message:
+        "User registered successfully. Please check your email to verify your account.",
       userId: user._id,
     });
-
   } catch (err) {
     res.status(500).json(err.message);
   }
@@ -112,14 +113,14 @@ export const updateTheme = async (req, res) => {
 
     // req.user.id comes from your auth middleware
     const updatedUser = await User.findByIdAndUpdate(
-      req.user.id, 
-      { theme }, 
-      { new: true } // Returns the updated document
+      req.user.id,
+      { theme },
+      { new: true }, // Returns the updated document
     );
 
     res.status(200).json({
       message: "Theme updated successfully",
-      theme: updatedUser.theme
+      theme: updatedUser.theme,
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -135,10 +136,14 @@ export const login = async (req, res) => {
     if (!user) return res.status(400).json({ message: "User not found" });
 
     if (!user.is_verified) {
-      return res.status(401).json({ message: "Please verify your email first." });
+      return res
+        .status(401)
+        .json({ message: "Please verify your email first." });
     }
     if (user.status === "suspended") {
-      return res.status(403).json({ message: "Your account has been suspended." });
+      return res
+        .status(403)
+        .json({ message: "Your account has been suspended." });
     }
     if (user.status === "banned") {
       return res.status(403).json({
@@ -157,9 +162,9 @@ export const login = async (req, res) => {
     const accessToken = createAccessToken(user);
     const refreshToken = createRefreshToken(user);
 
-    //refresh token in Session 
+    //refresh token in Session
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); 
+    expiresAt.setDate(expiresAt.getDate() + 7);
 
     await Session.create({
       user_id: user._id,
@@ -191,7 +196,9 @@ export const logout = async (req, res) => {
     }
 
     if (session.user_id.toString() !== req.user.id) {
-      return res.status(403).json({ message: "Unauthorized to delete this session" });
+      return res
+        .status(403)
+        .json({ message: "Unauthorized to delete this session" });
     }
 
     await Session.deleteOne({ _id: session._id });
@@ -215,7 +222,9 @@ export const refresh = async (req, res) => {
     });
 
     if (!existingSession) {
-      return res.status(401).json({ message: "Invalid or expired refresh token" });
+      return res
+        .status(401)
+        .json({ message: "Invalid or expired refresh token" });
     }
 
     const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
@@ -232,7 +241,7 @@ export const refresh = async (req, res) => {
 
     const accessToken = createAccessToken(user);
     const newRefreshToken = createRefreshToken(user);
-    
+
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
@@ -250,7 +259,6 @@ export const refresh = async (req, res) => {
 
 //Update User
 
-
 // GET /api/auth/sessions
 export const getSessions = async (req, res) => {
   try {
@@ -262,7 +270,7 @@ export const getSessions = async (req, res) => {
     }).select("-refresh_token");
 
     res.json({
-      sessions: sessions.map(session => ({
+      sessions: sessions.map((session) => ({
         id: session._id,
         created_at: session.created_at,
         expires_at: session.expires_at,
@@ -314,9 +322,9 @@ export const resendVerification = async (req, res) => {
     }
 
     const user = await User.findOne({ email });
-    
+
     if (!user) {
-      return res.status(404).json({ message: "User not found" });  
+      return res.status(404).json({ message: "User not found" });
     }
 
     if (user.is_verified) {
@@ -325,7 +333,7 @@ export const resendVerification = async (req, res) => {
 
     await EmailVerification.updateMany(
       { user_id: user._id, is_used: false },
-      { is_used: true }
+      { is_used: true },
     );
 
     const verificationToken = crypto.randomBytes(32).toString("hex");
@@ -340,7 +348,7 @@ export const resendVerification = async (req, res) => {
     });
 
     const verifyUrl = `http://localhost:5000/api/auth/verify-email/${verificationToken}`;
-    
+
     await sendEmail({
       email: user.email,
       subject: "Verify Your Email - CareerForge",
