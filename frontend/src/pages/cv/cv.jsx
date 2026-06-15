@@ -5,6 +5,7 @@ import {
   Trash2,
   CheckCircle,
 } from "lucide-react";
+import ConfirmModal from "../../components/common/ConfirmModal";
 
 import {
   uploadCV,
@@ -14,6 +15,9 @@ import {
 } from "../../services/cvService";
 
 export default function MyCV() {
+  const [confirmOpen, setConfirmOpen] = useState(false);
+const [selectedCvId, setSelectedCvId] = useState(null);
+const [deleteLoading, setDeleteLoading] = useState(false);
   const [cvs, setCvs] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -58,14 +62,27 @@ export default function MyCV() {
 
   // DELETE CV
   const handleDelete = async (id) => {
-    try {
-      await deleteCV(id);
-      fetchCVs();
-    } catch (error) {
-      console.log(error);
-    }
+    setSelectedCvId(id);
+  setConfirmOpen(true);
   };
+const confirmDelete = async () => {
+  if (!selectedCvId) return;
 
+  try {
+    setDeleteLoading(true);
+
+    await deleteCV(selectedCvId);
+
+    await fetchCVs();
+
+    setConfirmOpen(false);
+    setSelectedCvId(null);
+  } catch (error) {
+    console.log(error);
+  } finally {
+    setDeleteLoading(false);
+  }
+};
   // SET ACTIVE CV
   const handleActive = async (id) => {
     try {
@@ -242,7 +259,20 @@ export default function MyCV() {
 
         </div>
       </div>
-
+<ConfirmModal
+  open={confirmOpen}
+  onClose={() => {
+    setConfirmOpen(false);
+    setSelectedCvId(null);
+  }}
+  title="Delete CV"
+  message="Are you sure you want to delete this CV? This action cannot be undone."
+  confirmLabel="Delete"
+  cancelLabel="Cancel"
+  confirmVariant="destructive"
+  onConfirm={confirmDelete}
+  isLoading={deleteLoading}
+/>
     </div>
   );
 }

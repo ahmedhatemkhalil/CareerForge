@@ -1,19 +1,19 @@
 import { useEffect, useState } from "react";
-import { FileText, Calendar, Plus, ChevronRight, Trash2, Loader2, X, Sparkles } from "lucide-react";
-import { getAllCVs, getAllAnalyses, deleteCV, createCVAnalysis, getAllJobs } from "../../services/cvService";
-
-export default function CvAnalysis() {
+import { FileText, Calendar, Plus, ChevronRight, Trash2, Loader2} from "lucide-react";
+import { getAllCVs, getAllAnalyses, deleteCV, getAllJobs } from "../../services/cvService";
+import { useNavigate } from "react-router-dom";
+import ConfirmModal from "../../components/common/ConfirmModal";
+export default function Analyze() {
+  const [confirmOpen, setConfirmOpen] = useState(false);
+const [selectedCvId, setSelectedCvId] = useState(null);
+const [deleteLoading, setDeleteLoading] = useState(false);
+  const navigate = useNavigate();
   const [analyses, setAnalyses] = useState([]);
   const [cvList, setCvList] = useState([]); 
   const [jobList, setJobList] = useState([]); 
   const [stats, setStats] = useState({ total: 0, avgScore: 0, bestScore: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [selectedCv, setSelectedCv] = useState("");
-  const [selectedJob, setSelectedJob] = useState("");
 
   const fetchAnalysesData = async () => {
     try {
@@ -23,7 +23,7 @@ export default function CvAnalysis() {
         getAllAnalyses(),
         getAllCVs()
       ]);
-
+console.log("analysesRes =", analysesRes);
       // 1. استخراج الـ CVs المرفوعة
       let fetchedCvs = [];
       if (cvsRes) {
@@ -44,49 +44,88 @@ export default function CvAnalysis() {
           fetchedAnalyses = analysesRes.data.analyses || analysesRes.data.data || Object.values(analysesRes.data).find(Array.isArray) || [];
         }
       }
-
+console.log("CVs:", fetchedCvs);
+console.log("Analyses:", fetchedAnalyses);
       // 3. الربط المرن بين الـ CV والتحليل الخاص به
       const formatted = fetchedCvs.map((cv) => {
         // فحص ومقارنة المعرفات بأكثر من طريقة لضمان مطابقة الـ Backend
-        const matchingAnalysis = fetchedAnalyses.find(a => {
-          const idFromAnalysis = a.cvId?._id || a.cvId || a.cv || a.resumeId;
-          const currentCvId = cv._id || cv.id;
-          return String(idFromAnalysis) === String(currentCvId);
-        });
+       // استبدل الـ matching block ده كله
+// استبدل الـ matchingAnalysis بالكود ده
+const matchingAnalysis = fetchedAnalyses.find((a) => {
+  const cvId = String(cv._id || cv.id || "");
+
+  const analysisCvId =
+    a.cvId?._id ||
+    a.cvId?.id ||
+    a.cvId ||
+    a.cv?._id ||
+    a.cv ||
+    a.resumeId?._id ||
+    a.resumeId ||
+    "";
+
+  return String(analysisCvId) === cvId;
+});
 
         // استخراج السكور المتاح
-        const score = matchingAnalysis 
-          ? (matchingAnalysis.atsScore ?? matchingAnalysis.matchScore ?? matchingAnalysis.score ?? matchingAnalysis.compatibilityScore ?? 0)
-          : 0; 
+   const score = matchingAnalysis
+  ? parseInt(
+      matchingAnalysis.matchScore ??
+      matchingAnalysis.atsScore ??
+      matchingAnalysis.score ??
+      0,
+      10
+    )
+  : 0;
 
-        // استخراج المسمى الوظيفي للتحليل أو وضع اسم افتراضي بناءً على اسم الملف
-        let jobTitle = "Targeted Job Role";
-        if (matchingAnalysis) {
-          jobTitle = matchingAnalysis.jobId?.title || matchingAnalysis.jobTitle || matchingAnalysis.title || matchingAnalysis.jobDescription || jobTitle;
-        } else if (cv.fileName) {
-          // محاولة استنتاج اسم ذكي إذا لم يحلل بعد بدلاً من كلمة ثابتة
-          if (cv.fileName.toLowerCase().includes("frontend")) jobTitle = "Frontend Developer";
-          else if (cv.fileName.toLowerCase().includes("react")) jobTitle = "React Developer";
-          else if (cv.fileName.toLowerCase().includes("fullstack") || cv.fileName.toLowerCase().includes("resume")) jobTitle = "Full Stack Developer";
-        }
+let jobTitle = "Targeted Job Role";
+if (matchingAnalysis) {
+  jobTitle = matchingAnalysis.jobId?.title || 
+             matchingAnalysis.jobTitle || 
+             "Targeted Job Role";
+}
+console.log("Found Analysis?", !!matchingAnalysis);
+if (matchingAnalysis) {
+  console.log("Analysis Data:", {
+    cvId: matchingAnalysis.cvId,
+    score: matchingAnalysis.atsScore || matchingAnalysis.matchScore || matchingAnalysis.score,
+    jobTitle: matchingAnalysis.jobTitle || matchingAnalysis.jobId?.title
+  });
+}else if (cv.fileName) {
+  const fileName = cv.fileName?.toLowerCase() || "";
 
-        return {
-          _id: cv._id || cv.id,
-          analysisId: matchingAnalysis?._id || null,
-          jobTitle: jobTitle,
-          matchScore: Number(score),
-          fileName: cv.fileName || "Uploaded_Resume.pdf",
-          version: cv.version || 1,
-          hasAnalysis: !!matchingAnalysis,
-          analysisDate: cv.createdAt 
-            ? new Date(cv.createdAt).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric"
-              })
-            : "Uploaded Recently"
-        };
-      });
+  if (fileName.includes("frontend")) {
+    jobTitle = "Frontend Developer";
+  } else if (fileName.includes("react")) {
+    jobTitle = "React Developer";
+  } else if (
+    fileName.includes("fullstack") ||
+    fileName.includes("resume")
+  ) {
+    jobTitle = "Full Stack Developer";
+  }
+}
+console.log("CV ID:", cv._id);
+console.log("Matching Analysis:", matchingAnalysis);
+  return {
+  _id: cv._id || cv.id,
+  analysisId: matchingAnalysis?._id || null,
+  jobTitle,
+  matchScore: score,
+  fileName: cv.fileName || "Uploaded_Resume.pdf",
+  version: cv.version || 1,
+  hasAnalysis: !!matchingAnalysis,
+  analysisDate: cv.createdAt
+    ? new Date(cv.createdAt).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : "Uploaded Recently",
+};
+}); // إغلاق الـ map
+
+
 
       setAnalyses(formatted);
       
@@ -98,7 +137,7 @@ export default function CvAnalysis() {
 
       setStats({ total, avgScore, bestScore });
 
-    } catch (err) {
+    }catch (err) {
       console.error("Error loading CV data:", err);
       setError("Failed to sync CV analyses history.");
     } finally {
@@ -107,6 +146,7 @@ export default function CvAnalysis() {
   };
 
   const fetchJobs = async () => {
+      console.log(JSON.stringify(analyses, null, 2));
     try {
       const response = await getAllJobs();
       const jobs = response?.jobs || response?.data?.jobs || response?.data || response || [];
@@ -121,36 +161,33 @@ export default function CvAnalysis() {
     fetchJobs();
   }, []);
 
-  const handleStartAnalysis = async (e) => {
-    e.preventDefault();
-    if (!selectedCv || !selectedJob) return alert("Please select both a CV and a Job Description!");
+ 
 
-    try {
-      setSubmitting(true);
-      await createCVAnalysis(selectedCv, selectedJob);
-      setIsModalOpen(false); 
-      setSelectedCv("");
-      setSelectedJob("");
-      await fetchAnalysesData(); 
-    } catch (err) {
-      console.error("Analysis generation failed:", err);
-      alert("Error generating AI Analysis.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
 
   const handleDelete = async (cvId, e) => {
-    e.stopPropagation();
-    if (!window.confirm("Are you sure you want to delete this CV record?")) return;
-    try {
-      await deleteCV(cvId); 
-      fetchAnalysesData(); 
-    } catch (err) {
-      console.error("Delete failed:", err);
-    }
-  };
+  e.stopPropagation();
+  setSelectedCvId(cvId);
+  setConfirmOpen(true);
 
+};
+const confirmDelete = async () => {
+  if (!selectedCvId) return;
+
+  try {
+    setDeleteLoading(true);
+
+    await deleteCV(selectedCvId);
+
+    await fetchAnalysesData();
+
+    setConfirmOpen(false);
+    setSelectedCvId(null);
+  } catch (err) {
+    console.error("Delete failed:", err);
+  } finally {
+    setDeleteLoading(false);
+  }
+};
   const getScoreStyles = (score, hasAnalysis) => {
     if (!hasAnalysis || score === 0) {
       return {
@@ -205,13 +242,13 @@ export default function CvAnalysis() {
             {stats.total} analyses · Avg score {stats.avgScore}% · Best {stats.bestScore}%
           </p>
         </div>
-        <button 
-          onClick={() => setIsModalOpen(true)}
-          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-all duration-200"
-        >
-          <Plus size={18} strokeWidth={2.5} />
-          New Analysis
-        </button>
+        <button
+  onClick={() => navigate("/new-analysis")}
+  className="flex items-center gap-2 bg-sidebar-ring hover:bg-sidebar-ring text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-all duration-200"
+>
+  <Plus size={18} strokeWidth={2.5} />
+  New Analysis
+</button>
       </div>
 
       {/* Main History Box */}
@@ -297,88 +334,24 @@ export default function CvAnalysis() {
             })
           )}
         </div>
+        
       </div>
 
-      {/* Modal View */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-gray-900/40 backdrop-blur-xs flex items-center justify-center z-50 transition-opacity">
-          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-xl border border-gray-100 relative mx-4">
-            <button 
-              onClick={() => setIsModalOpen(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 p-1.5 rounded-lg hover:bg-gray-50 transition"
-            >
-              <X size={18} />
-            </button>
-
-            <div className="flex items-center gap-2 mb-2 text-indigo-600">
-              <Sparkles size={20} className="fill-indigo-100" />
-              <h2 className="text-lg font-bold text-gray-900">AI CV Matcher</h2>
-            </div>
-            <p className="text-xs text-gray-400 mb-5">Select a resume and the target job description to match skills architecture via AI.</p>
-
-            <form onSubmit={handleStartAnalysis} className="space-y-4">
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1.5">Select Resume</label>
-                <select 
-                  value={selectedCv}
-                  onChange={(e) => setSelectedCv(e.target.value)}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 font-semibold text-gray-700 transition"
-                  required
-                >
-                  <option value="">-- Choose a CV File --</option>
-                  {cvList.map(cv => (
-                    <option key={cv._id || cv.id} value={cv._id || cv.id}>{cv.fileName || "Resume"} (v{cv.version || 1})</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1.5">Target Job Description</label>
-                {jobList.length > 0 ? (
-                  <select 
-                    value={selectedJob}
-                    onChange={(e) => setSelectedJob(e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 font-semibold text-gray-700 transition"
-                    required
-                  >
-                    <option value="">-- Choose a Job Role --</option>
-                    {jobList.map(job => (
-                      <option key={job._id || job.id} value={job._id || job.id}>{job.title}</option>
-                    ))}
-                  </select>
-                ) : (
-                  <input
-                    type="text"
-                    placeholder="e.g. Senior Frontend Engineer"
-                    value={selectedJob}
-                    onChange={(e) => setSelectedJob(e.target.value)}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/10 focus:border-indigo-500 font-semibold text-gray-700 transition"
-                    required
-                  />
-                )}
-              </div>
-
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-semibold py-3 rounded-xl shadow-sm transition duration-150 mt-4 text-xs"
-              >
-                {submitting ? (
-                  <>
-                    <Loader2 size={14} className="animate-spin" />
-                    Analyzing with Gemini AI...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles size={14} />
-                    Run AI Analysis
-                  </>
-                )}
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
+    <ConfirmModal
+  open={confirmOpen}
+  onClose={() => {
+    setConfirmOpen(false);
+    setSelectedCvId(null);
+  }}
+  title="Delete CV"
+  message="Are you sure you want to delete this CV and its analysis history? This action cannot be undone."
+  confirmLabel="Delete"
+  cancelLabel="Cancel"
+  confirmVariant="destructive"
+  onConfirm={confirmDelete}
+  isLoading={deleteLoading}
+/>
+    
     </div>
   );
 }
