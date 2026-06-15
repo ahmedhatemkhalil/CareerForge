@@ -63,7 +63,6 @@ export const getSingleAnalysis = catchAsync(async (req, res, next) => {
 
 // 3. Get All Analyses for User (GET)
 export const getAllAnalyses = catchAsync(async (req, res, next) => {
-  console.log(JSON.stringify(analyses, null, 2));
   const analyses = await Analysis.find({ userId: req.user.id })
     .populate({
       path: 'cvId', 

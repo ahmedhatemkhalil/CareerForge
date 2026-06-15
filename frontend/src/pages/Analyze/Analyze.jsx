@@ -1,16 +1,25 @@
 import { useEffect, useState } from "react";
-import { FileText, Calendar, Plus, ChevronRight, Trash2, Loader2} from "lucide-react";
-import { getAllCVs, getAllAnalyses, deleteCV, getAllJobs } from "../../services/cvService";
+import { FileText, Calendar, Plus, ChevronRight, Trash2, Loader2 } from "lucide-react";
+import { getAllAnalyses, deleteAnalysis } from "../../services/analysisService";
 import { useNavigate } from "react-router-dom";
 import ConfirmModal from "../../components/common/ConfirmModal";
+
+const formatAnalysisDate = (isoDate) => {
+  if (!isoDate) return "Unknown date";
+  const dateOnly = String(isoDate).split("T")[0];
+  return new Date(`${dateOnly}T00:00:00`).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};
+
 export default function Analyze() {
   const [confirmOpen, setConfirmOpen] = useState(false);
-const [selectedCvId, setSelectedCvId] = useState(null);
-const [deleteLoading, setDeleteLoading] = useState(false);
+  const [selectedAnalysisId, setSelectedAnalysisId] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const navigate = useNavigate();
   const [analyses, setAnalyses] = useState([]);
-  const [cvList, setCvList] = useState([]); 
-  const [jobList, setJobList] = useState([]); 
   const [stats, setStats] = useState({ total: 0, avgScore: 0, bestScore: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -18,126 +27,48 @@ const [deleteLoading, setDeleteLoading] = useState(false);
   const fetchAnalysesData = async () => {
     try {
       setLoading(true);
+      setError(null);
 
-      const [analysesRes, cvsRes] = await Promise.all([
-        getAllAnalyses(),
-        getAllCVs()
-      ]);
-console.log("analysesRes =", analysesRes);
-      // 1. استخراج الـ CVs المرفوعة
-      let fetchedCvs = [];
-      if (cvsRes) {
-        if (Array.isArray(cvsRes)) fetchedCvs = cvsRes;
-        else if (cvsRes.success && Array.isArray(cvsRes.data)) fetchedCvs = cvsRes.data;
-        else if (cvsRes.data && typeof cvsRes.data === 'object') {
-          fetchedCvs = cvsRes.data.cvs || cvsRes.data.resumes || cvsRes.data.data || Object.values(cvsRes.data).find(Array.isArray) || [];
-        }
-        setCvList(fetchedCvs);
-      }
+      const analysesRes = await getAllAnalyses();
 
-      // 2. استخراج التحليلات الجاهزة
       let fetchedAnalyses = [];
-      if (analysesRes) {
-        if (Array.isArray(analysesRes)) fetchedAnalyses = analysesRes;
-        else if (analysesRes.success && Array.isArray(analysesRes.data)) fetchedAnalyses = analysesRes.data;
-        else if (analysesRes.data && typeof analysesRes.data === 'object') {
-          fetchedAnalyses = analysesRes.data.analyses || analysesRes.data.data || Object.values(analysesRes.data).find(Array.isArray) || [];
-        }
+      if (Array.isArray(analysesRes)) {
+        fetchedAnalyses = analysesRes;
+      } else if (analysesRes?.success && Array.isArray(analysesRes.data)) {
+        fetchedAnalyses = analysesRes.data;
+      } else if (analysesRes?.data && typeof analysesRes.data === "object") {
+        fetchedAnalyses =
+          analysesRes.data.analyses ||
+          analysesRes.data.data ||
+          Object.values(analysesRes.data).find(Array.isArray) ||
+          [];
       }
-console.log("CVs:", fetchedCvs);
-console.log("Analyses:", fetchedAnalyses);
-      // 3. الربط المرن بين الـ CV والتحليل الخاص به
-      const formatted = fetchedCvs.map((cv) => {
-        // فحص ومقارنة المعرفات بأكثر من طريقة لضمان مطابقة الـ Backend
-       // استبدل الـ matching block ده كله
-// استبدل الـ matchingAnalysis بالكود ده
-const matchingAnalysis = fetchedAnalyses.find((a) => {
-  const cvId = String(cv._id || cv.id || "");
 
-  const analysisCvId =
-    a.cvId?._id ||
-    a.cvId?.id ||
-    a.cvId ||
-    a.cv?._id ||
-    a.cv ||
-    a.resumeId?._id ||
-    a.resumeId ||
-    "";
-
-  return String(analysisCvId) === cvId;
-});
-
-        // استخراج السكور المتاح
-   const score = matchingAnalysis
-  ? parseInt(
-      matchingAnalysis.matchScore ??
-      matchingAnalysis.atsScore ??
-      matchingAnalysis.score ??
-      0,
-      10
-    )
-  : 0;
-
-let jobTitle = "Targeted Job Role";
-if (matchingAnalysis) {
-  jobTitle = matchingAnalysis.jobId?.title || 
-             matchingAnalysis.jobTitle || 
-             "Targeted Job Role";
-}
-console.log("Found Analysis?", !!matchingAnalysis);
-if (matchingAnalysis) {
-  console.log("Analysis Data:", {
-    cvId: matchingAnalysis.cvId,
-    score: matchingAnalysis.atsScore || matchingAnalysis.matchScore || matchingAnalysis.score,
-    jobTitle: matchingAnalysis.jobTitle || matchingAnalysis.jobId?.title
-  });
-}else if (cv.fileName) {
-  const fileName = cv.fileName?.toLowerCase() || "";
-
-  if (fileName.includes("frontend")) {
-    jobTitle = "Frontend Developer";
-  } else if (fileName.includes("react")) {
-    jobTitle = "React Developer";
-  } else if (
-    fileName.includes("fullstack") ||
-    fileName.includes("resume")
-  ) {
-    jobTitle = "Full Stack Developer";
-  }
-}
-console.log("CV ID:", cv._id);
-console.log("Matching Analysis:", matchingAnalysis);
-  return {
-  _id: cv._id || cv.id,
-  analysisId: matchingAnalysis?._id || null,
-  jobTitle,
-  matchScore: score,
-  fileName: cv.fileName || "Uploaded_Resume.pdf",
-  version: cv.version || 1,
-  hasAnalysis: !!matchingAnalysis,
-  analysisDate: cv.createdAt
-    ? new Date(cv.createdAt).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      })
-    : "Uploaded Recently",
-};
-}); // إغلاق الـ map
-
-
+      const formatted = fetchedAnalyses.map((analysis) => ({
+        _id: analysis._id,
+        jobTitle: analysis.jobId?.title || "Targeted Job Role",
+        matchScore: parseInt(analysis.matchScore ?? 0, 10),
+        fileName: analysis.cvId?.fileName || "Uploaded_Resume.pdf",
+        version: analysis.version || 1,
+        hasAnalysis: true,
+        analysisDate: formatAnalysisDate(analysis.createdAt),
+      }));
 
       setAnalyses(formatted);
-      
-      // حساب الإحصائيات العلوية بناءً على الملفات التي تملك سكور حقيقي فقط
-      const analysesWithScores = formatted.filter(item => item.hasAnalysis && item.matchScore > 0);
+
+      const analysesWithScores = formatted.filter((item) => item.matchScore > 0);
       const total = analysesWithScores.length;
-      const avgScore = total > 0 ? Math.round(analysesWithScores.reduce((acc, item) => acc + item.matchScore, 0) / total) : 0;
-      const bestScore = total > 0 ? Math.max(...analysesWithScores.map(item => item.matchScore)) : 0;
+      const avgScore =
+        total > 0
+          ? Math.round(
+              analysesWithScores.reduce((acc, item) => acc + item.matchScore, 0) / total
+            )
+          : 0;
+      const bestScore =
+        total > 0 ? Math.max(...analysesWithScores.map((item) => item.matchScore)) : 0;
 
       setStats({ total, avgScore, bestScore });
-
-    }catch (err) {
+    } catch (err) {
       console.error("Error loading CV data:", err);
       setError("Failed to sync CV analyses history.");
     } finally {
@@ -145,80 +76,67 @@ console.log("Matching Analysis:", matchingAnalysis);
     }
   };
 
-  const fetchJobs = async () => {
-      console.log(JSON.stringify(analyses, null, 2));
+  useEffect(() => {
+    fetchAnalysesData();
+  }, []);
+
+  const handleDelete = (analysisId, e) => {
+    e.stopPropagation();
+    setSelectedAnalysisId(analysisId);
+    setConfirmOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!selectedAnalysisId) return;
+
     try {
-      const response = await getAllJobs();
-      const jobs = response?.jobs || response?.data?.jobs || response?.data || response || [];
-      setJobList(Array.isArray(jobs) ? jobs : []);
+      setDeleteLoading(true);
+      await deleteAnalysis(selectedAnalysisId);
+      await fetchAnalysesData();
+      setConfirmOpen(false);
+      setSelectedAnalysisId(null);
     } catch (err) {
-      setJobList([]);
+      console.error("Delete failed:", err);
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchAnalysesData();
-    fetchJobs();
-  }, []);
+  const handleOpenAnalysis = (analysisId) => {
+    navigate(`/analyze/results/${analysisId}`);
+  };
 
- 
-
-
-  const handleDelete = async (cvId, e) => {
-  e.stopPropagation();
-  setSelectedCvId(cvId);
-  setConfirmOpen(true);
-
-};
-const confirmDelete = async () => {
-  if (!selectedCvId) return;
-
-  try {
-    setDeleteLoading(true);
-
-    await deleteCV(selectedCvId);
-
-    await fetchAnalysesData();
-
-    setConfirmOpen(false);
-    setSelectedCvId(null);
-  } catch (err) {
-    console.error("Delete failed:", err);
-  } finally {
-    setDeleteLoading(false);
-  }
-};
-  const getScoreStyles = (score, hasAnalysis) => {
-    if (!hasAnalysis || score === 0) {
+  const getScoreStyles = (score) => {
+    if (score === 0) {
       return {
         text: "text-gray-400",
         stroke: "#e5e7eb",
         badge: "bg-gray-100 text-gray-500 border-gray-200",
-        label: "No analysis yet"
+        label: "No score",
       };
     }
     if (score >= 80) {
-      return { 
-        text: "text-emerald-500", 
-        stroke: "#10b981", 
-        badge: "bg-emerald-50 text-emerald-700 border-emerald-100", 
-        label: "Strong match" 
-      };
-    } else if (score >= 65) {
-      return { 
-        text: "text-amber-500", 
-        stroke: "#f59e0b", 
-        badge: "bg-amber-50 text-amber-700 border-amber-100", 
-        label: "Moderate match" 
-      };
-    } else {
-      return { 
-        text: "text-rose-500", 
-        stroke: "#ef4444", 
-        badge: "bg-rose-50 text-rose-700 border-rose-100", 
-        label: "Low match" 
+      return {
+        text: "text-emerald-500",
+        stroke: "#10b981",
+        badge: "bg-emerald-50 text-emerald-700 border-emerald-100",
+        label: "Strong match",
       };
     }
+    if (score >= 65) {
+      return {
+        text: "text-amber-500",
+        stroke: "#f59e0b",
+        badge: "bg-amber-50 text-amber-700 border-amber-100",
+        label: "Moderate match",
+      };
+    }
+    return {
+      text: "text-rose-500",
+      stroke: "#ef4444",
+      badge: "bg-rose-50 text-rose-700 border-rose-100",
+      label: "Low match",
+    };
   };
 
   if (loading) {
@@ -229,12 +147,12 @@ const confirmDelete = async () => {
     );
   }
 
-  if (error) return <div className="p-6 text-red-500 text-center font-medium">{error}</div>;
+  if (error) {
+    return <div className="p-6 text-red-500 text-center font-medium">{error}</div>;
+  }
 
   return (
     <div className="p-6 max-w-5xl mx-auto font-sans text-gray-800 antialiased">
-      
-      {/* Top Counters Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 tracking-tight">CV Analysis</h1>
@@ -243,15 +161,14 @@ const confirmDelete = async () => {
           </p>
         </div>
         <button
-  onClick={() => navigate("/new-analysis")}
-  className="flex items-center gap-2 bg-sidebar-ring hover:bg-sidebar-ring text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-all duration-200"
->
-  <Plus size={18} strokeWidth={2.5} />
-  New Analysis
-</button>
+          onClick={() => navigate("/new-analysis")}
+          className="flex items-center gap-2 bg-sidebar-ring hover:bg-sidebar-ring text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-all duration-200"
+        >
+          <Plus size={18} strokeWidth={2.5} />
+          New Analysis
+        </button>
       </div>
 
-      {/* Main History Box */}
       <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
         <div className="flex justify-between items-center px-6 py-5 border-b border-gray-50">
           <h2 className="text-xl font-bold text-gray-900">Analysis History</h2>
@@ -260,12 +177,12 @@ const confirmDelete = async () => {
 
         <div className="divide-y divide-gray-50">
           {analyses.length === 0 ? (
-            <p className="text-center text-gray-400 py-12 font-medium">No CVs uploaded yet.</p>
+            <p className="text-center text-gray-400 py-12 font-medium">No analyses yet.</p>
           ) : (
             analyses.map((item) => {
               const score = item.matchScore || 0;
-              const styles = getScoreStyles(score, item.hasAnalysis);
-              
+              const styles = getScoreStyles(score);
+
               const radius = 22;
               const circumference = 2 * Math.PI * radius;
               const strokeDashoffset = circumference - (score / 100) * circumference;
@@ -273,34 +190,46 @@ const confirmDelete = async () => {
               return (
                 <div
                   key={item._id}
-                  className="flex items-center justify-between p-5 hover:bg-slate-50/50 transition-all group relative"
+                  onDoubleClick={() => handleOpenAnalysis(item._id)}
+                  className="flex items-center justify-between p-5 hover:bg-slate-50/50 transition-all group relative cursor-pointer"
                 >
                   <div className="flex items-center gap-5">
-                    {/* Circle Indicator */}
                     <div className="relative w-12 h-12 flex items-center justify-center flex-shrink-0">
                       <svg className="w-full h-full transform -rotate-90">
-                        <circle cx="24" cy="24" r={radius} className="stroke-gray-100" strokeWidth="4" fill="transparent" />
                         <circle
-                          cx="24" cy="24" r={radius}
-                          stroke={styles.stroke} strokeWidth="4" fill="transparent"
+                          cx="24"
+                          cy="24"
+                          r={radius}
+                          className="stroke-gray-100"
+                          strokeWidth="4"
+                          fill="transparent"
+                        />
+                        <circle
+                          cx="24"
+                          cy="24"
+                          r={radius}
+                          stroke={styles.stroke}
+                          strokeWidth="4"
+                          fill="transparent"
                           strokeDasharray={circumference}
-                          strokeDashoffset={item.hasAnalysis && score > 0 ? strokeDashoffset : circumference}
+                          strokeDashoffset={score > 0 ? strokeDashoffset : circumference}
                           strokeLinecap="round"
                           className="transition-all duration-500 ease-out"
                         />
                       </svg>
                       <span className={`absolute font-bold text-xs ${styles.text}`}>
-                        {item.hasAnalysis && score > 0 ? `${score}` : "-"}
+                        {score > 0 ? `${score}` : "-"}
                       </span>
                     </div>
 
-                    {/* Meta Info */}
                     <div>
                       <div className="flex items-center gap-2.5 flex-wrap">
                         <h3 className="font-bold text-gray-800 text-base tracking-tight group-hover:text-indigo-600 transition duration-150">
                           {item.jobTitle}
                         </h3>
-                        <span className={`text-[11px] px-2.5 py-0.5 font-bold rounded-full border ${styles.badge}`}>
+                        <span
+                          className={`text-[11px] px-2.5 py-0.5 font-bold rounded-full border ${styles.badge}`}
+                        >
                           {styles.label}
                         </span>
                       </div>
@@ -312,46 +241,51 @@ const confirmDelete = async () => {
                         </span>
                         <span className="flex items-center gap-1">
                           <Calendar size={14} className="text-gray-400" />
-                          {item.analysisDate} 
+                          {item.analysisDate}
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Actions buttons */}
                   <div className="flex items-center gap-3">
-                    <button 
+                    <button
                       onClick={(e) => handleDelete(item._id, e)}
+                      onDoubleClick={(e) => e.stopPropagation()}
                       className="p-2 text-gray-400 hover:text-red-500 rounded-lg hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all duration-150"
-                      title="Delete entry"
+                      title="Delete analysis"
                     >
                       <Trash2 size={16} />
                     </button>
-                    <ChevronRight className="text-gray-300 group-hover:text-gray-500 group-hover:translate-x-0.5 transition-all duration-150" size={18} />
+                    <button
+                      type="button"
+                      onClick={() => handleOpenAnalysis(item._id)}
+                      className="p-1 text-gray-300 group-hover:text-gray-500 group-hover:translate-x-0.5 transition-all duration-150"
+                      title="View analysis details"
+                    >
+                      <ChevronRight size={18} />
+                    </button>
                   </div>
                 </div>
               );
             })
           )}
         </div>
-        
       </div>
 
-    <ConfirmModal
-  open={confirmOpen}
-  onClose={() => {
-    setConfirmOpen(false);
-    setSelectedCvId(null);
-  }}
-  title="Delete CV"
-  message="Are you sure you want to delete this CV and its analysis history? This action cannot be undone."
-  confirmLabel="Delete"
-  cancelLabel="Cancel"
-  confirmVariant="destructive"
-  onConfirm={confirmDelete}
-  isLoading={deleteLoading}
-/>
-    
+      <ConfirmModal
+        open={confirmOpen}
+        onClose={() => {
+          setConfirmOpen(false);
+          setSelectedAnalysisId(null);
+        }}
+        title="Delete Analysis"
+        message="Are you sure you want to delete this analysis? This action cannot be undone."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        confirmVariant="destructive"
+        onConfirm={confirmDelete}
+        isLoading={deleteLoading}
+      />
     </div>
   );
 }
