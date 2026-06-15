@@ -24,5 +24,6 @@ export const navItems = [
     name: 'Admin Panel',
     path: '/admin',
     icon: ShieldCheck,
+    adminOnly: true,
   },
 ]

@@ -15,6 +15,9 @@ export default function Sidebar() {
   const navigate = useNavigate()
   const logout = useAuthStore((state) => state.logout)
   const user = useAuthStore((state) => state.user)
+  const visibleNavItems = navItems.filter(
+    (item) => !item.adminOnly || user?.role === 'admin',
+  )
   const [collapsed, setCollapsed] = useState(false)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
@@ -95,7 +98,7 @@ export default function Sidebar() {
       )}
 
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
-        {navItems.map((item) => {
+        {visibleNavItems.map((item) => {
           const Icon = item.icon
           const active = location.pathname === item.path
 
