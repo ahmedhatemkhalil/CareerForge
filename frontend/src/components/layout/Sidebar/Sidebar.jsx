@@ -136,35 +136,44 @@ export default function Sidebar() {
             collapsed && 'justify-center',
           )}
         >
-          {user?.avatar_url ? (
-            <img
-              src={user.avatar_url}
-              alt={user.name}
-              className="h-10 w-10 shrink-0 rounded-full object-cover"
-            />
-          ) : (
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sidebar-primary text-sm font-semibold text-sidebar-primary-foreground">
-              {getInitials(user?.name)}
-            </div>
-          )}
+          <Link
+            to="/profile"
+            title={collapsed ? 'Profile' : undefined}
+            className={cn(
+              'flex min-w-0 items-center gap-3 no-underline transition-colors hover:bg-sidebar-accent rounded-lg',
+              collapsed ? 'justify-center p-1' : 'flex-1 p-1',
+            )}
+          >
+            {user?.avatar_url ? (
+              <img
+                src={user.avatar_url}
+                alt={user.name}
+                className="h-10 w-10 shrink-0 rounded-full object-cover"
+              />
+            ) : (
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sidebar-primary text-sm font-semibold text-sidebar-primary-foreground">
+                {getInitials(user?.name)}
+              </div>
+            )}
 
-          {!collapsed && (
-            <>
+            {!collapsed && (
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-sidebar-foreground">
                   {user?.name}
                 </p>
               </div>
+            )}
+          </Link>
 
-              <button
-                type="button"
-                aria-label="Logout"
-                onClick={() => setShowLogoutConfirm(true)}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-sidebar-accent hover:text-sidebar-foreground"
-              >
-                <LogOut size={18} />
-              </button>
-            </>
+          {!collapsed && (
+            <button
+              type="button"
+              aria-label="Logout"
+              onClick={() => setShowLogoutConfirm(true)}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-sidebar-accent hover:text-sidebar-foreground"
+            >
+              <LogOut size={18} />
+            </button>
           )}
         </div>
       </div>
