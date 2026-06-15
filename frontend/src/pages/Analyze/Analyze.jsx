@@ -3,6 +3,7 @@ import { FileText, Calendar, Plus, ChevronRight, Trash2, Loader2 } from "lucide-
 import { getAllAnalyses, deleteAnalysis } from "../../services/analysisService";
 import { useNavigate } from "react-router-dom";
 import ConfirmModal from "../../components/common/ConfirmModal";
+import { getScoreStyles } from "../../utils/helpers";
 
 const formatAnalysisDate = (isoDate) => {
   if (!isoDate) return "Unknown date";
@@ -104,39 +105,6 @@ export default function Analyze() {
 
   const handleOpenAnalysis = (analysisId) => {
     navigate(`/analyze/results/${analysisId}`);
-  };
-
-  const getScoreStyles = (score) => {
-    if (score === 0) {
-      return {
-        text: "text-gray-400",
-        stroke: "#e5e7eb",
-        badge: "bg-gray-100 text-gray-500 border-gray-200",
-        label: "No score",
-      };
-    }
-    if (score >= 80) {
-      return {
-        text: "text-emerald-500",
-        stroke: "#10b981",
-        badge: "bg-emerald-50 text-emerald-700 border-emerald-100",
-        label: "Strong match",
-      };
-    }
-    if (score >= 65) {
-      return {
-        text: "text-amber-500",
-        stroke: "#f59e0b",
-        badge: "bg-amber-50 text-amber-700 border-amber-100",
-        label: "Moderate match",
-      };
-    }
-    return {
-      text: "text-rose-500",
-      stroke: "#ef4444",
-      badge: "bg-rose-50 text-rose-700 border-rose-100",
-      label: "Low match",
-    };
   };
 
   if (loading) {
