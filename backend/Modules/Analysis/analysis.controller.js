@@ -35,7 +35,8 @@ export const createAnalysis = catchAsync(async (req, res, next) => {
     status: "completed",
     aiModelUsed: "Gemini-Langflow",
   });
-
+console.log("USER IN CREATE:", req.user.id);
+console.log("NEW ANALYSIS SAVED:", newAnalysis);
   res.status(201).json({
     success: true,
     message: "Analysis completed successfully",
@@ -62,6 +63,7 @@ export const getSingleAnalysis = catchAsync(async (req, res, next) => {
 
 // 3. Get All Analyses for User (GET)
 export const getAllAnalyses = catchAsync(async (req, res, next) => {
+  console.log(JSON.stringify(analyses, null, 2));
   const analyses = await Analysis.find({ userId: req.user.id })
     .populate({
       path: 'cvId', 
@@ -80,6 +82,9 @@ export const getAllAnalyses = catchAsync(async (req, res, next) => {
     results: analyses.length,
     data: analyses,
   });
+  console.log("USER IN GET:", req.user.id);
+console.log("ANALYSES FOUND:", analyses.length);
+console.log("ANALYSES:", analyses);
 });
 
 // 4. Delete Analysis (DELETE)
