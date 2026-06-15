@@ -50,6 +50,10 @@ const ProfileInformationCard = () => {
     fetchProfile()
   }, [])
 
+  const hasProfileChanges =
+    user !== null &&
+    (name.trim() !== (user.name || '').trim() || Boolean(avatarFile))
+
   const handleSaveProfile = async () => {
     const trimmedName = name.trim()
 
@@ -154,7 +158,7 @@ const ProfileInformationCard = () => {
               <Button
                 type="button"
                 onClick={handleSaveProfile}
-                disabled={isSavingProfile}
+                disabled={isSavingProfile || !hasProfileChanges}
                 className={`${actionButtonClassName} gap-2 px-4`}
               >
                 <Save size={16} />
