@@ -118,11 +118,7 @@ export default function Sidebar() {
               <Icon size={18} className="shrink-0" />
 
               {!collapsed && (
-                <>
-                  <span className="flex-1 truncate">{item.name}</span>
-
-                 
-                </>
+                <span className="flex-1 truncate">{item.name}</span>
               )}
             </Link>
           )
