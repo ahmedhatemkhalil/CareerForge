@@ -18,7 +18,7 @@ import oauthRoutes from './Modules/Oauth/oauthRoutes.js';
 import cvRoutes from './Modules/CV/cv.routes.js'; 
 import jobDescriptionRoutes from './Modules/jobDescription/job.routes.js'; 
 import sendEmail from "./Email/email.js";
-
+import { startInterviewCleanupJob } from "./cron/interviewCleanup.cron.js";
 
 dotenv.config();
 
@@ -59,6 +59,7 @@ app.all(/(.*)/, (req, res, next) => {
 console.log("Is globalErrorHandler a function?", typeof globalErrorHandler);
 app.use(globalErrorHandler);
 
+startInterviewCleanupJob();
 // Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

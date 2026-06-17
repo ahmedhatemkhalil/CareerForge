@@ -1,142 +1,202 @@
-import {interviewModel} from "../../models/Interview.js";
+import crypto from "crypto";
+import { interviewSessionModel } from "../../models/Interview/InterviewSession.js";
+import { interviewQuestionModel } from "../../models/Interview/InterviewQuestion.js";
+import { Analysis } from "../../models/Analysis.js";
+import {startInterviewAI, continueInterviewAI} from "../../services/interview.service.js";
 import { handleError } from "../../middleware/HandleError.js";
-import {generateFirstQuestion, evaluateAnswerAndGetNext, generateSummaryReport} from "../../services/ai.static.js";
 
-export const createInterview = handleError(async (req,res)=>{
-    const { jobDescription } = req.body;
-    if(!jobDescription || jobDescription.trim() === ""){
-        return res.status(400).json({message:"Job description is required"});
+// Post /api/interviews/start
+export const startInterview = handleError(async (req, res) => {
+    const { analysisId } = req.body;
+
+    if (!analysisId) {
+        return res.status(400).json({ message: "analysisId is required" });
     }
-    
-    const firstQuestion = await generateFirstQuestion(jobDescription);
-    const interview = await interviewModel.create({
-        user: req.user.id,
-        jobDescription: jobDescription.trim(),
-        qaList: [
-            {
-                question: firstQuestion,
-            },
-        ],
+
+    const analysis = await Analysis.findOne({_id: analysisId, userId: req.user.id}).populate("jobId");
+
+    if (!analysis?.jobId) {
+        return res.status(404).json({ message: "Analysis or Associated Job not found" });
+    }
+
+    const langflowSessionId = crypto.randomUUID();
+
+    const session = await interviewSessionModel.create({
+        user_id: req.user.id,
+        analysis_id: analysis._id,
+        jobTitle: analysis.jobId.title,
+        status: "in_progress",
+        started_at: new Date(),
+        langflow_session_id: langflowSessionId,
     });
 
-    res.status(201).json({
+    const aiResponse = await startInterviewAI({
+        langflowSessionId,
+        jobTitle: analysis.jobId.title,
+        jobDescription: analysis.jobId.descriptionText,
+        matchScore: analysis.matchScore,
+        strengths: analysis.strengths,
+        weaknesses: analysis.weaknesses,
+        skillGaps: analysis.skillGaps,
+    });
+
+    if (!aiResponse?.nextQuestion) {
+        return res.status(500).json({message: "AI failed to generate first question",});
+    }
+
+    const firstQuestion = await interviewQuestionModel.create({
+        session_id: session._id,
+        question_text: aiResponse.nextQuestion,
+        order_index: 1,
+    });
+
+    return res.status(201).json({
+        message: "Interview started successfully",
         data: {
-            interviewId: interview._id,
-            status: interview.status,
-            currentQuestion: {
-                questionNumber: 1,
-                totalQuestions: 8,
-                question: firstQuestion,
-            },
+            sessionId: session._id,
+            question: firstQuestion.question_text,
+            order: 1,
+            isCompleted: false,
         },
     });
 });
 
-export const submitAnswer = handleError(async (req, res)=>{
-    const interview = req.interview;
-    const { userAnswer } = req.body;
+// POST /api/interviews/:sessionId/answer
+export const submitAnswer = handleError(async (req, res) => {
+    const { answer } = req.body;
 
-    if (interview.status === "completed") {
+    if (!answer?.trim()) {
+        return res.status(400).json({ message: "Answer is required" });
+    }
+
+    const session = req.session;
+
+    if (session.status === "completed") {
         return res.status(400).json({ message: "Interview already completed" });
     }
 
-    if (!userAnswer || userAnswer.trim() === "") {
-        return res.status(400).json({message: "userAnswer is required"});
+    const analysis = await Analysis.findById(session.analysis_id).populate("jobId");
+
+    const currentQuestion = await interviewQuestionModel.findOne({session_id: session._id, user_answer: null}).sort({ order_index: -1 });
+
+    if (!currentQuestion) {
+        return res.status(400).json({ message: "No active question found" });
     }
 
-    const currentQA = interview.qaList[interview.currentQuestionIndex];
-    if (!currentQA) {
-        return res.status(400).json({ message: "No active question found." });
+    currentQuestion.user_answer = answer.trim();
+
+    const allQuestions = await interviewQuestionModel.find({ session_id: session._id }).sort({ order_index: 1 });
+
+    const interviewHistory = allQuestions.filter((q) => q.user_answer || q._id.equals(currentQuestion._id)).map((q) => ({
+      question: q.question_text,
+      answer: q._id.equals(currentQuestion._id) ? answer.trim() : q.user_answer,
+    }));
+
+    const aiResponse = await continueInterviewAI({
+        langflowSessionId: session.langflow_session_id,
+        jobTitle: analysis.jobId.title,
+        jobDescription: analysis.jobId.descriptionText,
+        matchScore: analysis.matchScore,
+        strengths: analysis.strengths,
+        weaknesses: analysis.weaknesses,
+        skillGaps: analysis.skillGaps,
+        interviewHistory,
+        candidateAnswer: answer.trim(),
+    });
+
+    if (!aiResponse) {
+        return res.status(500).json({ message: "AI response invalid" });
     }
 
-    const currentQuestionNumber = interview.currentQuestionIndex + 1;
+    currentQuestion.score = aiResponse.score ?? 0;
+    currentQuestion.ai_feedback = aiResponse.feedback || "No feedback provided.";
+    await currentQuestion.save();
 
-    const aiResponse = await evaluateAnswerAndGetNext({jobDescription:interview.jobDescription, questionNumber:currentQuestionNumber});
+    // finish
+    if (aiResponse.isCompleted) {
+        session.status = "completed";
+        session.total_questions = allQuestions.length < 5 ? 5 : allQuestions.length;
+        session.overall_score = aiResponse.overall_score ?? aiResponse.overallScore ?? 0; 
+        session.overall_feedback = aiResponse.overall_feedback ?? aiResponse.generalFeedback;
+        session.tips_for_improvement = (aiResponse.tips_for_improvement ?? aiResponse.tipsForImprovement) || [];
+        session.hiringRecommendation = aiResponse.hiringRecommendation;
+        session.completed_at = new Date();
 
-    currentQA.userAnswer = userAnswer.trim();
-    currentQA.feedback = aiResponse.feedback;
-    currentQA.score = aiResponse.score;
-    
-    if (aiResponse.nextQuestion) {
-        interview.qaList.push({question:aiResponse.nextQuestion});
-        interview.currentQuestionIndex += 1;
+        await session.save();
+
+        return res.status(200).json({
+            isCompleted: true,
+            score: currentQuestion.score,
+            feedback: currentQuestion.ai_feedback,
+            overallScore: session.overall_score,
+            generalFeedback: session.overall_feedback,
+            tipsForImprovement: session.tips_for_improvement,
+            hiringRecommendation: session.hiringRecommendation,
+        });
     }
 
-    await interview.save();
-    
-    const isFinished = !aiResponse.nextQuestion;
+    // next Question
+    const nextQuestion = await interviewQuestionModel.create({
+        session_id: session._id,
+        question_text: aiResponse.nextQuestion,
+        order_index: currentQuestion.order_index + 1,
+    });
 
-    res.status(200).json({
-        data: {
-            answeredQuestion: {
-                questionNumber:currentQuestionNumber,
-                question:currentQA.question,
-                userAnswer:currentQA.userAnswer,
-                feedback:currentQA.feedback,
-                score:currentQA.score,
-            },
-
-            nextQuestion:
-                aiResponse.nextQuestion
-                    ? {
-                        questionNumber:currentQuestionNumber + 1,
-                        totalQuestions:interview.totalQuestions,
-                        question:aiResponse.nextQuestion,
-                    }
-                    : null,
-
-            isFinished,
-        },
+    return res.status(200).json({
+        isCompleted: false,
+        score: aiResponse.score,
+        feedback: aiResponse.feedback,
+        nextQuestion: nextQuestion.question_text,
     });
 });
 
-export const completeInterview = handleError(async (req, res)=>{
-    const interview = req.interview;
-    
-    if (interview.status === "completed") {
-        return res.status(400).json({message:"Interview already completed",});
-    }
-
-    const answeredQuestions = interview.qaList.filter((q) => q.userAnswer);
-
-    if (answeredQuestions.length !== interview.totalQuestions) {
-        return res.status(400).json({message: "Please answer all questions first"});
-    }
-    
-    const summary = await generateSummaryReport({qaList: interview.qaList});
-    interview.summary = summary;
-    interview.status = "completed";
-    await interview.save();
-
-    res.status(200).json({
-        message:"Interview completed successfully",
-        data: {
-            interviewId: interview._id,
-            status: interview.status,
-            summary: interview.summary,
-            completedAt: interview.updatedAt,
-        },
-    });
-});
-
+// GET /api/interviews
 export const getAllInterviews = handleError(async (req, res) => {
-    const interviews = await interviewModel.find({user: req.user.id, status: "completed",})
-    .select("jobDescription totalQuestions summary.overallScore createdAt updatedAt")
-    .sort({ createdAt: -1 });
+    const interviews = await interviewSessionModel
+        .find({user_id: req.user.id, status: "completed"})
+        .populate({
+            path: "analysis_id",
+            select: "cvId",
+            populate: {
+                path: "cvId",
+                select: "fileName",
+            },
+        })
+        .sort({ createdAt: -1 });
 
-    res.status(200).json({count: interviews.length, data: interviews,});
+    const formattedInterviews = interviews.map((interview) => {
+        return {
+            id: interview._id,
+            jobTitle: interview.jobTitle,
+            score: interview.overall_score,
+            status: interview.status,
+            hiringRecommendation: interview.hiringRecommendation,
+            interviewDate: interview.createdAt,
+            started_at: interview.started_at,
+            completed_at: interview.completed_at,
+            cvName:interview.analysis_id?.cvId?.fileName || null,
+        };
+    });
+
+    return res.status(200).json({
+        count: formattedInterviews.length,
+        data: formattedInterviews,
+    });
 });
 
-export const getInterviewById =handleError(async (req, res)=>{
-    const interview = await interviewModel.findOne({_id: req.params.id, user: req.user.id, status: "completed"});
-    if(!interview){
-        return res.status(404).json({message: "Interview not found"})
-    }
-    res.status(200).json({data:interview});
+// GET  /api/interviews/:sessionId
+export const getInterviewById = handleError(async (req, res) => {
+    const questions = await interviewQuestionModel.find({session_id: req.session._id}).sort({order_index: 1,});
+
+    return res.status(200).json({
+        session: req.session,
+        questions,
+    });
 });
 
-export const deleteInterview =handleError(async (req, res)=>{
-    const interview = req.interview;
-    await interview.deleteOne();
-    res.status(200).json({message: "Interview deleted successfully"});
+// DELETE /api/interviews/:sessionId
+export const deleteInterview = handleError(async (req, res) => {
+    await interviewQuestionModel.deleteMany({ session_id: req.session._id });
+    await req.session.deleteOne();
+    return res.status(200).json({message: "Interview deleted successfully",});
 });
