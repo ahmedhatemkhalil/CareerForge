@@ -1,3 +1,53 @@
+export const getFirstName = (name) => {
+  if (!name) return 'there'
+  return name.trim().split(/\s+/)[0]
+}
+
+export const getFormattedDate = (date = new Date()) => {
+  const dayName = date.toLocaleDateString('en-US', { weekday: 'long' })
+  const fullDate = date.toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  })
+
+  return { dayName, fullDate }
+}
+
+export const formatAnalysisDate = (isoDate) => {
+  if (!isoDate) return 'Unknown date'
+  const dateOnly = String(isoDate).split('T')[0]
+  return new Date(`${dateOnly}T00:00:00`).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
+}
+
+export const parseAnalysesResponse = (analysesRes) => {
+  const analyses = analysesRes?.data || []
+
+  return analyses.map((analysis) => ({
+    _id: analysis._id,
+    jobTitle: analysis.jobId?.title || 'Targeted Job Role',
+    matchScore: Number(analysis.matchScore) || 0,
+    fileName: analysis.cvId?.fileName || 'Uploaded_Resume.pdf',
+    analysisDate: formatAnalysisDate(analysis.createdAt),
+    createdAt: analysis.createdAt,
+  }))
+}
+
+export const countAnalysesThisMonth = (analyses = []) => {
+  const now = new Date()
+  const month = now.getMonth()
+  const year = now.getFullYear()
+
+  return analyses.filter((analysis) => {
+    const createdAt = new Date(analysis.createdAt)
+    return createdAt.getMonth() === month && createdAt.getFullYear() === year
+  }).length
+}
+
 export const getInitials = (name = '') => {
   const parts = name.trim().split(/\s+/).filter(Boolean)
 
