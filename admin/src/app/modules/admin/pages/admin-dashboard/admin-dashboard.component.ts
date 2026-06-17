@@ -80,12 +80,6 @@ loadAdminData(): void {
     this.showBanModal = true;
   }
 
-  closeModals(): void {
-    this.showRoleModal = false;
-    this.showBanModal = false;
-    this.selectedUser = null;
-  }
-
   // 1. تعديل الـ Role وتحديث الجدول والداتابيز فوراً
   updateUserRole(newRole: string): void {
     if (!this.selectedUser) return;
@@ -123,5 +117,32 @@ loadAdminData(): void {
       this.loadAdminData(); // دلوقتي الـ Load هتقرأ الـ status الجديد من الداتابيز
     }
   });
+}
+showDeleteModal: boolean = false; // إضافة متغير للمودال الجديد
+
+openDeleteModal(user: any): void {
+  this.selectedUser = user;
+  this.showDeleteModal = true;
+}
+
+confirmDeleteUser(): void {
+  if (!this.selectedUser) return;
+  const userId = this.selectedUser._id || this.selectedUser.id;
+
+  this.adminService.deleteUser(userId).subscribe({
+    next: () => {
+      this.closeModals();
+      this.loadAdminData(); // إعادة تحميل البيانات بعد الحذف
+    },
+    error: (err) => console.error('Error deleting user:', err)
+  });
+}
+
+// لا تنسي تعديل دالة closeModals لتشمل المودال الجديد
+closeModals(): void {
+  this.showRoleModal = false;
+  this.showBanModal = false;
+  this.showDeleteModal = false; // هنا
+  this.selectedUser = null;
 }
 }
