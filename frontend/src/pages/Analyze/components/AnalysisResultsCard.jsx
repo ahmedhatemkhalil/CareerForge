@@ -16,19 +16,7 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible'
 import { cn } from '@/lib/utils'
-
-const getScoreSummary = (score) => {
-  if (score >= 90) {
-    return 'Excellent match. Your CV aligns strongly with this role.'
-  }
-  if (score >= 75) {
-    return 'Your CV is a strong match. A few targeted improvements could push this above 90.'
-  }
-  if (score >= 50) {
-    return 'Moderate match. Focus on the highlighted gaps to improve your fit.'
-  }
-  return 'Limited match. Consider tailoring your CV or exploring other roles.'
-}
+import { getScoreStyles, getScoreSummary } from '@/utils/helpers'
 
 const AnalysisResultsCard = ({
   score = 0,
@@ -39,6 +27,7 @@ const AnalysisResultsCard = ({
 }) => {
   const [isJdOpen, setIsJdOpen] = useState(false)
   const displaySummary = summary ?? getScoreSummary(score)
+  const scoreStyles = getScoreStyles(score)
 
   return (
     <Collapsible open={isJdOpen} onOpenChange={setIsJdOpen}>
@@ -51,13 +40,18 @@ const AnalysisResultsCard = ({
                   value={score}
                   strokeWidth={10}
                   styles={buildStyles({
-                    pathColor: 'var(--status-success)',
+                    pathColor: scoreStyles.stroke,
                     trailColor: 'var(--muted)',
                     pathTransitionDuration: 0.6,
                   })}
                 />
                 <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-3xl font-bold leading-none text-foreground sm:text-4xl">
+                  <span
+                    className={cn(
+                      'text-3xl font-bold leading-none sm:text-4xl',
+                      scoreStyles.text,
+                    )}
+                  >
                     {score}
                   </span>
                   <span className="mt-1 text-sm text-muted-foreground">
@@ -68,13 +62,23 @@ const AnalysisResultsCard = ({
             </div>
 
             <div className="min-w-0 flex-1 space-y-3">
-              <Badge className="rounded-full border-transparent bg-[var(--ai-accent)] px-2.5 py-1 text-xs font-medium text-[var(--ai-accent-foreground)] hover:bg-[var(--ai-accent)]">
-                <Sparkles className="size-3.5" />
-                AI Analysis Complete
-              </Badge>
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge className="rounded-full border-transparent bg-[var(--ai-accent)] px-2.5 py-1 text-xs font-medium text-[var(--ai-accent-foreground)] hover:bg-[var(--ai-accent)]">
+                  <Sparkles className="size-3.5" />
+                  AI Analysis Complete
+                </Badge>
+                <Badge
+                  className={cn(
+                    'rounded-full border px-2.5 py-1 text-xs font-semibold',
+                    scoreStyles.badge,
+                  )}
+                >
+                  {scoreStyles.label}
+                </Badge>
+              </div>
 
               <h2 className="text-xl font-bold leading-tight text-foreground sm:text-2xl">
-                 match for {roleTitle}
+                {score}% match for {roleTitle}
               </h2>
 
               <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">

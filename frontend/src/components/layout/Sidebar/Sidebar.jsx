@@ -15,6 +15,9 @@ export default function Sidebar() {
   const navigate = useNavigate()
   const logout = useAuthStore((state) => state.logout)
   const user = useAuthStore((state) => state.user)
+  const visibleNavItems = navItems.filter(
+    (item) => !item.adminOnly || user?.role === 'admin',
+  )
   const [collapsed, setCollapsed] = useState(false)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
@@ -95,7 +98,7 @@ export default function Sidebar() {
       )}
 
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
-        {navItems.map((item) => {
+        {visibleNavItems.map((item) => {
           const Icon = item.icon
           const active = location.pathname === item.path
 
@@ -115,11 +118,7 @@ export default function Sidebar() {
               <Icon size={18} className="shrink-0" />
 
               {!collapsed && (
-                <>
-                  <span className="flex-1 truncate">{item.name}</span>
-
-                 
-                </>
+                <span className="flex-1 truncate">{item.name}</span>
               )}
             </Link>
           )
@@ -133,35 +132,44 @@ export default function Sidebar() {
             collapsed && 'justify-center',
           )}
         >
-          {user?.avatar_url ? (
-            <img
-              src={user.avatar_url}
-              alt={user.name}
-              className="h-10 w-10 shrink-0 rounded-full object-cover"
-            />
-          ) : (
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sidebar-primary text-sm font-semibold text-sidebar-primary-foreground">
-              {getInitials(user?.name)}
-            </div>
-          )}
+          <Link
+            to="/profile"
+            title={collapsed ? 'Profile' : undefined}
+            className={cn(
+              'flex min-w-0 items-center gap-3 no-underline transition-colors hover:bg-sidebar-accent rounded-lg',
+              collapsed ? 'justify-center p-1' : 'flex-1 p-1',
+            )}
+          >
+            {user?.avatar_url ? (
+              <img
+                src={user.avatar_url}
+                alt={user.name}
+                className="h-10 w-10 shrink-0 rounded-full object-cover"
+              />
+            ) : (
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sidebar-primary text-sm font-semibold text-sidebar-primary-foreground">
+                {getInitials(user?.name)}
+              </div>
+            )}
 
-          {!collapsed && (
-            <>
+            {!collapsed && (
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-sidebar-foreground">
                   {user?.name}
                 </p>
               </div>
+            )}
+          </Link>
 
-              <button
-                type="button"
-                aria-label="Logout"
-                onClick={() => setShowLogoutConfirm(true)}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-sidebar-accent hover:text-sidebar-foreground"
-              >
-                <LogOut size={18} />
-              </button>
-            </>
+          {!collapsed && (
+            <button
+              type="button"
+              aria-label="Logout"
+              onClick={() => setShowLogoutConfirm(true)}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-sidebar-accent hover:text-sidebar-foreground"
+            >
+              <LogOut size={18} />
+            </button>
           )}
         </div>
       </div>

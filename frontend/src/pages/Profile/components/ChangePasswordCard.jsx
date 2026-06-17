@@ -19,6 +19,9 @@ const ChangePasswordCard = () => {
   const [newPassword, setNewPassword] = useState('')
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false)
 
+  const hasPasswordChanges =
+    currentPassword.trim() !== '' && newPassword.trim() !== ''
+
   const handleChangePassword = async () => {
     if (!currentPassword || !newPassword) {
       toast.error('Current and new password are required')
@@ -99,7 +102,7 @@ const ChangePasswordCard = () => {
         <Button
           type="button"
           onClick={handleChangePassword}
-          disabled={isUpdatingPassword}
+          disabled={isUpdatingPassword || !hasPasswordChanges}
           className={`${actionButtonClassName} px-4`}
         >
           {isUpdatingPassword ? 'Updating...' : 'Update Password'}
