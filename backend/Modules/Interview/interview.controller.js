@@ -21,15 +21,6 @@ export const startInterview = handleError(async (req, res) => {
 
     const langflowSessionId = crypto.randomUUID();
 
-    const session = await interviewSessionModel.create({
-        user_id: req.user.id,
-        analysis_id: analysis._id,
-        jobTitle: analysis.jobId.title,
-        status: "in_progress",
-        started_at: new Date(),
-        langflow_session_id: langflowSessionId,
-    });
-
     const aiResponse = await startInterviewAI({
         langflowSessionId,
         jobTitle: analysis.jobId.title,
@@ -43,6 +34,16 @@ export const startInterview = handleError(async (req, res) => {
     if (!aiResponse?.nextQuestion) {
         return res.status(500).json({message: "AI failed to generate first question",});
     }
+
+    const session = await interviewSessionModel.create({
+        user_id: req.user.id,
+        analysis_id: analysis._id,
+        jobTitle: analysis.jobId.title,
+        status: "in_progress",
+        started_at: new Date(),
+        langflow_session_id: langflowSessionId,
+    });
+
 
     const firstQuestion = await interviewQuestionModel.create({
         session_id: session._id,
@@ -77,39 +78,58 @@ export const submitAnswer = handleError(async (req, res) => {
 
     const analysis = await Analysis.findById(session.analysis_id).populate("jobId");
 
-    const currentQuestion = await interviewQuestionModel.findOne({session_id: session._id, user_answer: null}).sort({ order_index: -1 });
+    const currentQuestion = await interviewQuestionModel.findOne({
+      session_id: session._id,
+      answer_status: { $in: ["pending", "failed"] },
+    }).sort({ order_index: 1 });
 
     if (!currentQuestion) {
-        return res.status(400).json({ message: "No active question found" });
+      return res.status(400).json({ message: "No active question found" });
     }
 
     currentQuestion.user_answer = answer.trim();
+    currentQuestion.answer_status = "processing";
+    await currentQuestion.save();
 
     const allQuestions = await interviewQuestionModel.find({ session_id: session._id }).sort({ order_index: 1 });
 
-    const interviewHistory = allQuestions.filter((q) => q.user_answer || q._id.equals(currentQuestion._id)).map((q) => ({
-      question: q.question_text,
-      answer: q._id.equals(currentQuestion._id) ? answer.trim() : q.user_answer,
-    }));
+    const interviewHistory = allQuestions.filter(q => q.answer_status === "completed" && q.user_answer)
+      .map(q => ({
+        question: q.question_text,
+        answer: q.user_answer,
+      }));
 
     const aiResponse = await continueInterviewAI({
-        langflowSessionId: session.langflow_session_id,
-        jobTitle: analysis.jobId.title,
-        jobDescription: analysis.jobId.descriptionText,
-        matchScore: analysis.matchScore,
-        strengths: analysis.strengths,
-        weaknesses: analysis.weaknesses,
-        skillGaps: analysis.skillGaps,
-        interviewHistory,
-        candidateAnswer: answer.trim(),
+      langflowSessionId: session.langflow_session_id,
+      jobTitle: analysis.jobId.title,
+      jobDescription: analysis.jobId.descriptionText,
+      matchScore: analysis.matchScore,
+      strengths: analysis.strengths,
+      weaknesses: analysis.weaknesses,
+      skillGaps: analysis.skillGaps,
+      interviewHistory,
+      candidateAnswer: answer.trim(),
     });
 
-    if (!aiResponse) {
-        return res.status(500).json({ message: "AI response invalid" });
+    if (!aiResponse || aiResponse.error) {
+      currentQuestion.answer_status = "failed";
+      await currentQuestion.save();
+      return res.status(500).json({message: "Please try submitting your answer again.",});
     }
 
+    if (!aiResponse.isCompleted && !aiResponse.nextQuestion) {
+      currentQuestion.answer_status = "failed";
+      await currentQuestion.save();
+
+      return res.status(500).json({
+        message: "AI failed to generate next question",
+      });
+    }
+
+    // SAVE AI RESULT
     currentQuestion.score = aiResponse.score ?? 0;
     currentQuestion.ai_feedback = aiResponse.feedback || "No feedback provided.";
+    currentQuestion.answer_status = "completed";
     await currentQuestion.save();
 
     // finish
@@ -140,6 +160,7 @@ export const submitAnswer = handleError(async (req, res) => {
         session_id: session._id,
         question_text: aiResponse.nextQuestion,
         order_index: currentQuestion.order_index + 1,
+        answer_status: "pending",
     });
 
     return res.status(200).json({
