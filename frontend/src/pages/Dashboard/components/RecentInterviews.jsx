@@ -1,45 +1,25 @@
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, Loader2 } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
+import {
+  formatAnalysisDate,
+  formatInterviewScore,
+  getInterviewScoreStyles,
+} from '@/utils/helpers'
 
-const INTERVIEWS = [
-  {
-    title: 'Product Manager',
-    company: 'Stripe',
-    date: 'Jun 9, 2026',
-    score: 8.2,
-  },
-  {
-    title: 'Senior Frontend Engineer',
-    company: 'Vercel',
-    date: 'Jun 7, 2026',
-    score: 9.1,
-  },
-  {
-    title: 'Backend Engineer',
-    company: 'Notion',
-    date: 'Jun 5, 2026',
-    score: 7.4,
-  },
-]
-
-const getInterviewScoreStyles = (score) => {
-  if (score >= 8.5) {
-    return 'bg-emerald-50 text-emerald-600 border-emerald-100'
-  }
-  if (score >= 7) {
-    return 'bg-amber-50 text-amber-600 border-amber-100'
-  }
-  return 'bg-rose-50 text-rose-600 border-rose-100'
-}
-
-const RecentInterviews = () => {
+const RecentInterviews = ({
+  interviews,
+  loading,
+  onOpenInterview,
+  onViewAll,
+}) => {
   return (
     <div className="flex h-full flex-col rounded-2xl border border-border bg-card shadow-sm">
       <div className="flex items-center justify-between border-b border-border px-5 py-4">
         <h2 className="text-base font-bold text-foreground">Recent Interviews</h2>
         <button
           type="button"
+          onClick={onViewAll}
           className="flex items-center gap-0.5 text-sm font-medium text-primary transition hover:text-primary/80"
         >
           View all
@@ -48,29 +28,49 @@ const RecentInterviews = () => {
       </div>
 
       <div className="flex-1 divide-y divide-border">
-        {INTERVIEWS.map((item) => (
-          <div
-            key={`${item.title}-${item.date}`}
-            className="flex items-center justify-between gap-3 px-5 py-4"
-          >
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-foreground">
-                {item.title}
-              </p>
-              <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                {item.company} · {item.date}
-              </p>
-            </div>
-            <span
-              className={cn(
-                'shrink-0 rounded-full border px-2.5 py-1 text-xs font-bold',
-                getInterviewScoreStyles(item.score),
-              )}
-            >
-              {item.score}/10
-            </span>
+        {loading ? (
+          <div className="flex h-48 items-center justify-center text-primary">
+            <Loader2 className="h-6 w-6 animate-spin" />
           </div>
-        ))}
+        ) : interviews.length === 0 ? (
+          <p className="px-5 py-10 text-center text-sm text-muted-foreground">
+            No interviews yet.
+          </p>
+        ) : (
+          interviews.map((item) => {
+            const interviewDate = formatAnalysisDate(
+              item.completed_at || item.interviewDate,
+            )
+
+            return (
+              <div
+                key={item.id}
+                onDoubleClick={() => onOpenInterview?.(item.id)}
+                className={cn(
+                  'flex items-center justify-between gap-3 px-5 py-4 transition',
+                  onOpenInterview && 'cursor-pointer hover:bg-muted/40',
+                )}
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-foreground">
+                    {item.jobTitle}
+                  </p>
+                  <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                   {interviewDate}
+                  </p>
+                </div>
+                <span
+                  className={cn(
+                    'shrink-0 rounded-full border px-2.5 py-1 text-xs font-bold',
+                    getInterviewScoreStyles(item.score),
+                  )}
+                >
+                  {formatInterviewScore(item.score)}/10
+                </span>
+              </div>
+            )
+          })
+        )}
       </div>
     </div>
   )
