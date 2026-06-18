@@ -111,40 +111,75 @@ export const deleteCurrentUser = async (req, res) => {
 };
 
 // GET /api/admin/users
+// GET /api/admin/users
 export const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find().select("-password_hash");
+    const users = await User.aggregate([
+      {
+        $lookup: {
+          from: 'cvs',
+          localField: '_id',
+          foreignField: 'userId',
+          as: 'userCvs'
+        }
+      },
+      {
+        $addFields: {
+          cvCount: { $size: "$userCvs" }
+        }
+      },
+
+      { 
+        $project: { 
+          password_hash: 0, 
+          userCvs: 0 
+        } 
+      }
+    ]);
+
     res.json(users);
   } catch (err) {
+    console.error("Error in getAllUsers:", err);
     res.status(500).json({ message: err.message });
   }
 };
-
 // PUT /api/admin/users/:id/ban
 export const banUser = async (req, res) => {
   try {
-    const { status, ban_reason } = req.body;
+    const { status, ban_reason, role } = req.body;
+    const { id } = req.params;
 
-    if (!["active", "suspended", "banned"].includes(status)) {
-      return res
-        .status(400)
-        .json({ message: "Status must be active, suspended, or banned" });
+
+    const normalizedStatus = status ? status.toLowerCase() : undefined;
+    const normalizedRole = role ? role.toLowerCase() : undefined; 
+
+    if (normalizedStatus && !["active", "suspended", "banned"].includes(normalizedStatus)) {
+      return res.status(400).json({ message: "Invalid status value" });
     }
 
+    const updateFields = {};
+    if (normalizedStatus !== undefined) updateFields.status = normalizedStatus;
+    if (normalizedRole !== undefined) updateFields.role = normalizedRole;
+    
+    if (normalizedStatus === "banned") {
+      updateFields.ban_reason = ban_reason || "No reason provided";
+    } else {
+      updateFields.ban_reason = null;
+    }
+
+
     const user = await User.findByIdAndUpdate(
-      req.params.id,
-      {
-        status,
-        ban_reason: status === "banned" ? ban_reason || null : null,
-      },
-      { new: true, runValidators: true },
+      id,
+      { $set: updateFields }, 
+      { new: true, runValidators: true }
     ).select("-password_hash");
 
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    res.json({ message: "User status updated", user });
+    res.json({ message: "User updated successfully", user });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("Database Update Error:", err); 
+    res.status(500).json({ message: "Server error during update", error: err.message });
   }
 };
 

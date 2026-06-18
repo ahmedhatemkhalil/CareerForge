@@ -1,13 +1,12 @@
 import { Component } from '@angular/core';
-import { LucideShieldCheck } from '@lucide/angular';
-import { cn } from '../lib/utils';
+import { RouterOutlet } from '@angular/router';
 
 @Component({
   selector: 'app-root',
-  imports: [LucideShieldCheck],
-  templateUrl: './app.component.html',
+  standalone: true,
+  imports: [RouterOutlet],
+  templateUrl: './app.component.html', // التيمبلت الافتراضي للـ app
 })
 export class AppComponent {
   title = 'CareerForge Admin';
-  protected readonly cn = cn;
 }
