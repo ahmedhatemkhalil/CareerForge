@@ -6,6 +6,9 @@ import Landing from './pages/Landing/Landing'
 import Analyze from './pages/Analyze/Analyze'
 import MyCv from './pages/cv/CV'
 import Interview from './pages/Interview/Interview'
+import NewInterview from './pages/Interview/NewInterview'
+import LiveInterview from './pages/Interview/LiveInterview'
+import InterviewResult from './pages/Interview/InterviewResult'
 import Roadmap from './pages/Roadmap/Roadmap'
 import Dashboard from './pages/Dashboard/Dashboard'
 import Login from './pages/Login/Login'
@@ -57,6 +60,9 @@ const AppRouter = () => {
             <Route path="analyze" element={<Analyze />} />
             <Route path="cv" element={<MyCv />} />
             <Route path="interview" element={<Interview />} />
+            <Route path="new-interview" element={<NewInterview />} />
+            <Route path="live-interview/:sessionId" element={<LiveInterview />} />
+            <Route path="interview/:sessionId/result" element={<InterviewResult />} /> 
             <Route path="roadmap" element={<Roadmap />} />
             <Route path="analyze/results/:id" element={<AnalysisResults />} />
             <Route path="new-analysis" element={<NewAnalysis />} />

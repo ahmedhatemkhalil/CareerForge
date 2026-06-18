@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const langflowBaseUrl = process.env.LANGFLOW_URL || "http://localhost:7860";
-const flowId = process.env.LANGFLOW_INTERVIEW_FLOW_ID || "c41d70d3-2357-4abb-b100-d4015880a9fb";
+const flowId = process.env.LANGFLOW_INTERVIEW_FLOW_ID || "a8fe870f-c60a-44fe-a69b-a08f1e10bbc6";
 const LANGFLOW_API_URL = `${langflowBaseUrl}/api/v1/run/${flowId}`;
 const LANGFLOW_API_KEY = process.env.LANGFLOW_API_KEY;
 

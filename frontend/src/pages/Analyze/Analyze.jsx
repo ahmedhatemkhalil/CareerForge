@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
-import { FileText, Calendar, Plus, ChevronRight, Trash2, Loader2 } from "lucide-react";
-import { getAllAnalyses, deleteAnalysis } from "../../services/analysisService";
+import {
+  FileText,
+  Calendar,
+  Plus,
+  ChevronRight,
+  Trash2,
+  Loader2,
+} from "lucide-react";
+import { getAllAnalyses, deleteAnalysis } from "../../../../analysisService";
 import { useNavigate } from "react-router-dom";
 import ConfirmModal from "../../components/common/ConfirmModal";
 import { getScoreStyles } from "../../utils/helpers";
@@ -57,16 +64,23 @@ export default function Analyze() {
 
       setAnalyses(formatted);
 
-      const analysesWithScores = formatted.filter((item) => item.matchScore > 0);
+      const analysesWithScores = formatted.filter(
+        (item) => item.matchScore > 0,
+      );
       const total = analysesWithScores.length;
       const avgScore =
         total > 0
           ? Math.round(
-              analysesWithScores.reduce((acc, item) => acc + item.matchScore, 0) / total
+              analysesWithScores.reduce(
+                (acc, item) => acc + item.matchScore,
+                0,
+              ) / total,
             )
           : 0;
       const bestScore =
-        total > 0 ? Math.max(...analysesWithScores.map((item) => item.matchScore)) : 0;
+        total > 0
+          ? Math.max(...analysesWithScores.map((item) => item.matchScore))
+          : 0;
 
       setStats({ total, avgScore, bestScore });
     } catch (err) {
@@ -116,16 +130,21 @@ export default function Analyze() {
   }
 
   if (error) {
-    return <div className="p-6 text-red-500 text-center font-medium">{error}</div>;
+    return (
+      <div className="p-6 text-red-500 text-center font-medium">{error}</div>
+    );
   }
 
   return (
     <div className="p-6 max-w-5xl mx-auto font-sans text-gray-800 antialiased">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">CV Analysis</h1>
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+            CV Analysis
+          </h1>
           <p className="text-sm text-gray-500 mt-1.5 font-medium">
-            {stats.total} analyses · Avg score {stats.avgScore}% · Best {stats.bestScore}%
+            {stats.total} analyses · Avg score {stats.avgScore}% · Best{" "}
+            {stats.bestScore}%
           </p>
         </div>
         <button
@@ -140,12 +159,16 @@ export default function Analyze() {
       <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
         <div className="flex justify-between items-center px-6 py-5 border-b border-gray-50">
           <h2 className="text-xl font-bold text-gray-900">Analysis History</h2>
-          <span className="text-sm font-semibold text-gray-400">{analyses.length} records</span>
+          <span className="text-sm font-semibold text-gray-400">
+            {analyses.length} records
+          </span>
         </div>
 
         <div className="divide-y divide-gray-50">
           {analyses.length === 0 ? (
-            <p className="text-center text-gray-400 py-12 font-medium">No analyses yet.</p>
+            <p className="text-center text-gray-400 py-12 font-medium">
+              No analyses yet.
+            </p>
           ) : (
             analyses.map((item) => {
               const score = item.matchScore || 0;
@@ -153,7 +176,8 @@ export default function Analyze() {
 
               const radius = 22;
               const circumference = 2 * Math.PI * radius;
-              const strokeDashoffset = circumference - (score / 100) * circumference;
+              const strokeDashoffset =
+                circumference - (score / 100) * circumference;
 
               return (
                 <div
@@ -180,12 +204,16 @@ export default function Analyze() {
                           strokeWidth="4"
                           fill="transparent"
                           strokeDasharray={circumference}
-                          strokeDashoffset={score > 0 ? strokeDashoffset : circumference}
+                          strokeDashoffset={
+                            score > 0 ? strokeDashoffset : circumference
+                          }
                           strokeLinecap="round"
                           className="transition-all duration-500 ease-out"
                         />
                       </svg>
-                      <span className={`absolute font-bold text-xs ${styles.text}`}>
+                      <span
+                        className={`absolute font-bold text-xs ${styles.text}`}
+                      >
                         {score > 0 ? `${score}` : "-"}
                       </span>
                     </div>
