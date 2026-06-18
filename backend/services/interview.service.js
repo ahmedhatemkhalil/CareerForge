@@ -7,7 +7,7 @@ const langflowBaseUrl = process.env.LANGFLOW_URL || "http://localhost:7860";
 const flowId = process.env.LANGFLOW_INTERVIEW_FLOW_ID || "c41d70d3-2357-4abb-b100-d4015880a9fb";
 const LANGFLOW_API_URL = `${langflowBaseUrl}/api/v1/run/${flowId}`;
 const LANGFLOW_API_KEY = process.env.LANGFLOW_API_KEY;
-
+const LANGFLOW_PROMPT_ID = process.env.LANGFLOW_PROMPT_ID;
 // Helpers
 const toArray = (val) => Array.isArray(val) ? val : val ? [val] : [];
 
@@ -32,10 +32,10 @@ const parseAIResponse = (text) => {
 const sendToLangflow = async (inputs, isStart = false) => {
     try { 
         const historyText = isStart
-            ? "Interview just started."
-            : inputs.interviewHistory
-                  .map((item) => `Question: ${item.question}\nAnswer: ${item.answer}`)
-                  .join("\n\n");
+          ? "Interview just started."
+          : inputs.interviewHistory
+            .map((item) => `Question: ${item.question}\nAnswer: ${item.answer}`)
+            .join("\n\n");
 
         const candidateAnalysisString = `
           - Match Score: ${inputs.matchScore || 0}%
@@ -50,12 +50,12 @@ const sendToLangflow = async (inputs, isStart = false) => {
             session_id: inputs.langflowSessionId,
             input_value: isStart ? "start" : (inputs.candidateAnswer || ""), 
             tweaks: {
-                "Prompt Template-rAOBc": {
-                    job_title: inputs.jobTitle || "",
-                    job_description: inputs.jobDescription || "",
-                    interview_history: historyText,
-                    candidate_analysis: candidateAnalysisString 
-                },
+              [LANGFLOW_PROMPT_ID]: {
+                job_title: inputs.jobTitle || "",
+                job_description: inputs.jobDescription || "",
+                interview_history: historyText,
+                candidate_analysis: candidateAnalysisString 
+              },
             },
         };
 

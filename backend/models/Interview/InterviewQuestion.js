@@ -18,6 +18,12 @@ const interviewQuestionSchema = new mongoose.Schema(
         type: String,
         default: null,
         },
+        
+        answer_status: {
+            type: String,
+            enum: ["pending", "processing", "completed", "failed"],
+            default: "pending",
+        },
 
         score: {
         type: Number,
