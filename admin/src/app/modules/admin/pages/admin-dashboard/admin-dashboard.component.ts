@@ -118,6 +118,16 @@ loadAdminData(): void {
     }
   });
 }
+
+reactivateUser(user: any): void {
+  const userId = user._id || user.id;
+
+  this.adminService.updateUserStatus(userId, 'active', user.role || 'user').subscribe({
+    next: () => this.loadAdminData(),
+    error: (err) => console.error('Error reactivating user:', err)
+  });
+}
+
 showDeleteModal: boolean = false; // إضافة متغير للمودال الجديد
 
 openDeleteModal(user: any): void {
