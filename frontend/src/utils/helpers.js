@@ -48,6 +48,18 @@ export const countAnalysesThisMonth = (analyses = []) => {
   }).length
 }
 
+export const countInterviewsThisWeek = (interviews = []) => {
+  const now = new Date()
+  const startOfWeek = new Date(now)
+  startOfWeek.setDate(now.getDate() - now.getDay())
+  startOfWeek.setHours(0, 0, 0, 0)
+
+  return interviews.filter((interview) => {
+    const date = new Date(interview.completed_at || interview.interviewDate)
+    return date >= startOfWeek
+  }).length
+}
+
 export const getInitials = (name = '') => {
   const parts = name.trim().split(/\s+/).filter(Boolean)
 
@@ -102,3 +114,10 @@ export const getScoreSummary = (score) => {
   }
   return 'Limited match. Consider tailoring your CV or exploring other roles.'
 }
+
+export const formatInterviewScore = (score) => {
+  const value = Number(score) || 0
+  return (value / 10).toFixed(1)
+}
+
+export const getInterviewScoreStyles = (score) => getScoreStyles(score).badge
