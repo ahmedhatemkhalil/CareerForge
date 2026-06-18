@@ -1,0 +1,8 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "@fontsource-variable/geist";
+
+body {
+  font-family: "Geist Variable", system-ui, sans-serif;
+  background-color: var(--color-app-bg);
+}
