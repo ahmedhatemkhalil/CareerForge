@@ -92,13 +92,24 @@ throw new Error('Method not implemented.');
   }
 
   updateUserRole(newRole: string): void {
-    if (!this.selectedUser) return;
-    this.adminService.updateUserStatus(this.selectedUser._id, this.selectedUser.status, newRole).subscribe(() => {
-      this.toastr.success("Role updated");
-      this.closeModals();
-      this.loadAdminData();
-    });
-  }
+  if (!this.selectedUser) return;
+
+  const userId = this.selectedUser._id;
+  const loggedInUser = JSON.parse(localStorage.getItem('user') || '{}');
+
+  this.adminService.updateUserStatus(userId, this.selectedUser.status, newRole).subscribe({
+    next: () => {
+      if (loggedInUser._id === userId && newRole !== 'Admin') {
+        this.toastr.warning("Your role has been changed. Logging out...");
+        this.logout(); 
+      } else {
+        this.toastr.success("Role updated successfully");
+        this.closeModals();
+        this.loadAdminData();
+      }
+    }
+  });
+}
 
   confirmBanUser(): void {
     this.adminService.updateUserStatus(this.selectedUser._id, 'banned', this.selectedUser.role).subscribe(() => {
