@@ -3,10 +3,9 @@ export interface User {
   name: string;
   email: string;
   role: 'Admin' | 'User';
-  cvCount?: number;   // <--- العمود الجديد
+  cvCount?: number;
   status: 'active' | 'suspended' | 'banned';
-  createdAt: string;  // <--- العمود الجديد لـ Joined Date
-}
+  createdAt: string;  }
 
 export interface DashboardStats {
   totalUsers: number;

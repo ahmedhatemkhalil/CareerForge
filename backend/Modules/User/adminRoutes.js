@@ -4,7 +4,7 @@ import { verifyToken, adminOnly } from "../../middleware/auth.js";
 
 const adminRoutes = express.Router();
 
-// adminRoutes.use(verifyToken, adminOnly);
+adminRoutes.use(verifyToken, adminOnly);
 
 adminRoutes.get("/users", getAllUsers);
 adminRoutes.put("/users/:id/ban", banUser);

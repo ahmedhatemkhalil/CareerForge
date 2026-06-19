@@ -8,9 +8,10 @@ body {
   font-family: "Geist Variable", system-ui, sans-serif;
   margin: 0;
   padding: 0;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
 }
 
-/* تعريف ثيم الألوان المخصص ليتطابق مع Figma */
 @theme {
   --color-background: #ffffff;
   --color-foreground: #0f172a;
@@ -22,16 +23,15 @@ body {
   --color-primary: #4f46e5;
   --color-primary-foreground: #ffffff;
 
-  --color-brand-primary: #6366f1;
-  --color-brand-secondary: #818cf8;
-  --color-brand-tertiary: #a5b4fc;
+  --color-brand-primary: #4f46e5;
+  --color-brand-secondary: #6366f1;
+  --color-brand-tertiary: #818cf8;
 
   --color-status-success: #10b981;
   --color-status-warning: #f59e0b;
   --color-status-error: #ef4444;
 }
 
-/* إعدادات ألوان وضع الدارك مود (Dark Mode Theme) المتطابق مع صورة Figma المظلمة */
 .dark {
   --color-background: #090d16;
   --color-foreground: #f8fafc;
@@ -40,15 +40,7 @@ body {
   --color-muted: #1f2937;
   --color-muted-foreground: #94a3b8;
 
-  --color-primary: #6366f1;
-  --color-primary-foreground: #ffffff;
-
-  --color-brand-primary: #818cf8;
-  --color-brand-secondary: #a5b4fc;
-  --color-brand-tertiary: #c7d2fe;
-
-  --color-status-success: #34d399;
-  --color-status-warning: #fbbf24;
-  --color-status-error: #f87171;
+  --color-brand-primary: #6366f1;
+  --color-brand-secondary: #818cf8;
+  --color-brand-tertiary: #a5b4fc;
 }
-

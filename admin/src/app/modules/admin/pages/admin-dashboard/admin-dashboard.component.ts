@@ -1,7 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AdminService } from '../../services/admin.service';
 import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
+import { ToastrService } from 'ngx-toastr';
 import { DashboardStats } from '../../interfaces/admin.interface';
 
 @Component({
@@ -12,40 +14,51 @@ import { DashboardStats } from '../../interfaces/admin.interface';
   styleUrls: ['./admin-dashboard.component.css']
 })
 export class AdminDashboardComponent implements OnInit {
+  private adminService = inject(AdminService);
+  private router = inject(Router);
+  private toastr = inject(ToastrService);
+
   users: any[] = [];
   stats: DashboardStats = { totalUsers: 0, activeUsers: 0, totalCvs: 0, bannedUsers: 0 };
   isDarkMode: boolean = true;
 
-  // التحكم في الـ Modals الفيجما الجديدة
+  adminName: string = 'Admin';
+  adminInitial: string = 'AD';
+
   showRoleModal: boolean = false;
   showBanModal: boolean = false;
+  showDeleteModal: boolean = false;
   selectedUser: any = null;
-
-  constructor(private adminService: AdminService, private http: HttpClient) {}
 
   ngOnInit(): void {
     this.loadAdminData();
+    this.loadAdminInfo();
   }
 
-loadAdminData(): void {
-  this.adminService.getUsers().subscribe({
-    next: (users) => {
-      // بما أننا لا نستطيع جلب CVs، سنعتمد على البيانات القادمة مع المستخدم فقط
-      this.users = users.map((user: any) => ({
-        ...user,
-        role: user.role || 'User',
-        status: user.status || 'active',
-        createdAt: user.createdAt || new Date(),
-        // نستخدم حقل cvCount إذا كان موجوداً في بيانات المستخدم، وإلا نعتبره 0
-        cvCount: user.cvCount || (user.cvs ? user.cvs.length : 0)
-      }));
+  loadAdminInfo() {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    this.adminName = user.name || 'Admin';
+    this.adminInitial = this.adminName.substring(0, 2).toUpperCase();
+  }
 
-      // الآن نقوم بحساب الإحصائيات بناءً على بيانات المستخدمين فقط
-      this.updateStats();
-    },
-    error: (err) => console.error("Error fetching users:", err)
-  });
-}
+  loadAdminData(): void {
+    this.adminService.getUsers().subscribe({
+      next: (users) => {
+        this.users = users.map((user: any) => ({
+          ...user,
+          role: user.role || 'User',
+          status: user.status || 'active',
+          createdAt: user.createdAt || new Date(),
+          cvCount: user.cvCount || (user.cvs ? user.cvs.length : 0)
+        }));
+        this.updateStats();
+      },
+      error: (err) => {
+        this.toastr.error("Failed to load users");
+        console.error(err);
+      }
+    });
+  }
 
   updateStats(): void {
     this.stats.totalUsers = this.users.length;
@@ -54,95 +67,49 @@ loadAdminData(): void {
     this.stats.totalCvs = this.users.reduce((acc, user) => acc + (user.cvCount || 0), 0);
   }
 
-  loadTotalCvsCount(): void {
-    this.http.get<any>('http://localhost:5000/api/cvs/').subscribe({
-      next: (res) => {
-        this.stats.totalCvs = res?.data?.pagination?.total || res?.data?.cvs?.length || 15;
-      },
-      error: (err) => {
-        console.warn('CV API not responding, using fallback value for layout:', err);
-        this.stats.totalCvs = 15;
-      }
-    });
-  }
-
   toggleTheme(): void {
     this.isDarkMode = !this.isDarkMode;
   }
 
-  openRoleModal(user: any): void {
-    this.selectedUser = user;
-    this.showRoleModal = true;
+  logout() {
+    localStorage.clear();
+    this.toastr.success("Logged out successfully");
+    this.router.navigate(['/login']);
   }
 
-  openBanModal(user: any): void {
-    this.selectedUser = user;
-    this.showBanModal = true;
+  openRoleModal(user: any) { this.selectedUser = user; this.showRoleModal = true; }
+  openBanModal(user: any) { this.selectedUser = user; this.showBanModal = true; }
+  openDeleteModal(user: any) { this.selectedUser = user; this.showDeleteModal = true; }
+
+  closeModals(): void {
+    this.showRoleModal = false;
+    this.showBanModal = false;
+    this.showDeleteModal = false;
+    this.selectedUser = null;
   }
 
-  // 1. تعديل الـ Role وتحديث الجدول والداتابيز فوراً
   updateUserRole(newRole: string): void {
     if (!this.selectedUser) return;
-    const userId = this.selectedUser._id || this.selectedUser.id;
-
-    // تحديث فوري في الـ UI للجدول الحالي بدون انتظار الـ Response
-    this.selectedUser.role = newRole;
-
-    // إرسال الطلب للباك إند ليسمع في الداتابيز
-    this.adminService.updateUserStatus(userId, this.selectedUser.status || 'active', newRole).subscribe({
-      next: () => {
-        this.closeModals();
-        this.loadAdminData(); // جلب البيانات من السيرفر للتأكيد النهائي والمزامنة
-      },
-      error: (err) => {
-        console.error('Error updating user role:', err);
-        this.loadAdminData(); // في حال فشل السيرفر، نعيد تحميل الداتا القديمة لحماية الـ UI
-      }
+    this.adminService.updateUserStatus(this.selectedUser._id, this.selectedUser.status, newRole).subscribe(() => {
+      this.toastr.success("Role updated");
+      this.closeModals();
+      this.loadAdminData();
     });
   }
 
-  // 2. عمل الـ Ban الفعلي، إخفاء الأيقونات، وتحديث الداتابيز والإحصائيات فوراً
   confirmBanUser(): void {
-  if (!this.selectedUser) return;
-
-  // تأكدي إنك بتبعتي الـ role الحالي
-  this.adminService.updateUserStatus(
-    this.selectedUser._id,
-    'banned',
-    this.selectedUser.role, // <-- تأكدي إن دي موجودة
-    'Banned by Admin'
-  ).subscribe({
-    next: () => {
+    this.adminService.updateUserStatus(this.selectedUser._id, 'banned', this.selectedUser.role).subscribe(() => {
+      this.toastr.warning("User banned");
       this.closeModals();
-      this.loadAdminData(); // دلوقتي الـ Load هتقرأ الـ status الجديد من الداتابيز
-    }
-  });
-}
-showDeleteModal: boolean = false; // إضافة متغير للمودال الجديد
+      this.loadAdminData();
+    });
+  }
 
-openDeleteModal(user: any): void {
-  this.selectedUser = user;
-  this.showDeleteModal = true;
-}
-
-confirmDeleteUser(): void {
-  if (!this.selectedUser) return;
-  const userId = this.selectedUser._id || this.selectedUser.id;
-
-  this.adminService.deleteUser(userId).subscribe({
-    next: () => {
+  confirmDeleteUser(): void {
+    this.adminService.deleteUser(this.selectedUser._id).subscribe(() => {
+      this.toastr.error("User deleted");
       this.closeModals();
-      this.loadAdminData(); // إعادة تحميل البيانات بعد الحذف
-    },
-    error: (err) => console.error('Error deleting user:', err)
-  });
-}
-
-// لا تنسي تعديل دالة closeModals لتشمل المودال الجديد
-closeModals(): void {
-  this.showRoleModal = false;
-  this.showBanModal = false;
-  this.showDeleteModal = false; // هنا
-  this.selectedUser = null;
-}
+      this.loadAdminData();
+    });
+  }
 }
