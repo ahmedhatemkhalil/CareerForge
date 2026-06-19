@@ -4,8 +4,10 @@ import { BarChart3, Mic, TrendingUp } from 'lucide-react'
 
 import useAuthStore from '@/stores/authStore'
 import { getAllAnalyses } from '@/services/analysisService'
+import { getAllInterviews } from '@/services/interviewService'
 import {
   countAnalysesThisMonth,
+  countInterviewsThisWeek,
   getFirstName,
   getFormattedDate,
   parseAnalysesResponse,
@@ -22,6 +24,9 @@ const Dashboard = () => {
   const [analyses, setAnalyses] = useState([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [interviews, setInterviews] = useState([])
+  const [interviewTotal, setInterviewTotal] = useState(0)
+  const [interviewsLoading, setInterviewsLoading] = useState(true)
 
   useEffect(() => {
     if (!user) loadCurrentUser().catch(() => {})
@@ -41,6 +46,20 @@ const Dashboard = () => {
       .finally(() => setLoading(false))
   }, [])
 
+  useEffect(() => {
+    getAllInterviews()
+      .then((response) => {
+        const data = response?.data ?? []
+        setInterviews(data)
+        setInterviewTotal(response?.count ?? data.length)
+      })
+      .catch(() => {
+        setInterviews([])
+        setInterviewTotal(0)
+      })
+      .finally(() => setInterviewsLoading(false))
+  }, [])
+
   const recentAnalyses = useMemo(
     () =>
       [...analyses]
@@ -52,6 +71,23 @@ const Dashboard = () => {
   const analysesThisMonth = useMemo(
     () => countAnalysesThisMonth(analyses),
     [analyses],
+  )
+
+  const interviewsThisWeek = useMemo(
+    () => countInterviewsThisWeek(interviews),
+    [interviews],
+  )
+
+  const recentInterviews = useMemo(
+    () =>
+      [...interviews]
+        .sort(
+          (a, b) =>
+            new Date(b.completed_at || b.interviewDate) -
+            new Date(a.completed_at || a.interviewDate),
+        )
+        .slice(0, 3),
+    [interviews],
   )
 
   const { dayName, fullDate } = getFormattedDate()
@@ -96,10 +132,16 @@ const Dashboard = () => {
           icon={Mic}
           iconBgClassName="bg-secondary"
           iconClassName="text-primary"
-          value="8"
+          value={interviewTotal}
           label="Interview Sessions"
-          sublabel="+2 this week"
+          sublabel={
+            interviewsThisWeek > 0
+              ? `+${interviewsThisWeek} this week`
+              : 'No new interviews this week'
+          }
           sublabelClassName="text-primary"
+          onDoubleClick={() => navigate('/interview')}
+          loading={interviewsLoading}
         />
 
         <StatCard
@@ -120,7 +162,12 @@ const Dashboard = () => {
           onOpenAnalysis={(id) => navigate(`/analyze/results/${id}`)}
           onViewAll={() => navigate('/analyze')}
         />
-        <RecentInterviews />
+        <RecentInterviews
+          interviews={recentInterviews}
+          loading={interviewsLoading}
+          onOpenInterview={() => navigate('/interview')}
+          onViewAll={() => navigate('/interview')}
+        />
         <ActiveRoadmap />
       </section>
     </div>

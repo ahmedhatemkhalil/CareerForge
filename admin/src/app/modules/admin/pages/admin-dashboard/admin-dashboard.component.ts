@@ -14,6 +14,9 @@ import { DashboardStats } from '../../interfaces/admin.interface';
   styleUrls: ['./admin-dashboard.component.css']
 })
 export class AdminDashboardComponent implements OnInit {
+reactivateUser(_t79: any) {
+throw new Error('Method not implemented.');
+}
   private adminService = inject(AdminService);
   private router = inject(Router);
   private toastr = inject(ToastrService);

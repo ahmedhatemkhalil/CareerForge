@@ -1,44 +1,44 @@
-import { useEffect, useState } from 'react'
-import { Link, useLocation, useParams } from 'react-router-dom'
-import { ArrowLeft, Loader2 } from 'lucide-react'
-import { toast } from 'react-hot-toast'
+import { useEffect, useState } from "react";
+import { Link, useLocation, useParams } from "react-router-dom";
+import { ArrowLeft, Loader2 } from "lucide-react";
+import { toast } from "react-hot-toast";
 
-import AnalysisDetailsTabs from './components/AnalysisDetailsTabs'
-import AnalysisResultsCard from './components/AnalysisResultsCard'
-import { getAnalysisById } from '../../services/analysisService'
+import AnalysisDetailsTabs from "./components/AnalysisDetailsTabs";
+import AnalysisResultsCard from "./components/AnalysisResultsCard";
+import { getAnalysisById } from "../../../../analysisService";
 
 const AnalysisResults = () => {
-  const { id } = useParams()
-  const location = useLocation()
-  const [analysis, setAnalysis] = useState(location.state?.analysis ?? null)
-  const [loading, setLoading] = useState(!location.state?.analysis)
+  const { id } = useParams();
+  const location = useLocation();
+  const [analysis, setAnalysis] = useState(location.state?.analysis ?? null);
+  const [loading, setLoading] = useState(!location.state?.analysis);
 
   useEffect(() => {
-    if (location.state?.analysis) return
+    if (location.state?.analysis) return;
 
     const loadAnalysis = async () => {
       try {
-        const data = await getAnalysisById(id)
-        setAnalysis(data)
+        const data = await getAnalysisById(id);
+        setAnalysis(data);
       } catch (error) {
-        console.error('Failed to load analysis:', error)
+        console.error("Failed to load analysis:", error);
         toast.error(
-          error.response?.data?.message || 'Failed to load analysis results.',
-        )
+          error.response?.data?.message || "Failed to load analysis results.",
+        );
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    loadAnalysis()
-  }, [id, location.state?.analysis])
+    loadAnalysis();
+  }, [id, location.state?.analysis]);
 
   if (loading) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center">
         <Loader2 className="size-8 animate-spin text-muted-foreground" />
       </div>
-    )
+    );
   }
 
   if (!analysis) {
@@ -53,13 +53,13 @@ const AnalysisResults = () => {
           Back to analyses
         </Link>
       </div>
-    )
+    );
   }
 
-  const roleTitle = location.state?.jobTitle ?? analysis.jobId?.title
-  const cvFileName = location.state?.cvFileName ?? analysis.cvId?.fileName
+  const roleTitle = location.state?.jobTitle ?? analysis.jobId?.title;
+  const cvFileName = location.state?.cvFileName ?? analysis.cvId?.fileName;
   const jobDescription =
-    location.state?.jobDescription ?? analysis.jobId?.descriptionText
+    location.state?.jobDescription ?? analysis.jobId?.descriptionText;
 
   return (
     <div className="mx-auto w-full max-w-4xl space-y-4 pb-2 sm:space-y-6 sm:pb-0">
@@ -87,7 +87,7 @@ const AnalysisResults = () => {
         improvedSuggestions={analysis.improvedSuggestions}
       />
     </div>
-  )
-}
+  );
+};
 
-export default AnalysisResults
+export default AnalysisResults;
