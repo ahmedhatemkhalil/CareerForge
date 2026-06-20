@@ -71,6 +71,8 @@ const AppRouter = () => {
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <Routes>
+</Routes>
     </BrowserRouter>
   )
 }
