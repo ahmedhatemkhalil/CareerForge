@@ -111,6 +111,8 @@ ${jobDescription || "Not provided"}
 
 Instructions:
 - Build the roadmap primarily around the missing skills and weaknesses above.
+- CRITICAL: Personalize every week to the exact Current role and Target role above. If skill gaps say "None provided", infer the learning path from the role transition only.
+- Do NOT return a generic React/frontend roadmap unless the target role is clearly frontend-related (e.g. React Developer, Frontend Engineer).
 - Use match score as intensity guidance: below 50% prioritize fundamentals and more weeks; 50-75% balance gaps with role-specific skills; above 75% focus on advanced polish and interview readiness.
 - Adjust number of weeks based on hours per week (more hours = fewer weeks, fewer hours = more weeks).
 - For each resource, DO NOT invent URLs. Provide title, type, platform, and searchTopic only.
@@ -131,7 +133,7 @@ const callLangflowRoadmap = async (context) => {
         output_type: "chat",
         input_type: "chat",
         session_id: sessionId,
-        input_value: "generate_roadmap",
+        input_value: context,
     };
 
     if (LANGFLOW_ROADMAP_PROMPT_ID) {
@@ -140,8 +142,6 @@ const callLangflowRoadmap = async (context) => {
                 roadmap_context: context,
             },
         };
-    } else {
-        payload.input_value = context;
     }
 
     const headers = { "Content-Type": "application/json" };
