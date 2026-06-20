@@ -16,12 +16,11 @@ import Register from './pages/Register/Register'
 import ForgotPassword from './pages/Login/ForgotPassword'
 import ResetPassword from './pages/Login/ResetPassword'
 import EmailVerification from './pages/Login/EmailVerification'
-import GithubCallback from './pages/Login/GithubCallback'
-import GoogleCallback from './pages/Login/GoogleCallback'
 import VerifyNotice from './pages/Register/verify-notice'
 import Profile from './pages/Profile/Profile'
 import NewAnalysis from './pages/Analyze/NewAnalysis'
 import AnalysisResults from './pages/Analyze/AnalysisResults'
+import GoogleCallback from './pages/Login/GoogleCallback'
 
 const ConditionalLayout = () => {
   const token = localStorage.getItem('token')
@@ -50,9 +49,10 @@ const AppRouter = () => {
           <Route path="verify-notice" element={<VerifyNotice />} />
         </Route>
 
-        <Route path="auth/callback" element={<GoogleCallback />} />
-        <Route path="oauth/github/callback" element={<GithubCallback />} />
+ <Route path="oauth/callback" element={<GoogleCallback />} />
 
+
+        
         <Route element={<ProtectedRoute />}>
           <Route element={<Layout />}>
             <Route path="dashboard" element={<Dashboard />} />

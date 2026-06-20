@@ -7,12 +7,12 @@ import bcrypt from 'bcrypt';
 
 const generateAuthTokens = (user) => {
   const accessToken = jwt.sign(
-    { userId: user._id, role: user.role }, 
+    { id: user._id, role: user.role }, 
     process.env.JWT_SECRET, 
     { expiresIn: '15m' }
   );
   const refreshToken = jwt.sign(
-    { userId: user._id, type: 'refresh' }, 
+    { id: user._id, type: 'refresh' }, 
     process.env.REFRESH_SECRET, 
     { expiresIn: '7d' }
   );

@@ -15,7 +15,7 @@ export class AdminService {
     return this.http.get<User[]>(`${this.apiUrl}/users`);
   }
 
-  
+
 
 updateUserStatus(id: string, status: string, role: string, banReason: string | null = null): Observable<any> {
   return this.http.put(`${this.apiUrl}/users/${id}/ban`, {
@@ -27,4 +27,5 @@ updateUserStatus(id: string, status: string, role: string, banReason: string | n
 deleteUser(id: string): Observable<any> {
   return this.http.delete(`${this.apiUrl}/users/${id}`);
 }
+
 }

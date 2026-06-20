@@ -20,6 +20,7 @@ const resetPasswordSchema = z
 export default function ResetPassword() {
   const [resetSuccess, setResetSuccess] = useState(false);
 
+  // eslint-disable-next-line no-unused-vars
   const navigate = useNavigate();
   const location = useLocation();
  

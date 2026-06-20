@@ -74,19 +74,11 @@ export const updateTheme = async (theme) => {
   return data;
 };
 
-export const githubLogin = async (code) => {
-  const { data } = await api.post("/auth/oauth/github", {
-    code,
-    redirectUri: "http://localhost:5173/oauth/github/callback",
-  });
 
-  return data;
-};
 export const googleLogin = async (code) => {
-  const { data } = await api.post("/auth/oauth/google", {
+  const { data } = await api.post("/oauth/google", {
     code,
-    redirectUri: "http://localhost:3000/auth/callback",
+    redirectUri: "http://localhost:5173/oauth/callback",
   });
-
   return data;
 };

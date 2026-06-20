@@ -5,6 +5,8 @@ import { isStrongPassword } from "../../utils/validators.js";
 
 // GET /api/users/me
 export const getCurrentUser = async (req, res) => {
+console.log("Check Headers:", req.headers.authorization); // أضيفي هذا
+  console.log("Check req.user:", req.user);
   try {
     const user = await User.findById(req.user.id).select("-password_hash");
     if (!user) return res.status(404).json({ message: "User not found" });

@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+/* eslint-disable no-undef */
+import { useEffect ,useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { googleLogin } from "../../services/authService";
 import { loadUserTheme } from "../../utils/theme";
@@ -8,7 +9,11 @@ import toast from "react-hot-toast";
 export default function GoogleCallback() {
   const navigate = useNavigate();
 
-  useEffect(() => {
+  const isCalled = useRef(false); // إضافة ref لمنع التكرار
+
+useEffect(() => {
+  if (isCalled.current) return; // إذا تم الاستدعاء، توقفي
+  isCalled.current = true;
     const loginWithGoogle = async () => {
       try {
         const params = new URLSearchParams(window.location.search);
@@ -36,7 +41,7 @@ export default function GoogleCallback() {
 
         toast.success("Login with Google successful");
 
-        // نروح للداشبورد
+    
         navigate("/dashboard");
 
       } catch (error) {
@@ -52,11 +57,25 @@ export default function GoogleCallback() {
     loginWithGoogle();
   }, [navigate]);
 
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <h1 className="text-xl font-semibold">
-        Signing in with Google...
-      </h1>
+return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-900 transition-colors duration-500">
+      <div className="text-center space-y-6">
+        {/* Spinner Animation */}
+        <div className="relative ml-8"> 
+  <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+  <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-t-blue-400 rounded-full animate-spin-slow"></div>
+</div>
+
+        {/* Text Content */}
+        <div className="space-y-2">
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
+            Authenticating...
+          </h2>
+          <p className="text-gray-500 dark:text-gray-400">
+            Please wait while we set up your profile.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

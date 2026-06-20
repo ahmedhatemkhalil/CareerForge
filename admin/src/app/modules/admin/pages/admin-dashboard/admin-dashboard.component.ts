@@ -22,7 +22,9 @@ throw new Error('Method not implemented.');
   private toastr = inject(ToastrService);
 
   users: any[] = [];
-  stats: DashboardStats = { totalUsers: 0, activeUsers: 0, totalCvs: 0, bannedUsers: 0 };
+  stats: DashboardStats = {
+    totalUsers: 0, activeUsers: 0, totalCvs: 0, bannedUsers: 0
+  };
   isDarkMode: boolean = true;
 
   adminName: string = 'Admin';
@@ -101,7 +103,7 @@ throw new Error('Method not implemented.');
     next: () => {
       if (loggedInUser._id === userId && newRole !== 'Admin') {
         this.toastr.warning("Your role has been changed. Logging out...");
-        this.logout(); 
+        this.logout();
       } else {
         this.toastr.success("Role updated successfully");
         this.closeModals();
