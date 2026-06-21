@@ -121,3 +121,13 @@ export const formatInterviewScore = (score) => {
 }
 
 export const getInterviewScoreStyles = (score) => getScoreStyles(score).badge
+
+export const getRoadmapProgressColor = (progress, status) => {
+  if (status === 'completed' || progress === 100) {
+    return 'var(--status-success)'; 
+  }
+  if (progress < 50) {
+    return 'var(--status-warning)'; 
+  }
+  return 'var(--brand-primary)'; 
+}
