@@ -21,6 +21,8 @@ import Profile from './pages/Profile/Profile'
 import NewAnalysis from './pages/Analyze/NewAnalysis'
 import AnalysisResults from './pages/Analyze/AnalysisResults'
 import GoogleCallback from './pages/Login/GoogleCallback'
+import NewRoadmap from './pages/Roadmap/NewRoadmap'
+import RoadmapResults from './pages/Roadmap/RoadmapResults'
 
 const ConditionalLayout = () => {
   const token = localStorage.getItem('token')
@@ -64,6 +66,8 @@ const AppRouter = () => {
             <Route path="live-interview/:sessionId" element={<LiveInterview />} />
             <Route path="interview/:sessionId/result" element={<InterviewResult />} /> 
             <Route path="roadmap" element={<Roadmap />} />
+            <Route path="roadmap/result/:id" element={<RoadmapResults />} />
+            <Route path="new-roadmap" element={<NewRoadmap />} />
             <Route path="analyze/results/:id" element={<AnalysisResults />} />
             <Route path="new-analysis" element={<NewAnalysis />} />
           </Route>
@@ -71,8 +75,7 @@ const AppRouter = () => {
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-      <Routes>
-</Routes>
+
     </BrowserRouter>
   )
 }

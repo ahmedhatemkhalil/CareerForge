@@ -38,7 +38,11 @@ export default function SkillAnalysisForm() {
       const response = await postRoadmap(payload);
       
       console.log("Roadmap API Success:", response.data);
-      
+
+      const newRoadmapId = response.data?._id || response.data?.data?._id; 
+      if (newRoadmapId) {
+        navigate(`/roadmap/result/${newRoadmapId}`); 
+      }
     //   navigate('/roadmap-view'); 
     } catch (err) {
       console.error("Submission failed - Server Response:", err.response?.data || err.message);
@@ -111,7 +115,7 @@ export default function SkillAnalysisForm() {
         disabled={loading || !selectedId} 
         className="w-full bg-brand-primary text-primary-foreground py-4 rounded-xl font-bold hover:bg-brand-primary-hover disabled:opacity-50 transition-all shadow-lg"
       >
-        {loading ? 'Generating...' : '✨ Generate AI Roadmap'}
+        {loading ? 'Generating...' : 'Generate AI Roadmap'}
       </button>
     </form>
   );
