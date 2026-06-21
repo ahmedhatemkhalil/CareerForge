@@ -5,15 +5,17 @@ import { BarChart3, Mic, TrendingUp } from 'lucide-react'
 import useAuthStore from '@/stores/authStore'
 import { getAllAnalyses } from '@/services/analysisService'
 import { interviewService } from '@/services/interviewService'
+import { getAllRoadmaps } from '@/services/roadmapService'
 import {
   countAnalysesThisMonth,
   countInterviewsThisWeek,
+  countRoadmapsThisMonth,
   getFirstName,
   getFormattedDate,
   parseAnalysesResponse,
 } from '@/utils/helpers'
 import { loadCurrentUser } from '@/utils/userProfile'
-import ActiveRoadmap from './components/ActiveRoadmap'
+import RecentRoadmaps from './components/RecentRoadmaps'
 import RecentCvAnalyses from './components/RecentCvAnalyses'
 import RecentInterviews from './components/RecentInterviews'
 import StatCard from './components/StatCard'
@@ -27,6 +29,8 @@ const Dashboard = () => {
   const [interviews, setInterviews] = useState([])
   const [interviewTotal, setInterviewTotal] = useState(0)
   const [interviewsLoading, setInterviewsLoading] = useState(true)
+  const [roadmaps, setRoadmaps] = useState([])
+  const [roadmapsLoading, setRoadmapsLoading] = useState(true)
 
   useEffect(() => {
     if (!user) loadCurrentUser().catch(() => {})
@@ -59,6 +63,31 @@ const Dashboard = () => {
       })
       .finally(() => setInterviewsLoading(false))
   }, [])
+
+  useEffect(() => {
+    getAllRoadmaps()
+      .then((data) => {
+        setRoadmaps(Array.isArray(data) ? data : [])
+      })
+      .catch(() => {
+        setRoadmaps([])
+      })
+      .finally(() => setRoadmapsLoading(false))
+  }, [])
+
+  const recentRoadmaps = useMemo(
+    () =>
+      [...roadmaps]
+        .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+        .slice(0, 3),
+    [roadmaps],
+  )
+
+  const roadmapsThisMonth = useMemo(
+    () => countRoadmapsThisMonth(roadmaps),
+    [roadmaps],
+  )
+
   const recentAnalyses = useMemo(
     () =>
       [...analyses]
@@ -147,10 +176,16 @@ const Dashboard = () => {
           icon={TrendingUp}
           iconBgClassName="bg-emerald-50"
           iconClassName="text-emerald-500"
-          value="67%"
-          label="Roadmap Progress"
-          sublabel="Week 8 of 12"
+          value={roadmaps.length}
+          label="Total Roadmaps"
+          sublabel={
+            roadmapsThisMonth > 0
+              ? `+${roadmapsThisMonth} this month`
+              : 'No new roadmaps this month'
+          }
           sublabelClassName="text-emerald-500"
+          onDoubleClick={() => navigate('/roadmap')}
+          loading={roadmapsLoading}
         />
       </section>
 
@@ -176,7 +211,12 @@ const Dashboard = () => {
           }}
           onViewAll={() => navigate('/interview')}
         />
-        <ActiveRoadmap />
+        <RecentRoadmaps
+          roadmaps={recentRoadmaps}
+          loading={roadmapsLoading}
+          onOpenRoadmap={(id) => navigate(`/roadmap/result/${id}`)}
+          onViewAll={() => navigate('/roadmap')}
+        />
       </section>
     </div>
   )

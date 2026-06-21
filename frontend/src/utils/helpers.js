@@ -48,6 +48,17 @@ export const countAnalysesThisMonth = (analyses = []) => {
   }).length
 }
 
+export const countRoadmapsThisMonth = (roadmaps = []) => {
+  const now = new Date()
+  const month = now.getMonth()
+  const year = now.getFullYear()
+
+  return roadmaps.filter((roadmap) => {
+    const createdAt = new Date(roadmap.createdAt)
+    return createdAt.getMonth() === month && createdAt.getFullYear() === year
+  }).length
+}
+
 export const countInterviewsThisWeek = (interviews = []) => {
   const now = new Date()
   const startOfWeek = new Date(now)
