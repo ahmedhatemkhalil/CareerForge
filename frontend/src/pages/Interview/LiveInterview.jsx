@@ -14,91 +14,58 @@ export default function LiveInterview() {
   const [questionIndex, setQuestionIndex] = useState(1);
   const [currentAnswer, setCurrentAnswer] = useState("");
   
-  // شاشة التحميل الكاملة فقط عند فتح الصفحة لأول مرة وجلب السؤال الأول
   const [loading, setLoading] = useState(!location.state?.firstQuestion); 
   const [submitting, setSubmitting] = useState(false); 
   const [exitModalOpen, setExitModalOpen] = useState(false);
 
-  // نتحقق إذا كانت الجلسة وهمية للتصميم أم حقيقية
-  const isMockMode = sessionId && sessionId.startsWith("mock-session-");
-  const TOTAL_QUESTIONS_COUNT = 5; 
-
-  // مصفوفة أسئلة وهمية جاهزة للتحرك داخل الفرونت إند فوراً دون الحاجة للباكيند
-  const mockQuestions = [
-    `Welcome to your mock interview for the ${targetJob} position. To start, could you please introduce yourself and walk me through your relevant experience?`,
-    "What are your greatest professional strengths, and how do you think they will help you succeed in this role?",
-    "Can you describe a challenging situation you faced at work or during a project, and how you managed to overcome it?",
-    "Where do you see yourself professionally in the next 3 to 5 years, and how does this position align with your career goals?",
-    "Do you have any questions for us about the team, the company culture, or the expectations for this role?"
-  ];
-
   useEffect(() => {
-    // إذا كنا في الوضع الوهمي ومعنا سؤال، نوقف التحميل فوراً
-    if (isMockMode && currentQuestion) {
-      setLoading(false);
-      return;
-    }
-
     if (!currentQuestion) {
       const fetchSessionData = async () => {
         try {
           setLoading(true);
           const response = await interviewService.getInterviewById(sessionId);
-          const questionsList = response.questions || [];
+          const questionsList = response?.questions || response?.data?.questions || [];
           if (questionsList.length > 0) {
             const activeQ = questionsList.find(q => !q.user_answer) || questionsList[questionsList.length - 1];
             setCurrentQuestion(activeQ.question_text);
-            setQuestionIndex(activeQ.order_index);
+            setQuestionIndex(activeQ.order_index || questionsList.length);
           }
         } catch (err) {
-          console.error("Failed to load interview context:", err);
+          console.error("Failed to load interview question from backend AI:", err);
         } finally {
           setLoading(false);
         }
       };
       fetchSessionData();
     }
-  }, [sessionId, currentQuestion, isMockMode]);
-
-  const handleInputChange = (text) => {
-    setCurrentAnswer(text);
-  };
-
-  const handleAction = async () => {
+  }, [sessionId, currentQuestion]);
+const handleAction = async () => {
     if (!currentAnswer.trim() || submitting) return;
 
     try {
       setSubmitting(true);
       
-      // 🌟 الحماية الذهبية: لو كانت الجلسة وهمية لتخطي الـ 500، نتنقل داخل الفرونت إند تماماً بدون الاتصال بالباكيند لمنع الـ 400
-      if (isMockMode) {
-        if (questionIndex >= TOTAL_QUESTIONS_COUNT) {
-          // إذا كان السؤال الأخير ننتقل لصفحة النتيجة
-          navigate(`/interview/${sessionId}/result`);
-        } else {
-          // الانتقال للسؤال التالي من المصفوفة الوهمية مباشرة وفوراً
-          const nextIdx = questionIndex; // لأن index يبدأ من 1 فـ nextIdx يمثل العنصر التالي
-          setCurrentQuestion(mockQuestions[nextIdx] || "Tell me about your technical background?");
-          setQuestionIndex(prev => prev + 1);
-          setCurrentAnswer("");
-        }
-        return;
-      }
+      const response = await interviewService.submitAnswer(sessionId, currentAnswer.trim());
+      console.log("AI Response Raw:", response);
 
-      // 🟢 الكود الطبيعي في حال كانت الجلسة حقيقية والباكيند استجاب في البداية بسلام
-      const data = await interviewService.submitAnswer(sessionId, currentAnswer.trim());
+      const isCompleted = response?.isCompleted ?? response?.data?.isCompleted ?? false;
+      
+      const nextQuestionText = response?.nextQuestion ?? response?.data?.nextQuestion;
 
-      if (data.isCompleted) {
+      if (isCompleted) {
         navigate(`/interview/${sessionId}/result`);
-      } else {
-        setCurrentQuestion(data.nextQuestion);
+      } else if (nextQuestionText) {
+        setCurrentQuestion(nextQuestionText);
         setQuestionIndex(prev => prev + 1);
-        setCurrentAnswer("");
+        setCurrentAnswer(""); 
+      } else {
+        console.warn("No nextQuestion found in response, navigating to results.");
+        navigate(`/interview/${sessionId}/result`);
       }
+
     } catch (err) {
-      console.error("Error submitting answer:", err);
-      // Fallback آمن: لو انهار الباكيند الحقيقي في أي خطوة، ننقله لصفحة النتيجة بدلاً من تعطيل الشاشة
-      navigate(`/interview/${sessionId}/result`);
+      console.error("Error submitting answer to AI:", err);
+      alert("Failed to communicate with AI Server. Please check your connection and try again.");
     } finally {
       setSubmitting(false);
     }
@@ -110,20 +77,18 @@ export default function LiveInterview() {
         <Loader2 className="w-10 h-10 animate-spin" />
         <div className="text-center">
           <p className="text-base font-bold text-gray-800">
-            AI is generating your tailored questions...
+            AI is connecting to your interview session...
           </p>
-          <p className="text-xs text-gray-400 mt-1">Please wait, this might take a few moments.</p>
+          <p className="text-xs text-gray-400 mt-1">Please wait, retrieving tailored questions.</p>
         </div>
       </div>
     );
   }
 
   const hasNoAnswer = !currentAnswer.trim();
-  const isLastQuestion = questionIndex >= TOTAL_QUESTIONS_COUNT;
 
   return (
     <div className="p-8 max-w-4xl mx-auto font-sans text-gray-800 antialiased selection:bg-indigo-100">
-      
       <div className="mb-6">
         <button 
           onClick={() => setExitModalOpen(true)} 
@@ -136,7 +101,7 @@ export default function LiveInterview() {
       <div className="flex justify-between items-end mb-8">
         <div>
           <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">
-            Mock Interview {isMockMode && "(Preview Mode)"}
+            Live AI Interview
           </span>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight capitalize">
             {targetJob}
@@ -156,7 +121,7 @@ export default function LiveInterview() {
               {questionIndex}
             </div>
             <span className="text-xs font-bold text-[#4c3eac] uppercase tracking-wider">
-              Question {questionIndex}
+              AI Prompt
             </span>
           </div>
           <p className="text-lg font-bold text-slate-800 leading-relaxed px-1">
@@ -170,9 +135,9 @@ export default function LiveInterview() {
           </label>
           <textarea
             value={currentAnswer}
-            onChange={(e) => handleInputChange(e.target.value)}
+            onChange={(e) => setCurrentAnswer(e.target.value)}
             disabled={submitting}
-            placeholder="Type your answer here. Be specific — use concrete examples from your experience, quantify outcomes where possible, and structure your response clearly..."
+            placeholder="Type your answer here..."
             className="w-full h-64 p-5 rounded-2xl border border-slate-200 focus:outline-none focus:border-[#4c3eac] focus:ring-4 focus:ring-indigo-50/50 font-medium transition text-base resize-none placeholder:text-slate-400/90 leading-relaxed disabled:bg-slate-50"
           />
         </div>
@@ -191,10 +156,8 @@ export default function LiveInterview() {
         >
           {submitting ? (
             <span className="flex items-center gap-2">
-              <Loader2 className="w-5 h-5 animate-spin" /> Processing...
+              <Loader2 className="w-5 h-5 animate-spin" /> AI is evaluating your response...
             </span>
-          ) : isLastQuestion ? (
-            "Submit Answer & Finish Interview 🏁"
           ) : (
             "Submit Answer & Continue →"
           )}
@@ -205,9 +168,9 @@ export default function LiveInterview() {
         open={exitModalOpen}
         onClose={() => setExitModalOpen(false)}
         title="Exit Interview?"
-        message="Are you sure you want to exit? Your current unanswered progress won't be saved, but you can resume from this question later from your history."
+        message="Are you sure you want to exit? You can resume later."
         confirmLabel="Exit"
-        cancelLabel="Stay in Interview"
+        cancelLabel="Stay"
         confirmVariant="destructive"
         onConfirm={() => {
           setExitModalOpen(false);
