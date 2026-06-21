@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { postRoadmap } from '../../services/roadmapService';
+import { useNavigate } from 'react-router-dom';
 
 export default function RoleTransformationForm() {
   const [form, setForm] = useState({ currentRole: '', targetRole: '', commitment: '' });
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,7 +23,10 @@ export default function RoleTransformationForm() {
 
       const response = await postRoadmap({ type: 'role', ...payload });
       console.log("Role Roadmap Success:", response.data);
-      // أضيفي هنا navigate('/roadmap-view') إذا أردتِ التوجيه
+      const newRoadmapId = response.data?._id || response.data?.data?._id;
+      if (newRoadmapId) {
+        navigate(`/roadmap/result/${newRoadmapId}`);
+      }
     } catch (err) {
       console.error("Submission failed:", err.response?.data || err);
     } finally {
@@ -50,7 +55,7 @@ export default function RoleTransformationForm() {
         disabled={loading}
         className="w-full bg-brand-primary text-primary-foreground py-3 rounded-lg mt-4 font-bold hover:bg-brand-primary-hover disabled:opacity-50"
       >
-        {loading ? 'Generating...' : '✨ Generate AI Roadmap'}
+        {loading ? 'Generating...' : 'Generate AI Roadmap'}
       </button>
     </form>
   );
