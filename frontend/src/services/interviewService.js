@@ -26,7 +26,10 @@ submitAnswer: async (sessionId, answer) => {
 
   getAllInterviews: async () => {
     const { data } = await api.get("/interviews");
-    return data.data; // 👈 أهم تعديل
+    return {
+      count: data?.count ?? data?.data?.length ?? 0,
+      data: data?.data ?? [],
+    };
   },
 
   deleteInterview: async (sessionId) => {

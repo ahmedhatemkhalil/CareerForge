@@ -18,8 +18,7 @@ export default function Interview() {
     const fetchInterviews = async () => {
       try {
         setLoading(true);
-        const resData = await interviewService.getAllInterviews();
-        const interviewList = Array.isArray(resData) ? resData : resData.data || [];
+        const { data: interviewList } = await interviewService.getAllInterviews();
         setSessions(interviewList);
 
         const completedSessions = interviewList.filter(s => s.status === "Completed");

@@ -46,19 +46,19 @@ const Dashboard = () => {
       .finally(() => setLoading(false))
   }, [])
 
-useEffect(() => {
-  interviewService.getAllInterviews() // هنا التعديل
-    .then((response) => {
-      const data = response?.data ?? []
-      setInterviews(data)
-      setInterviewTotal(response?.count ?? data.length)
-    })
-    .catch(() => {
-      setInterviews([])
-      setInterviewTotal(0)
-    })
-    .finally(() => setInterviewsLoading(false))
-}, [])
+  useEffect(() => {
+    interviewService
+      .getAllInterviews()
+      .then(({ data, count }) => {
+        setInterviews(data)
+        setInterviewTotal(count)
+      })
+      .catch(() => {
+        setInterviews([])
+        setInterviewTotal(0)
+      })
+      .finally(() => setInterviewsLoading(false))
+  }, [])
   const recentAnalyses = useMemo(
     () =>
       [...analyses]
