@@ -1,15 +1,15 @@
 import { useState, useEffect } from "react";
-import { Plus, Calendar, Clock, ChevronRight, Play, Loader2, Trash2 } from "lucide-react";
+import { Plus, Calendar, ChevronRight, Play, Loader2, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { interviewService } from "../../services/interviewService"; 
-import ConfirmModal from "@/components/common/ConfirmModal"; // تأكدي من صحة مسار المودال لديكِ
+import ConfirmModal from "@/components/common/ConfirmModal"; 
 
 export default function Interview() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [sessions, setSessions] = useState([]);
-  
-  // حالات المودال المضافة
+  const [stats, setStats] = useState({ avgScore: 0, bestScore: 0 });
+
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [selectedSessionId, setSelectedSessionId] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -18,8 +18,19 @@ export default function Interview() {
     const fetchInterviews = async () => {
       try {
         setLoading(true);
-        const data = await interviewService.getAllInterviews();
-        setSessions(Array.isArray(data) ? data : data.sessions || []);
+        const resData = await interviewService.getAllInterviews();
+        const interviewList = Array.isArray(resData) ? resData : resData.data || [];
+        setSessions(interviewList);
+
+        const completedSessions = interviewList.filter(s => s.status === "Completed");
+        if (completedSessions.length > 0) {
+          const scores = completedSessions.map(s => s.score || 0);
+          const total = scores.reduce((sum, score) => sum + score, 0);
+          setStats({
+            avgScore: Math.round(total / scores.length),
+            bestScore: Math.max(...scores)
+          });
+        }
       } catch (error) {
         console.error("Error fetching interviews:", error);
       } finally {
@@ -30,21 +41,17 @@ export default function Interview() {
     fetchInterviews();
   }, []);
 
-  // فتح المودال وتحديد الجلسة المراد حذفها
   const handleDeleteTrigger = (id, e) => {
     e.stopPropagation(); 
     setSelectedSessionId(id);
     setConfirmOpen(true);
   };
 
-  // تنفيذ الحذف الفعلي من داخل المودال
   const confirmDelete = async () => {
     if (!selectedSessionId) return;
     try {
       setDeleteLoading(true);
-      if (interviewService.deleteInterview) {
-        await interviewService.deleteInterview(selectedSessionId);
-      }
+      await interviewService.deleteInterview(selectedSessionId);
       setSessions(sessions.filter((session) => session._id !== selectedSessionId));
       setConfirmOpen(false);
       setSelectedSessionId(null);
@@ -56,12 +63,26 @@ export default function Interview() {
     }
   };
 
+ const handleRowClick = (item) => {
+  if (item.status === "Completed") {
+    navigate(`/interview/${item._id}/result`); // 👈 اتأكدي إنها مكتوبة كده بالظبط
+  } else {
+    navigate(`/live-interview/${item._id}`);
+  }
+};
+
   return (
     <div className="p-6 max-w-5xl mx-auto font-sans text-gray-800 antialiased bg-slate-50/30 min-h-screen">
       
-      <div className="flex justify-between items-center mb-6">
+   
+      <div className="flex justify-between items-start mb-6">
         <div>
           <h1 className="text-[28px] font-bold text-[#0f172a] tracking-tight">Mock Interviews</h1>
+          {sessions.length > 0 && (
+            <p className="text-xs text-gray-400 font-medium mt-1">
+              {sessions.length} sessions - Avg score {stats.avgScore}% - Best {stats.bestScore}%
+            </p>
+          )}
         </div>
         <button
           onClick={() => navigate("/new-interview")}
@@ -72,6 +93,7 @@ export default function Interview() {
         </button>
       </div>
 
+  
       <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
         <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100">
           <h2 className="text-lg font-bold text-[#0f172a]">Session History</h2>
@@ -90,28 +112,27 @@ export default function Interview() {
           ) : (
             sessions.map((item) => {
               const isCompleted = item.status === "Completed";
-              const rawDate = item.date || item.createdAt || item.updatedAt || new Date();
+              const rawDate = item.interviewDate || new Date();
               const formattedDate = new Date(rawDate).toLocaleDateString('en-US', { 
                 month: 'short', 
                 day: 'numeric', 
                 year: 'numeric' 
               });
 
-              let cvName = item.fileName || item.resumeName || item.resume || item.cvName || item.jobDescription || "Elaf_Saad_Resume.pdf";
-              if (typeof cvName === 'string' && cvName.includes('/')) {
-                cvName = cvName.split('/').pop();
-              }
-
               const radius = 20;
               const circumference = 2 * Math.PI * radius;
-              const scoreValue = isCompleted ? (item.score || 0) : 40; 
-              const strokeDashoffset = circumference - (scoreValue / 100) * circumference;
+              const currentScore = item.score || 0;
+              const totalQuestions = item.totalQuestions || 5;
+              const answeredQuestions = item.answeredQuestions || 0;
+              
+              const percentage = isCompleted ? currentScore : (answeredQuestions / totalQuestions) * 100;
+              const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
               return (
                 <div
                   key={item._id}
                   className="flex items-center justify-between p-5 hover:bg-slate-50/40 transition-all group relative cursor-pointer"
-                  onClick={() => navigate(`/interview/${item._id}`)} 
+                  onClick={() => handleRowClick(item)} 
                 >
                   <div className="flex items-start gap-4">
                     <div className="relative w-11 h-11 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -121,18 +142,17 @@ export default function Interview() {
                           cx="22"
                           cy="22"
                           r={radius}
-                          stroke={isCompleted ? (item.score >= 80 ? "#10b981" : "#f59e0b") : "#f59e0b"} 
+                          stroke={isCompleted ? (currentScore >= 80 ? "#10b981" : "#f59e0b") : "#f59e0b"} 
                           strokeWidth="3"
                           fill="transparent"
-                          strokeDasharray={circumference}
-                          strokeDashoffset={strokeDashoffset}
+                          strokeDasharray={isCompleted ? circumference : "4, 2"}
+                          strokeDashoffset={isCompleted ? strokeDashoffset : 0}
                           strokeLinecap="round"
-                          style={{ strokeDasharray: !isCompleted ? "4 2" : circumference }} 
                           className="transition-all duration-500 ease-out"
                         />
                       </svg>
                       <span className="absolute font-bold text-xs text-gray-800">
-                        {isCompleted ? `${item.score}%` : `${item.score || 0}%`}
+                        {isCompleted ? `${currentScore}%` : `${answeredQuestions}/${totalQuestions}`}
                       </span>
                     </div>
 
@@ -147,8 +167,8 @@ export default function Interview() {
                             <span className="text-[11px] px-2 py-0.5 font-medium rounded-md border border-emerald-100 bg-emerald-50 text-emerald-600 flex items-center gap-1">
                               <span className="w-1 h-1 rounded-full bg-emerald-500"></span> Completed
                             </span>
-                            <span className={`text-[11px] px-2 py-0.5 font-medium rounded-md border ${item.score >= 80 ? "border-emerald-100 bg-emerald-50 text-emerald-600" : "border-blue-100 bg-blue-50 text-blue-600"}`}>
-                              {item.matchStatus || (item.score >= 80 ? "Strong Yes" : "Yes")}
+                            <span className={`text-[11px] px-2 py-0.5 font-medium rounded-md border ${currentScore >= 80 ? "border-emerald-100 bg-emerald-50 text-emerald-600" : "border-blue-100 bg-blue-50 text-blue-600"}`}>
+                              {item.hiringRecommendation || (currentScore >= 80 ? "Strong Yes" : "Yes")}
                             </span>
                           </>
                         ) : (
@@ -163,25 +183,20 @@ export default function Interview() {
                           <Calendar size={13} className="text-gray-300" />
                           {formattedDate}
                         </span>
-                        {isCompleted && cvName && (
-                          <span className="text-gray-400 truncate max-w-[250px] ml-1">
-                            {cvName}
+
+                        {item.cvName && (
+                          <span className="text-gray-400 truncate max-w-[250px] border-l border-gray-200 pl-3">
+                            {item.cvName}
                           </span>
                         )}
                       </div>
-
-                      {!isCompleted && cvName && (
-                        <div className="text-xs text-gray-400 font-normal mt-1 block">
-                          {cvName}
-                        </div>
-                      )}
                     </div>
                   </div>
 
                   <div className="flex items-center gap-4" onClick={(e) => e.stopPropagation()}>
                     {!isCompleted && (
                       <button 
-                        onClick={() => navigate(`/interview/${item._id}`)}
+                        onClick={() => navigate(`/live-interview/${item._id}`)}
                         className="flex items-center gap-1.5 px-3 py-1 bg-[#4f46e5] text-white hover:bg-[#4338ca] font-semibold text-xs rounded-lg shadow-sm transition-all"
                       >
                         <Play size={10} fill="currentColor" /> Resume
@@ -205,7 +220,6 @@ export default function Interview() {
         </div>
       </div>
 
-      {/* مودال تأكيد الحذف */}
       <ConfirmModal
         open={confirmOpen}
         onClose={() => {

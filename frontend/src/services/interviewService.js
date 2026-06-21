@@ -10,14 +10,18 @@ export const interviewService = {
   return data.data;
 },
 
-  submitAnswer: async (sessionId, answer) => {
-    const { data } = await api.post(`/interviews/${sessionId}/answer`, { answer });
-    return data.data;
-  },
+submitAnswer: async (sessionId, answer) => {
+  const { data } = await api.post(
+    `/interviews/${sessionId}/answer`,
+    { answer }
+  );
 
-  getInterviewById: async (sessionId) => {
+  return data;
+},
+
+ getInterviewById: async (sessionId) => {
     const { data } = await api.get(`/interviews/${sessionId}`);
-    return data.data;
+    return data; // 👈 تم تعديلها من data.data إلى data لتستقبل الكائن مباشرة
   },
 
   getAllInterviews: async () => {
