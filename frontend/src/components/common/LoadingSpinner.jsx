@@ -1,5 +1,10 @@
+import { Loader2 } from 'lucide-react';
 const LoadingSpinner = () => {
-  return <div>LoadingSpinner</div>
+  return (
+    <div className="flex items-center justify-center min-h-[80lvh] gap-3">
+      <Loader2 className="w-12 h-12 animate-spin text-brand-primary" />
+    </div>
+  )
 }
 
 export default LoadingSpinner
