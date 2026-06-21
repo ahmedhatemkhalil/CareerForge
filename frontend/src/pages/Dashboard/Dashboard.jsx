@@ -164,7 +164,16 @@ const Dashboard = () => {
         <RecentInterviews
           interviews={recentInterviews}
           loading={interviewsLoading}
-          onOpenInterview={() => navigate('/interview')}
+          onOpenInterview={(id) => {
+            const session = recentInterviews.find(
+              (item) => (item._id ?? item.id) === id,
+            )
+            if (session?.status === 'Completed') {
+              navigate(`/interview/${id}/result`)
+              return
+            }
+            navigate(`/live-interview/${id}`)
+          }}
           onViewAll={() => navigate('/interview')}
         />
         <ActiveRoadmap />

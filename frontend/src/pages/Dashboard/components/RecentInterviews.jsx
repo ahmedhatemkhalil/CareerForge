@@ -37,15 +37,16 @@ const RecentInterviews = ({
             No interviews yet.
           </p>
         ) : (
-          interviews.map((item) => {
+          interviews.map((item, index) => {
+            const interviewId = item._id ?? item.id ?? `interview-${index}`
             const interviewDate = formatAnalysisDate(
-              item.completed_at || item.interviewDate,
+              item.interviewDate || item.completed_at,
             )
 
             return (
               <div
-                key={item.id}
-                onDoubleClick={() => onOpenInterview?.(item.id)}
+                key={interviewId}
+                onDoubleClick={() => onOpenInterview?.(interviewId)}
                 className={cn(
                   'flex items-center justify-between gap-3 px-5 py-4 transition',
                   onOpenInterview && 'cursor-pointer hover:bg-muted/40',
