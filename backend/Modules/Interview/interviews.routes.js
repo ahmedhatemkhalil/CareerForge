@@ -10,7 +10,7 @@ interviewRouter.use(verifyToken);
 interviewRouter.post("/start", startInterview);
 interviewRouter.post("/:sessionId/answer", checkInterview, submitAnswer);
 interviewRouter.get("/", getAllInterviews);
-interviewRouter.get("/:sessionId", getInterviewById);
+interviewRouter.get("/:sessionId", checkInterview, getInterviewById);
 interviewRouter.delete("/:sessionId", checkInterview, deleteInterview);
 
 export default interviewRouter;

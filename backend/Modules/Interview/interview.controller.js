@@ -172,108 +172,9 @@ console.log("AI RESPONSE:", aiResponse);
 });
 
 // GET /api/interviews
-// export const getAllInterviews = handleError(async (req, res) => {
-//     const interviews = await interviewSessionModel
-//         .find({user_id: req.user.id, status: "completed"})
-//         .populate({
-//             path: "analysis_id",
-//             select: "cvId",
-//             populate: {
-//                 path: "cvId",
-//                 select: "fileName",
-//             },
-//         })
-//         .sort({ createdAt: -1 });
-
-//     const formattedInterviews = interviews.map((interview) => {
-//         return {
-//             id: interview._id,
-//             jobTitle: interview.jobTitle,
-//             score: interview.overall_score,
-//             status: interview.status,
-//             hiringRecommendation: interview.hiringRecommendation,
-//             interviewDate: interview.createdAt,
-//             started_at: interview.started_at,
-//             completed_at: interview.completed_at,
-//             cvName:interview.analysis_id?.cvId?.fileName || null,
-//         };
-//     });
-
-//     return res.status(200).json({
-//         count: formattedInterviews.length,
-//         data: formattedInterviews,
-//     });
-// });
-// GET /api/interviews
-// export const getAllInterviews = handleError(async (req, res) => {
-//     // جلب كل المقابلات الخاصة بالمستخدم دون التقيد بحالة معينة
-//     const interviews = await interviewSessionModel
-//         .find({ user_id: req.user.id }) 
-//         .populate({
-//             path: "analysis_id",
-//             select: "cvId",
-//             populate: {
-//                 path: "cvId",
-//                 select: "fileName",
-//             },
-//         })
-//         .sort({ createdAt: -1 });
-
-//     const formattedInterviews = await Promise.all(interviews.map(async (interview) => {
-//         // 1. تحديد العدد الكلي للأسئلة الافتراضي أو المخزن
-//         const totalQuestions = interview.total_questions || 5; 
-        
-//         // 2. عد الأسئلة التي جاوب عليها المستخدم الفعلي في هذه الجلسة
-//         const answeredQuestions = await interviewQuestionModel.countDocuments({
-//             session_id: interview._id,
-//             answer_status: "completed" // أو الحالة التي تعني أن السؤال تم حله عندك
-//         });
-
-//         // 3. التحقق: لو جاوب على كل الأسئلة تكون الحالة Completed، غير كدة In Progress
-//         const isAllAnswered = answeredQuestions >= totalQuestions;
-//         const finalStatus = (interview.status === "completed" || isAllAnswered) ? "Completed" : "In Progress";
-
-//         // 4. تحديد التوصية بناءً على السكور لو عالي (أكبر من أو يساوي 80)
-//         const currentScore = interview.overall_score || 0;
-//         let recommendation = interview.hiringRecommendation;
-//         if (!recommendation && finalStatus === "Completed") {
-//             recommendation = currentScore >= 80 ? "Strong Yes" : "Yes";
-//         }
-
-//         return {
-//             _id: interview._id,
-//             jobTitle: interview.jobTitle,
-//             score: currentScore,
-//             status: finalStatus, 
-//             hiringRecommendation: recommendation,
-//             interviewDate: interview.createdAt,
-//             cvName: interview.analysis_id?.cvId?.fileName || null,
-//             totalQuestions: totalQuestions,
-//             answeredQuestions: answeredQuestions
-//         };
-//     }));
-
-//     return res.status(200).json({
-//         count: formattedInterviews.length,
-//         data: formattedInterviews,
-//     });
-// });
-
-// GET  /api/interviews/:sessionId
-// export const getInterviewById = handleError(async (req, res) => {
-//     const questions = await interviewQuestionModel.find({session_id: req.session._id}).sort({order_index: 1,});
-
-//     return res.status(200).json({
-//         session: req.session,
-//         questions,
-//     });
-// });
-// GET  /api/interviews/:sessionId
-// GET /api/interviews
 export const getAllInterviews = handleError(async (req, res) => {
-    // شيلنا فلتر "completed" عشان يعرض المكتمل واللي لسه شغال سوا
     const interviews = await interviewSessionModel
-        .find({ user_id: req.user.id })
+        .find({user_id: req.user.id, status: "completed"})
         .populate({
             path: "analysis_id",
             select: "cvId",
@@ -284,37 +185,19 @@ export const getAllInterviews = handleError(async (req, res) => {
         })
         .sort({ createdAt: -1 });
 
-    const formattedInterviews = await Promise.all(interviews.map(async (interview) => {
-        const totalQuestions = interview.total_questions || 5;
-        
-        // عد الأسئلة الحقيقية اللي جاوب عليها المستخدم في السيشن ده
-        const answeredQuestions = await interviewQuestionModel.countDocuments({
-            session_id: interview._id,
-            answer_status: "completed"
-        });
-
-        // تحويل الحالة للشكل المطلوب في العرض
-        const isAllAnswered = answeredQuestions >= totalQuestions;
-        const finalStatus = (interview.status === "completed" || isAllAnswered) ? "Completed" : "In Progress";
-
-        const currentScore = interview.overall_score || 0;
-        let recommendation = interview.hiringRecommendation;
-        if (!recommendation && finalStatus === "Completed") {
-            recommendation = currentScore >= 80 ? "Strong Yes" : "Yes";
-        }
-
+    const formattedInterviews = interviews.map((interview) => {
         return {
-            _id: interview._id,
+            id: interview._id,
             jobTitle: interview.jobTitle,
-            score: currentScore,
-            status: finalStatus,
-            hiringRecommendation: recommendation,
+            score: interview.overall_score,
+            status: interview.status,
+            hiringRecommendation: interview.hiringRecommendation,
             interviewDate: interview.createdAt,
-            cvName: interview.analysis_id?.cvId?.fileName || null,
-            totalQuestions: totalQuestions,
-            answeredQuestions: answeredQuestions
+            started_at: interview.started_at,
+            completed_at: interview.completed_at,
+            cvName:interview.analysis_id?.cvId?.fileName || null,
         };
-    }));
+    });
 
     return res.status(200).json({
         count: formattedInterviews.length,
@@ -322,37 +205,16 @@ export const getAllInterviews = handleError(async (req, res) => {
     });
 });
 
-// GET /api/interviews/:sessionId
-
+// // GET /api/interviews/:sessionId
 export const getInterviewById = handleError(async (req, res) => {
-    const { sessionId } = req.params;
+    const questions = await interviewQuestionModel.find({session_id: req.session._id}).sort({order_index: 1,});
 
-    // جلب الجلسة مباشرة من قاعدة البيانات
-    const session = await interviewSessionModel.findById(sessionId);
-
-    if (!session) {
-        return res.status(404).json({ message: "Interview session not found" });
-    }
-
-    // جلب كافة الأسئلة الحقيقية المرتبطة بهذه الجلسة مرتبة تصاعدياً
-    const questions = await interviewQuestionModel
-        .find({ session_id: session._id })
-        .sort({ order_index: 1 });
-
-    // إرسال البيانات بشكل مسطح للفرونت إند مباشرة
     return res.status(200).json({
-        _id: session._id,
-        jobTitle: session.jobTitle,
-        overall_score: session.overall_score || 0,
-        status: session.status,
-        hiringRecommendation: session.hiringRecommendation || (session.overall_score >= 80 ? "Strong Yes" : "Yes"),
-        overall_feedback: session.overall_feedback || "No general feedback available.",
-        tips_for_improvement: session.tips_for_improvement || [],
-        createdAt: session.createdAt,
-        completed_at: session.completed_at,
-        questions: questions // قائمة الأسئلة وإجاباتك الحقيقية والـ Feedback لكل سؤال
+        session: req.session,
+        questions,
     });
 });
+
 // DELETE /api/interviews/:sessionId
 export const deleteInterview = handleError(async (req, res) => {
     await interviewQuestionModel.deleteMany({ session_id: req.session._id });
