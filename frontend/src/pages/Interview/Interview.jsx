@@ -1,15 +1,23 @@
 import { useState, useEffect } from "react";
-import { Plus, Calendar, ChevronRight, Play, Loader2, Trash2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Plus, Calendar, ChevronRight, Trash2 } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { interviewService } from "../../services/interviewService"; 
 import ConfirmModal from "@/components/common/ConfirmModal"; 
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "react-hot-toast";
+import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
+import 'react-circular-progressbar/dist/styles.css';
+import HistoryListSkeleton from '@/components/common/HistoryListSkeleton';
+import { getScoreStyles } from "../../utils/helpers";
+import EmptyInterviewsState from "../../components/Interview/EmptyInterviewsState"; 
 
 export default function Interview() {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
   const [sessions, setSessions] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState({ avgScore: 0, bestScore: 0 });
-
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [selectedSessionId, setSelectedSessionId] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -17,13 +25,13 @@ export default function Interview() {
   useEffect(() => {
     const fetchInterviews = async () => {
       try {
-        setLoading(true);
-        const { data: interviewList } = await interviewService.getAllInterviews();
+        setIsLoading(true);
+        const res = await interviewService.getAllInterviews();
+        const interviewList = res?.data?.data || res?.data || [];
         setSessions(interviewList);
 
-        const completedSessions = interviewList.filter(s => s.status === "Completed");
-        if (completedSessions.length > 0) {
-          const scores = completedSessions.map(s => s.score || 0);
+        if (interviewList.length > 0) {
+          const scores = interviewList.map(s => s.score || 0);
           const total = scores.reduce((sum, score) => sum + score, 0);
           setStats({
             avgScore: Math.round(total / scores.length),
@@ -32,193 +40,161 @@ export default function Interview() {
         }
       } catch (error) {
         console.error("Error fetching interviews:", error);
+        const errorMessage = error.response?.data?.message || "Failed to load your interview history.";
+        toast.error(errorMessage, { id: 'fetch-interviews-error' });
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
     fetchInterviews();
   }, []);
 
-  const handleDeleteTrigger = (id, e) => {
+  const totalSessions = sessions.length;
+
+  const handleDeleteClick = (id, e) => {
+    e.preventDefault(); 
     e.stopPropagation(); 
     setSelectedSessionId(id);
     setConfirmOpen(true);
   };
 
-  const confirmDelete = async () => {
+  const handleConfirmDelete = async () => {
     if (!selectedSessionId) return;
+    setDeleteLoading(true);
     try {
-      setDeleteLoading(true);
       await interviewService.deleteInterview(selectedSessionId);
-      setSessions(sessions.filter((session) => session._id !== selectedSessionId));
+      setSessions(prev => prev.filter((session) => session.id !== selectedSessionId));
       setConfirmOpen(false);
       setSelectedSessionId(null);
+      toast.success("Interview session deleted successfully!");
     } catch (error) {
       console.error("Error deleting interview:", error);
-      alert("Failed to delete the interview session.");
+      const errorMessage = error.response?.data?.message || "Could not delete the interview. Please try again.";
+      toast.error(errorMessage);
     } finally {
       setDeleteLoading(false);
     }
   };
 
- const handleRowClick = (item) => {
-  if (item.status === "Completed") {
-    navigate(`/interview/${item._id}/result`); // 👈 اتأكدي إنها مكتوبة كده بالظبط
-  } else {
-    navigate(`/live-interview/${item._id}`);
-  }
-};
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
 
   return (
-    <div className="p-6 max-w-5xl mx-auto font-sans text-gray-800 antialiased bg-slate-50/30 min-h-screen">
+    <div className="mx-auto w-full max-w-5xl space-y-4 sm:space-y-6">
       
-   
-      <div className="flex justify-between items-start mb-6">
-        <div>
-          <h1 className="text-[28px] font-bold text-[#0f172a] tracking-tight">Mock Interviews</h1>
-          {sessions.length > 0 && (
-            <p className="text-xs text-gray-400 font-medium mt-1">
-              {sessions.length} sessions - Avg score {stats.avgScore}% - Best {stats.bestScore}%
-            </p>
-          )}
+      {/* Header Section */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Mock Interviews</h1>
+          <div className="text-sm text-muted-foreground font-medium">
+            {isLoading ? (
+              <Skeleton className="h-4 w-64 mt-1" />
+            ) : totalSessions > 0 ? (
+              `${totalSessions} sessions · Avg score ${stats.avgScore}% · Best ${stats.bestScore}%`
+            ) : (
+              "No interview sessions completed yet"
+            )}
+          </div>
         </div>
-        <button
-          onClick={() => navigate("/new-interview")}
-          className="flex items-center gap-2 bg-[#4f46e5] hover:bg-[#4338ca] text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-sm transition-all duration-200"
-        >
-          <Plus size={16} strokeWidth={2.5} />
+        <Button onClick={() => navigate("/new-interview")} className="bg-brand-primary hover:bg-brand-primary/90 text-white font-medium inline-flex items-center gap-2 rounded-xl p-5 shadow-xs cursor-pointer w-full sm:w-fit">
+          <Plus className="size-4" />
           Start New Interview
-        </button>
+        </Button>
       </div>
 
-  
-      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-        <div className="flex justify-between items-center px-6 py-4 border-b border-gray-100">
-          <h2 className="text-lg font-bold text-[#0f172a]">Session History</h2>
-          <span className="text-xs font-semibold text-gray-400">{sessions.length} records</span>
+      <div className="bg-card border border-border rounded-2xl shadow-xs overflow-hidden">
+        <div className="flex items-center justify-between p-5 border-b border-border bg-card">
+          <h2 className="text-lg font-bold tracking-tight">Session History</h2>
+          <span className="text-xs font-semibold text-muted-foreground uppercase bg-muted/50 px-2.5 py-1 rounded-md">
+            {totalSessions} records
+          </span>
         </div>
 
-        <div className="divide-y divide-gray-100">
-          {loading ? (
-            <div className="flex h-48 items-center justify-center text-indigo-600">
-              <Loader2 className="w-8 h-8 animate-spin" />
-            </div>
-          ) : sessions.length === 0 ? (
-            <div className="p-8 text-center text-gray-400 text-sm">
-              No interview sessions found.
-            </div>
+        <div>
+          {isLoading ? (
+            <HistoryListSkeleton />
+          ) : totalSessions === 0 ? (
+            <EmptyInterviewsState />
           ) : (
-            sessions.map((item) => {
-              const isCompleted = item.status === "Completed";
-              const rawDate = item.interviewDate || new Date();
-              const formattedDate = new Date(rawDate).toLocaleDateString('en-US', { 
-                month: 'short', 
-                day: 'numeric', 
-                year: 'numeric' 
-              });
+            <div className="divide-y divide-border">
+              {sessions.map((item) => {
+                const currentScore = item.score || 0;
+                const scoreStyle = getScoreStyles(currentScore);
 
-              const radius = 20;
-              const circumference = 2 * Math.PI * radius;
-              const currentScore = item.score || 0;
-              const totalQuestions = item.totalQuestions || 5;
-              const answeredQuestions = item.answeredQuestions || 0;
-              
-              const percentage = isCompleted ? currentScore : (answeredQuestions / totalQuestions) * 100;
-              const strokeDashoffset = circumference - (percentage / 100) * circumference;
-
-              return (
-                <div
-                  key={item._id}
-                  className="flex items-center justify-between p-5 hover:bg-slate-50/40 transition-all group relative cursor-pointer"
-                  onClick={() => handleRowClick(item)} 
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="relative w-11 h-11 flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <svg className="w-full h-full transform -rotate-90">
-                        <circle cx="22" cy="22" r={radius} className="stroke-gray-100" strokeWidth="3" fill="transparent" />
-                        <circle
-                          cx="22"
-                          cy="22"
-                          r={radius}
-                          stroke={isCompleted ? (currentScore >= 80 ? "#10b981" : "#f59e0b") : "#f59e0b"} 
-                          strokeWidth="3"
-                          fill="transparent"
-                          strokeDasharray={isCompleted ? circumference : "4, 2"}
-                          strokeDashoffset={isCompleted ? strokeDashoffset : 0}
-                          strokeLinecap="round"
-                          className="transition-all duration-500 ease-out"
+                return (
+                  <Link
+                    key={item.id}
+                    to={`/interview/${item.id}/result`}
+                    className="flex flex-col sm:flex-row items-center justify-between p-5 gap-4 hover:bg-muted/30 transition-colors group cursor-pointer"
+                  >
+                    <div className="flex items-start sm:items-center gap-5 w-full sm:w-auto">
+                      <div className="relative size-14 shrink-0 flex items-center justify-center font-bold">
+                        <CircularProgressbar
+                          value={currentScore}
+                          text={`${currentScore}%`}
+                          styles={buildStyles({
+                            textSize: '24px',
+                            textColor: 'currentColor',
+                            pathColor: scoreStyle.stroke,
+                            trailColor: 'var(--muted)', 
+                            strokeLinecap: 'round',
+                            pathTransitionDuration: 0.5,
+                          })}
                         />
-                      </svg>
-                      <span className="absolute font-bold text-xs text-gray-800">
-                        {isCompleted ? `${currentScore}%` : `${answeredQuestions}/${totalQuestions}`}
-                      </span>
-                    </div>
+                      </div>
 
-                    <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-bold text-[#1e293b] text-[15px] tracking-tight group-hover:text-[#4f46e5] transition duration-150">
-                          {item.jobTitle || "Job Title"}
-                        </h3>
+                      <div className="space-y-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="font-bold text-base text-foreground group-hover:text-brand-primary transition-colors">
+                            {item.jobTitle || "Job Title"}
+                          </h3>
+
+                          {item.hiringRecommendation && (
+                            <Badge className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${scoreStyle.badge}`}>
+                              {item.hiringRecommendation}
+                            </Badge>
+                          )}
+                        </div>
                         
-                        {isCompleted ? (
-                          <>
-                            <span className="text-[11px] px-2 py-0.5 font-medium rounded-md border border-emerald-100 bg-emerald-50 text-emerald-600 flex items-center gap-1">
-                              <span className="w-1 h-1 rounded-full bg-emerald-500"></span> Completed
-                            </span>
-                            <span className={`text-[11px] px-2 py-0.5 font-medium rounded-md border ${currentScore >= 80 ? "border-emerald-100 bg-emerald-50 text-emerald-600" : "border-blue-100 bg-blue-50 text-blue-600"}`}>
-                              {item.hiringRecommendation || (currentScore >= 80 ? "Strong Yes" : "Yes")}
-                            </span>
-                          </>
-                        ) : (
-                          <span className="text-[11px] px-2 py-0.5 font-medium rounded-md border border-amber-100 bg-amber-50 text-amber-600 flex items-center gap-1">
-                            <span className="w-1 h-1 rounded-full bg-amber-500 animate-pulse"></span> In Progress
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+                          {item.cvName && <span className="">CV: {item.cvName}</span>}
+                          {item.cvName && <span className="hidden sm:inline text-muted/60">•</span>}
+                          <span className="flex items-center gap-1">
+                            <Calendar className="size-3.5" />
+                            {formatDate(item.interviewDate)}
                           </span>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-3 text-xs font-normal text-gray-400 mt-0.5">
-                        <span className="flex items-center gap-1">
-                          <Calendar size={13} className="text-gray-300" />
-                          {formattedDate}
-                        </span>
-
-                        {item.cvName && (
-                          <span className="text-gray-400 truncate max-w-[250px] border-l border-gray-200 pl-3">
-                            {item.cvName}
-                          </span>
-                        )}
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="flex items-center gap-4" onClick={(e) => e.stopPropagation()}>
-                    {!isCompleted && (
+                    {/* Actions Section */}
+                    <div className="flex items-center gap-3 w-full sm:w-auto justify-end border-t sm:border-none pt-3 sm:pt-0">
                       <button 
-                        onClick={() => navigate(`/live-interview/${item._id}`)}
-                        className="flex items-center gap-1.5 px-3 py-1 bg-[#4f46e5] text-white hover:bg-[#4338ca] font-semibold text-xs rounded-lg shadow-sm transition-all"
+                        type="button"
+                        onClick={(e) => handleDeleteClick(item.id, e)}
+                        className="p-2 text-status-error/70 hover:text-status-error hover:bg-status-error/10 rounded-xl transition-all opacity-100 sm:opacity-0 group-hover:opacity-100 cursor-pointer"
+                        title="Delete Interview"
                       >
-                        <Play size={10} fill="currentColor" /> Resume
+                        <Trash2 className="size-4.5" />
                       </button>
-                    )}
-                    
-                    <button
-                      onClick={(e) => handleDeleteTrigger(item._id, e)}
-                      className="text-gray-300 hover:text-red-500 p-1 rounded-md hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100"
-                      title="Delete Interview"
-                    >
-                      <Trash2 size={15} />
-                    </button>
-
-                    <ChevronRight className="text-gray-300 group-hover:text-gray-400 group-hover:translate-x-0.5 transition-all duration-150" size={16} />
-                  </div>
-                </div>
-              );
-            })
+                      
+                      <div className='p-2 hover:bg-primary/10 rounded-xl group-hover:translate-x-1 transition-transform text-muted-foreground'>
+                        <ChevronRight className="size-4.5"/>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
           )}
         </div>
       </div>
 
+      {/* Confirmation Dialog */}
       <ConfirmModal
         open={confirmOpen}
         onClose={() => {
@@ -226,11 +202,11 @@ export default function Interview() {
           setSelectedSessionId(null);
         }}
         title="Delete Interview Session"
-        message="Are you sure you want to delete this interview session? This action cannot be undone."
+        message="Are you sure you want to delete this interview session? This action will permanently remove your evaluation and cannot be undone."
         confirmLabel="Delete"
         cancelLabel="Cancel"
-        confirmVariant="destructive"
-        onConfirm={confirmDelete}
+        confirmVariant="destructive" 
+        onConfirm={handleConfirmDelete}
         isLoading={deleteLoading}
       />
     </div>
