@@ -85,30 +85,30 @@ export const getScoreStyles = (score) => {
     return {
       text: 'text-gray-400',
       stroke: '#e5e7eb',
-      badge: 'bg-gray-100 text-gray-500 border-gray-200',
+      badge: 'bg-status-error/10 text-status-error border-status-error/20',
       label: 'No score',
     }
   }
   if (score >= 80) {
     return {
       text: 'text-emerald-500',
-      stroke: '#10b981',
-      badge: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+      stroke: 'var(--status-success)',
+      badge: 'bg-status-success/10 text-status-success border-status-success/20',
       label: 'Strong match',
     }
   }
   if (score >= 65) {
     return {
       text: 'text-amber-500',
-      stroke: '#f59e0b',
-      badge: 'bg-amber-50 text-amber-700 border-amber-100',
+      stroke: 'var(--status-warning)',
+      badge: 'bg-status-warning/10 text-status-warning border-status-warning/20',
       label: 'Moderate match',
     }
   }
   return {
     text: 'text-rose-500',
-    stroke: '#ef4444',
-    badge: 'bg-rose-50 text-rose-700 border-rose-100',
+    stroke: 'var(--status-error)',
+    badge: 'bg-status-error/10 text-status-error border-status-error/20',
     label: 'Low match',
   }
 }
