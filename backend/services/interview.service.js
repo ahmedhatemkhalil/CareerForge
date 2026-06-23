@@ -50,7 +50,7 @@ const sendToLangflow = async (inputs, isStart = false) => {
             session_id: inputs.langflowSessionId,
             input_value: isStart ? "start" : (inputs.candidateAnswer || ""), 
             tweaks: {
-              "Prompt Template-l8PII": {
+              "Prompt Template-rAOBc": {
                 job_title: inputs.jobTitle || "",
                 job_description: inputs.jobDescription || "",
                 interview_history: historyText,
