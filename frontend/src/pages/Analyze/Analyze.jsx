@@ -8,7 +8,7 @@ import {
   Trash2,
   Loader2,
 } from "lucide-react";
-import { getAllAnalyses, deleteAnalysis } from "../../../../analysisService";
+import { getAllAnalyses, deleteAnalysis } from "../../services/analysisService";
 import { useNavigate } from "react-router-dom";
 import ConfirmModal from "../../components/common/ConfirmModal";
 import { getScoreStyles } from "../../utils/helpers";

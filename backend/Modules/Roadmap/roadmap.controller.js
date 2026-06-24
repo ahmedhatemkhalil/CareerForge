@@ -2,6 +2,7 @@ import Roadmap, { RoadmapWeek, Resource, syncRoadmapProgress } from "../../model
 import { Analysis } from "../../models/Analysis.js";
 import { generateRoadmapPlan } from "../../services/roadmap.service.js";
 import mongoose from "mongoose";
+import User from "../../models/User.js"; 
 
 const formatResource = (resource) => ({
     _id: resource._id,
@@ -217,6 +218,19 @@ export const createRoadmap = async (req, res) => {
         if (!req.user || !req.user.id) {
             return res.status(401).json({ error: "Please authenticate" });
         }
+        const user = await User.findById(req.user.id);
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        const userPlanName = req.body.plan || user.plan || "free";
+        const allowedLimit = user.maxLimits?.roadmapsPerMonth || (userPlanName === "pro" ? 20 : 1);
+        const currentUsage = user.usage?.roadmapsThisMonth || 0;
+
+        if (currentUsage >= allowedLimit) {
+            return res.status(403).json({ 
+error: `You have exceeded your monthly roadmap limit for your current plan (Maximum allowed: ${allowedLimit}). Please upgrade your plan.`            });
+        }
 
         const resolved = await resolveRoadmapInput(req.user.id, req.body);
         if (resolved.error) {
@@ -224,7 +238,6 @@ export const createRoadmap = async (req, res) => {
         }
 
         const { weeks, ...roadmapData } = resolved.data;
-
         const weeksWithResources = weeks.filter((week) => week.resources?.length > 0);
 
         const roadmap = await Roadmap.create({
@@ -236,6 +249,10 @@ export const createRoadmap = async (req, res) => {
         await syncRoadmapProgress(roadmap._id);
 
         const result = await getRoadmapWithWeeks(roadmap._id, req.user.id);
+        
+        await User.findByIdAndUpdate(req.user.id, { 
+            $inc: { "usage.roadmapsThisMonth": 1 } 
+        });
 
         return res.status(201).json(result);
     } catch (err) {

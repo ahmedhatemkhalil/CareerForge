@@ -61,6 +61,11 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    usage: {
+      analysesThisMonth: { type: Number, default: 0 },
+      interviewsThisMonth: { type: Number, default: 0 },
+      roadmapsThisMonth: { type: Number, default: 0 }
+    },
 
     last_login_at: { type: Date, default: null },
   },

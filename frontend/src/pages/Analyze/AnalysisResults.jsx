@@ -5,7 +5,7 @@ import { toast } from "react-hot-toast";
 
 import AnalysisDetailsTabs from "./components/AnalysisDetailsTabs";
 import AnalysisResultsCard from "./components/AnalysisResultsCard";
-import { getAnalysisById } from "../../../../analysisService";
+import { getAnalysisById } from "../../services/analysisService";
 
 const AnalysisResults = () => {
   const { id } = useParams();

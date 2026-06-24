@@ -4,6 +4,7 @@ import { interviewQuestionModel } from "../../models/Interview/InterviewQuestion
 import { Analysis } from "../../models/Analysis.js";
 import {startInterviewAI, continueInterviewAI} from "../../services/interview.service.js";
 import { handleError } from "../../middleware/HandleError.js";
+import User from "../../models/User.js"; 
 
 // Post /api/interviews/start
 export const startInterview = handleError(async (req, res) => {
@@ -13,53 +14,82 @@ export const startInterview = handleError(async (req, res) => {
         return res.status(400).json({ message: "analysisId is required" });
     }
 
-    const analysis = await Analysis.findOne({_id: analysisId, userId: req.user.id}).populate("jobId");
-
-    if (!analysis?.jobId) {
-        return res.status(404).json({ message: "Analysis or Associated Job not found" });
+    const user = await User.findById(req.user.id);
+    if (!user) {
+        return res.status(404).json({ message: "User not found" });
     }
 
-    const langflowSessionId = crypto.randomUUID();
+    const userPlanName = user.plan || "free"; 
+    const allowedLimit = user.maxLimits?.interviewsPerMonth || (userPlanName === "pro" ? 99 : 1);
+    const currentUsage = user.usage?.interviewsThisMonth || 0;
 
-    const aiResponse = await startInterviewAI({
-        langflowSessionId,
-        jobTitle: analysis.jobId.title,
-        jobDescription: analysis.jobId.descriptionText,
-        matchScore: analysis.matchScore,
-        strengths: analysis.strengths,
-        weaknesses: analysis.weaknesses,
-        skillGaps: analysis.skillGaps,
-    });
-
-    if (!aiResponse?.nextQuestion) {
-        return res.status(500).json({message: "AI failed to generate first question",});
+    if (currentUsage >= allowedLimit) {
+        return res.status(403).json({ 
+            message: `You have exceeded your monthly interview limit for your current plan (Maximum allowed: ${allowedLimit}). Please upgrade your plan.`
+        });
     }
 
-    const session = await interviewSessionModel.create({
-        user_id: req.user.id,
-        analysis_id: analysis._id,
-        jobTitle: analysis.jobId.title,
-        status: "in_progress",
-        started_at: new Date(),
-        langflow_session_id: langflowSessionId,
+    await User.findByIdAndUpdate(req.user.id, {
+        $inc: { "usage.interviewsThisMonth": 1 }
     });
 
+    let aiResponse;
+    try {
+        const analysis = await Analysis.findOne({_id: analysisId, userId: req.user.id}).populate("jobId");
+        if (!analysis?.jobId) {
+            await User.findByIdAndUpdate(req.user.id, { $inc: { "usage.interviewsThisMonth": -1 } });
+            return res.status(404).json({ message: "Analysis or Associated Job not found" });
+        }
 
-    const firstQuestion = await interviewQuestionModel.create({
-        session_id: session._id,
-        question_text: aiResponse.nextQuestion,
-        order_index: 1,
-    });
+        const langflowSessionId = crypto.randomUUID();
+        aiResponse = await startInterviewAI({
+            langflowSessionId,
+            jobTitle: analysis.jobId.title,
+            jobDescription: analysis.jobId.descriptionText,
+            matchScore: analysis.matchScore,
+            strengths: analysis.strengths,
+            weaknesses: analysis.weaknesses,
+            skillGaps: analysis.skillGaps,
+        });
 
-    return res.status(201).json({
-        message: "Interview started successfully",
-        data: {
-            sessionId: session._id,
-            question: firstQuestion.question_text,
-            order: 1,
-            isCompleted: false,
-        },
-    });
+        if (!aiResponse?.nextQuestion || aiResponse.error) {
+            throw new Error("AI Generation Failed");
+        }
+
+        const session = await interviewSessionModel.create({
+            user_id: req.user.id,
+            analysis_id: analysis._id,
+            jobTitle: analysis.jobId.title,
+            status: "in_progress",
+            started_at: new Date(),
+            langflow_session_id: langflowSessionId,
+        });
+
+        const firstQuestion = await interviewQuestionModel.create({
+            session_id: session._id,
+            question_text: aiResponse.nextQuestion,
+            order_index: 1,
+        });
+
+
+        return res.status(201).json({
+            message: "Interview started successfully",
+            data: {
+                sessionId: session._id,
+                question: firstQuestion.question_text,
+                order: 1,
+                isCompleted: false,
+            },
+        });
+
+    } catch (error) {
+        await User.findByIdAndUpdate(req.user.id, {
+            $inc: { "usage.interviewsThisMonth": -1 }
+        });
+        
+        console.error("Start Interview Error:", error.message);
+        return res.status(500).json({ message: "Failed to start interview due to an external error. Please try again." });
+    }
 });
 
 // POST /api/interviews/:sessionId/answer
