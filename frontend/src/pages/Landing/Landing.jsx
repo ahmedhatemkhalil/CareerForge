@@ -1,6 +1,7 @@
 import CTASection from "@/components/LandingPage/CTASection"
 import FeaturesSection from "@/components/LandingPage/FeaturesSection"
 import HeroSection from "@/components/LandingPage/HeroSection"
+import PricingSection from "@/components/LandingPage/PricingSection"
 import WhyCareerForgeSection from "@/components/LandingPage/WhyCareerForgeSection"
 import WorkflowSection from "@/components/LandingPage/WorkflowSection"
 import Footer from "@/components/layout/Footer"
@@ -17,6 +18,8 @@ const Landing = () => {
       <hr className="max-w-4xl mx-auto border-t-2 "/>
       <WhyCareerForgeSection />
       <WorkflowSection />
+      <hr className="max-w-4xl mx-auto border-t-2 " />
+      <PricingSection />
       <CTASection />
     </div>
     <Footer/>
