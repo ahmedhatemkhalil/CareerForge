@@ -15,9 +15,11 @@ export default function Sidebar() {
   const navigate = useNavigate()
   const logout = useAuthStore((state) => state.logout)
   const user = useAuthStore((state) => state.user)
-  const visibleNavItems = navItems.filter(
-    (item) => !item.adminOnly || user?.role === 'admin',
-  )
+  const visibleNavItems = navItems.filter((item) => {
+    if (item.adminOnly && user?.role !== 'admin') return false
+    if (item.userOnly && user?.role === 'admin') return false
+    return true
+  })
   const [collapsed, setCollapsed] = useState(false)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
