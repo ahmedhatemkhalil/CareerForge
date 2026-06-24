@@ -23,6 +23,7 @@ import AnalysisResults from './pages/Analyze/AnalysisResults'
 import GoogleCallback from './pages/Login/GoogleCallback'
 import NewRoadmap from './pages/Roadmap/NewRoadmap'
 import RoadmapResults from './pages/Roadmap/RoadmapResults'
+import PaymentSuccess from './pages/Payment/PaymentSuccess'
 
 const ConditionalLayout = () => {
   const token = localStorage.getItem('token')
@@ -72,7 +73,7 @@ const AppRouter = () => {
             <Route path="new-analysis" element={<NewAnalysis />} />
           </Route>
         </Route>
-
+        <Route path="payment/success" element={<PaymentSuccess />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
