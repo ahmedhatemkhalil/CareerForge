@@ -19,6 +19,8 @@ import cvRoutes from "./Modules/CV/cv.routes.js";
 import jobDescriptionRoutes from "./Modules/jobDescription/job.routes.js";
 import sendEmail from "./Email/email.js";
 import { startInterviewCleanupJob } from "./cron/interviewCleanup.cron.js";
+import paymentRoutes from "./Modules/Payment/payment.routes.js";
+import stripeWebhook from "./Modules/Payment/stripe.webhook.js";
 
 dotenv.config();
 
@@ -33,8 +35,13 @@ const app = express();
 
 // Middleware
 app.use(cors());
+app.use(
+  "/api/webhooks/stripe",
+  stripeWebhook
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use("/api/payments", paymentRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/users", forgotPasswordRoutes);
