@@ -1,15 +1,11 @@
 import express from "express";
-import Stripe from "stripe";
 import User from "../../models/User.js";
+import stripe from "../../services/stripe.service.js";
 
 const router = express.Router();
-const stripe = new Stripe(
-    process.env.STRIPE_SECRET_KEY
-);
 
 router.post("/", express.raw({type: "application/json",}),
     async (req, res) => {
-        console.log("WEBHOOK HIT");
         let event;
 
         try {
@@ -20,7 +16,6 @@ router.post("/", express.raw({type: "application/json",}),
                 process.env
                 .STRIPE_WEBHOOK_SECRET
             );
-            console.log("EVENT:", event.type);
         } catch (err) {
             return res.status(400).send(`Webhook Error: ${err.message}`);
         }
@@ -30,14 +25,14 @@ router.post("/", express.raw({type: "application/json",}),
                 const session = event.data.object;
                 const customerId = session.customer;
                 const subscriptionId = session.subscription;
-                console.log("Customer:", customerId);
-                console.log("Subscription:", subscriptionId);
                 const user = await User.findOne({stripeCustomerId: customerId,});
-                console.log("User Found:", user?._id);
                 if (user) {
                     user.plan = "pro";
                     user.subscriptionStatus = "active";
                     user.stripeSubscriptionId = subscriptionId;
+                    const oneMonthFromNow = new Date();
+                    oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
+                    user.subscriptionCurrentPeriodEnd = oneMonthFromNow;
                     await user.save();
                 }
 
@@ -51,11 +46,13 @@ router.post("/", express.raw({type: "application/json",}),
                 if (user) {
                     user.plan = "free";
                     user.subscriptionStatus = "canceled";
+                    user.subscriptionCurrentPeriodEnd = null;
                     await user.save();
                 }
 
                 break;
             }
+            default: console.log(`Unhandled event type: ${event.type}`);
         }
 
         res.json({received: true});
