@@ -3,6 +3,7 @@ import { AdminDashboardComponent } from './modules/admin/pages/admin-dashboard/a
 import { adminGuard } from './guards/admin.guard';
 import { LoginComponent } from './auth/login/login.component';
 import { AccessDeniedComponent } from './pages/access-denied/access-denied.component';
+import { RevenueComponent } from './modules/admin/pages/revenue/revenue.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -12,4 +13,9 @@ export const routes: Routes = [
     component: AdminDashboardComponent,
     canActivate: [adminGuard]
   },
-{ path: 'access-denied', component: AccessDeniedComponent },];
+{ path: 'access-denied', component: AccessDeniedComponent },
+{
+  path: 'admin/revenue',
+  component: RevenueComponent,
+  canActivate: [adminGuard] 
+},];

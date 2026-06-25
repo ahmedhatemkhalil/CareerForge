@@ -12,4 +12,7 @@ export interface DashboardStats {
   activeUsers: number;
   totalCvs: number;
   bannedUsers: number;
+  totalRoadmaps:number;
+  totalInterviews:number;
+  totalAnalyses:number;
 }

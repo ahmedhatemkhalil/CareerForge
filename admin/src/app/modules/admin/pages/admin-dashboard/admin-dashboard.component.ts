@@ -2,14 +2,14 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AdminService } from '../../services/admin.service';
 import { HttpClient } from '@angular/common/http';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
 import { DashboardStats } from '../../interfaces/admin.interface';
-
-@Component({
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';@Component({
   selector: 'app-admin-dashboard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule ,RouterModule],
   templateUrl: './admin-dashboard.component.html',
   styleUrls: ['./admin-dashboard.component.css']
 })
@@ -23,7 +23,10 @@ throw new Error('Method not implemented.');
 
   users: any[] = [];
   stats: DashboardStats = {
-    totalUsers: 0, activeUsers: 0, totalCvs: 0, bannedUsers: 0
+    totalUsers: 0, activeUsers: 0, totalCvs: 0, bannedUsers: 0,
+    totalRoadmaps: 0,
+    totalInterviews: 0,
+    totalAnalyses: 0
   };
   isDarkMode: boolean = true;
 
@@ -46,31 +49,45 @@ throw new Error('Method not implemented.');
     this.adminInitial = this.adminName.substring(0, 2).toUpperCase();
   }
 
-  loadAdminData(): void {
-    this.adminService.getUsers().subscribe({
-      next: (users) => {
-        this.users = users.map((user: any) => ({
-          ...user,
-          role: user.role || 'User',
-          status: user.status || 'active',
-          createdAt: user.createdAt || new Date(),
-          cvCount: user.cvCount || (user.cvs ? user.cvs.length : 0)
-        }));
-        this.updateStats();
-      },
-      error: (err) => {
-        this.toastr.error("Failed to load users");
-        console.error(err);
-      }
-    });
-  }
 
-  updateStats(): void {
-    this.stats.totalUsers = this.users.length;
-    this.stats.activeUsers = this.users.filter(u => u.status?.toLowerCase() === 'active').length;
-    this.stats.bannedUsers = this.users.filter(u => u.status?.toLowerCase() === 'banned' || u.status?.toLowerCase() === 'suspended').length;
-    this.stats.totalCvs = this.users.reduce((acc, user) => acc + (user.cvCount || 0), 0);
+loadAdminData() {
+  // نستخدم الدالة الجديدة التي أنشأناها في السيرفس
+  this.adminService.getDashboardReport().subscribe({
+    next: (response) => {
+      // 1. تحديث جدول المستخدمين (البيانات جاهزة وبها كل الـ Counts)
+      this.users = response.data;
+
+      // 2. تحديث الـ Cards (الإحصائيات العامة)
+      // نقوم بجمع كل الكاونتات من مصفوفة المستخدمين
+      this.stats = {
+        totalUsers: this.users.length,
+        activeUsers: this.users.filter(u => u.status === 'active').length,
+        bannedUsers: this.users.filter(u => u.status === 'banned' || u.status === 'suspended').length,
+        totalCvs: this.users.reduce((acc, u) => acc + (u.cvCount || 0), 0),
+        totalAnalyses: this.users.reduce((acc, u) => acc + (u.analysisCount || 0), 0),
+        totalInterviews: this.users.reduce((acc, u) => acc + (u.interviewCount || 0), 0),
+        totalRoadmaps: this.users.reduce((acc, u) => acc + (u.roadmapCount || 0), 0)
+      };
+    },
+    error: (err) => {
+      this.toastr.error("Failed to load dashboard data");
+      console.error(err);
+    }
+  });
+}
+ updateStats(data?: any): void {
+  this.stats.totalUsers = this.users.length;
+  this.stats.activeUsers = this.users.filter(u => u.status?.toLowerCase() === 'active').length;
+  this.stats.bannedUsers = this.users.filter(u => u.status?.toLowerCase() === 'banned' || u.status?.toLowerCase() === 'suspended').length;
+  this.stats.totalCvs = this.users.reduce((acc, user) => acc + (user.cvCount || 0), 0);
+
+  // تحديث الإحصائيات الجديدة (إذا كانت البيانات موجودة)
+  if (data) {
+    this.stats.totalAnalyses = data.analyses.length;
+    this.stats.totalInterviews = data.interviews.length;
+    this.stats.totalRoadmaps = data.roadmaps.length;
   }
+}
 
   toggleTheme(): void {
     this.isDarkMode = !this.isDarkMode;
