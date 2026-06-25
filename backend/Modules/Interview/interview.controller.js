@@ -141,7 +141,6 @@ export const submitAnswer = handleError(async (req, res) => {
         candidateAnswer: answer.trim(),
     });
 
-    console.log("AI RESPONSE:", aiResponse);
     if (!aiResponse || aiResponse.error) {
         currentQuestion.answer_status = "failed";
         await currentQuestion.save();
@@ -177,9 +176,13 @@ export const submitAnswer = handleError(async (req, res) => {
 
     // finish
     if (aiResponse.isCompleted) {
+        const completedQuestions = await interviewQuestionModel.find({session_id: session._id, answer_status: "completed",});
+        const totalScore = completedQuestions.reduce((sum, q) => sum + (q.score || 0), 0);
+        const overallScore = completedQuestions.length > 0 ? Math.round((totalScore / (completedQuestions.length * 10)) * 100 ) : 0;
+
         session.status = "completed";
         session.total_questions = questionsCount;
-        session.overall_score = aiResponse.overall_score ?? aiResponse.overallScore ?? 0; 
+        session.overall_score = overallScore; 
         session.overall_feedback = aiResponse.overall_feedback ?? aiResponse.generalFeedback;
         session.tips_for_improvement = (aiResponse.tips_for_improvement ?? aiResponse.tipsForImprovement) || [];
         session.hiringRecommendation = aiResponse.hiringRecommendation;
