@@ -5,7 +5,7 @@ import { Check } from "lucide-react";
 
 import { getMyCVs } from "../../services/cvService";
 import { createJobDescription } from "../../services/jobService";
-import { createAnalysis } from "../../../../analysisService";
+import { createAnalysis } from "../../services/analysisService";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 

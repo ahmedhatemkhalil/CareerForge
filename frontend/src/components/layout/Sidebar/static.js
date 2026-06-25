@@ -6,6 +6,7 @@ import {
   Map,
   User,
   ShieldCheck,
+  CreditCard,
 } from 'lucide-react'
 
 export const navItems = [
@@ -19,6 +20,12 @@ export const navItems = [
   { name: 'CV Analysis', path: '/analyze', icon: BarChart3 },
   { name: 'Mock Interview', path: '/interview', icon: Mic },
   { name: 'Career Roadmaps', path: '/roadmap', icon: Map },
+  {
+    name: 'Pricing & Plans',
+    path: '/pricing',
+    icon: CreditCard,
+    userOnly: true,
+  },
   { name: 'Profile & Settings', path: '/profile', icon: User },
   {
     name: 'Admin Panel',

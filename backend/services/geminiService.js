@@ -8,14 +8,14 @@ const fetchRealJobsFromSerper = async (optimizedTitle, fallbackTitle) => {
     const exclusions = "-instructor -senior -manager -owner -junior -head -lead -principal";
     
     
-    const targetSites = "(site:linkedin.com/jobs OR site:wuzzuf.net OR site:indeed.com OR site:eg.tanqeeb.com)";
+    const targetSites = "(site:linkedin.com/jobs AND site:wuzzuf.net AND site:indeed.com AND site:eg.tanqeeb.com)";
     const primaryQuery = `"${searchTitle}" ${targetSites} ${exclusions}`;
 
     const makeSearchRequest = async (query) => {
         const response = await axios.post('https://google.serper.dev/search', {
             q: query,
             num: 4, 
-            tbs: "qdr:m" 
+            tbs: "qdr:w" 
         }, {
             headers: { 
                 'Content-Type': 'application/json', 

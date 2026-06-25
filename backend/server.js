@@ -4,6 +4,7 @@ import cors from "cors";
 import morgan from "morgan";
 import path from "path";
 import { fileURLToPath } from "url";
+import "./cron/resetUsageCron.js";
 import connectDB from "./config/db.js";
 import authRoutes from "./Modules/Auth/auth.route.js";
 import userRoutes from "./Modules/User/userRoutes.js";
@@ -19,6 +20,9 @@ import cvRoutes from "./Modules/CV/cv.routes.js";
 import jobDescriptionRoutes from "./Modules/jobDescription/job.routes.js";
 import sendEmail from "./Email/email.js";
 import { startInterviewCleanupJob } from "./cron/interviewCleanup.cron.js";
+import paymentRoutes from "./Modules/Payment/payment.routes.js";
+import stripeWebhook from "./Modules/Payment/stripe.webhook.js";
+import planRoutes from "./Modules/subscription/plan.routes.js";
 
 dotenv.config();
 
@@ -33,8 +37,13 @@ const app = express();
 
 // Middleware
 app.use(cors());
+app.use(
+  "/api/webhooks/stripe",
+  stripeWebhook
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use("/api/payments", paymentRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/users", forgotPasswordRoutes);
@@ -46,6 +55,8 @@ app.use("/api/analysis", analysesRoutes);
 app.use("/api", oauthRoutes);
 app.use("/api/cvs", cvRoutes);
 app.use("/api/job-descriptions", jobDescriptionRoutes);
+app.use("/api/plans", planRoutes);
+
 
 app.get("/", (req, res) => {
   res.json({ message: "CareerForge API is running!" });

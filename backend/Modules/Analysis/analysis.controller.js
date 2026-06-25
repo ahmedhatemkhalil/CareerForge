@@ -1,5 +1,6 @@
 import { Analysis } from "../../models/Analysis.js";
 import { CV } from "../../models/CV/CV.js";
+import User from "../../models/User.js";
 import { catchAsync, AppError } from "../../utils/validators.js";
 import * as analysisService from "../../services/geminiService.js";
 
@@ -7,18 +8,24 @@ import * as analysisService from "../../services/geminiService.js";
 export const createAnalysis = catchAsync(async (req, res, next) => {
   const { cvId, jobId } = req.body;
 
+  const user = await User.findById(req.user.id);
+  if (!user) return next(new AppError("User not found", 404));
+
+  const userPlanName = req.body.plan || user.plan || "free"; 
+  
+  const allowedLimit = user.maxLimits?.analysesPerMonth || (userPlanName === "pro" ? 50 : 2);
+  const currentUsage = user.usage?.analysesThisMonth || 0;
+
+  if (currentUsage >= allowedLimit) {
+return next(new AppError(`You have exceeded your monthly analysis limit for your current plan (Maximum allowed: ${allowedLimit}). Please upgrade your plan.`, 403));  }
+
   const cvData = await CV.findOne({ _id: cvId, userId: req.user.id });
   if (!cvData) return next(new AppError("CV not found or unauthorized", 404));
 
-  const latestAnalysis = await Analysis.findOne({ cvId, jobId }).sort({
-    version: -1,
-  });
+  const latestAnalysis = await Analysis.findOne({ cvId, jobId }).sort({ version: -1 });
   const nextVersion = latestAnalysis ? latestAnalysis.version + 1 : 1;
 
-  const aiResults = await analysisService.processAIAnalysisSync(
-    cvData.extractedText,
-    jobId,
-  );
+  const aiResults = await analysisService.processAIAnalysisSync(cvData.extractedText, jobId);
 
   const newAnalysis = await Analysis.create({
     userId: req.user.id,
@@ -35,8 +42,11 @@ export const createAnalysis = catchAsync(async (req, res, next) => {
     status: "completed",
     aiModelUsed: "Gemini-Langflow",
   });
-console.log("USER IN CREATE:", req.user.id);
-console.log("NEW ANALYSIS SAVED:", newAnalysis);
+
+  await User.findByIdAndUpdate(req.user.id, { 
+    $inc: { "usage.analysesThisMonth": 1 } 
+  });
+
   res.status(201).json({
     success: true,
     message: "Analysis completed successfully",
