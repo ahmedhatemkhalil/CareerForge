@@ -130,30 +130,43 @@ export const submitAnswer = handleError(async (req, res) => {
       }));
 
     const aiResponse = await continueInterviewAI({
-      langflowSessionId: session.langflow_session_id,
-      jobTitle: analysis.jobId.title,
-      jobDescription: analysis.jobId.descriptionText,
-      matchScore: analysis.matchScore,
-      strengths: analysis.strengths,
-      weaknesses: analysis.weaknesses,
-      skillGaps: analysis.skillGaps,
-      interviewHistory,
-      candidateAnswer: answer.trim(),
+        langflowSessionId: session.langflow_session_id,
+        jobTitle: analysis.jobId.title,
+        jobDescription: analysis.jobId.descriptionText,
+        matchScore: analysis.matchScore,
+        strengths: analysis.strengths,
+        weaknesses: analysis.weaknesses,
+        skillGaps: analysis.skillGaps,
+        interviewHistory,
+        candidateAnswer: answer.trim(),
     });
-console.log("AI RESPONSE:", aiResponse);
+
+    console.log("AI RESPONSE:", aiResponse);
     if (!aiResponse || aiResponse.error) {
-      currentQuestion.answer_status = "failed";
-      await currentQuestion.save();
-      return res.status(500).json({message: "Please try submitting your answer again.",});
+        currentQuestion.answer_status = "failed";
+        await currentQuestion.save();
+        return res.status(500).json({message: "Please try submitting your answer again.",});
+    }
+
+    const questionsCount = currentQuestion.order_index;
+    const MIN_QUESTIONS = 5;
+    const MAX_QUESTIONS = 8;
+
+    if (aiResponse.isCompleted && questionsCount < MIN_QUESTIONS) {
+        aiResponse.isCompleted = false;
+    }
+
+    if (questionsCount >= MAX_QUESTIONS) {
+        aiResponse.isCompleted = true;
     }
 
     if (!aiResponse.isCompleted && !aiResponse.nextQuestion) {
-      currentQuestion.answer_status = "failed";
-      await currentQuestion.save();
+        currentQuestion.answer_status = "failed";
+        await currentQuestion.save();
 
-      return res.status(500).json({
-        message: "AI failed to generate next question",
-      });
+        return res.status(500).json({
+            message: "AI failed to generate next question",
+        });
     }
 
     // SAVE AI RESULT
@@ -165,7 +178,7 @@ console.log("AI RESPONSE:", aiResponse);
     // finish
     if (aiResponse.isCompleted) {
         session.status = "completed";
-        session.total_questions = allQuestions.length < 5 ? 5 : allQuestions.length;
+        session.total_questions = questionsCount;
         session.overall_score = aiResponse.overall_score ?? aiResponse.overallScore ?? 0; 
         session.overall_feedback = aiResponse.overall_feedback ?? aiResponse.generalFeedback;
         session.tips_for_improvement = (aiResponse.tips_for_improvement ?? aiResponse.tipsForImprovement) || [];
