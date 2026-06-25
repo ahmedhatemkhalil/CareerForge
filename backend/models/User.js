@@ -61,6 +61,10 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    cancelAtPeriodEnd: {
+      type: Boolean,
+      default: false,
+    },
     usage: {
       analysesThisMonth: { type: Number, default: 0 },
       interviewsThisMonth: { type: Number, default: 0 },
