@@ -2,10 +2,15 @@ import User from "../../models/User.js";
 import UserSettings from "../../models/UserSettings.js";
 import bcrypt from "bcrypt";
 import { isStrongPassword } from "../../utils/validators.js";
+// the part added recently for admin dashboard
+import { Analysis } from "../../models/Analysis.js";
+import { interviewSessionModel as InterviewSession } from "../../models/Interview/InterviewSession.js";import Roadmap from "../../models/Roadmap.js";
+import { catchAsync } from "../../utils/validators.js";
+import { CV } from "../../models/CV/CV.js"; 
 
 // GET /api/users/me
 export const getCurrentUser = async (req, res) => {
-console.log("Check Headers:", req.headers.authorization); // أضيفي هذا
+console.log("Check Headers:", req.headers.authorization); 
   console.log("Check req.user:", req.user);
   try {
     const user = await User.findById(req.user.id).select("-password_hash");
@@ -113,7 +118,6 @@ export const deleteCurrentUser = async (req, res) => {
 };
 
 // GET /api/admin/users
-// GET /api/admin/users
 export const getAllUsers = async (req, res) => {
   try {
     const users = await User.aggregate([
@@ -197,3 +201,59 @@ export const deleteUserByAdmin = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+
+// the part added recently for admin dashboard
+// 1. grt all analysis for admin
+export const getAllAnalysesForAdmin = catchAsync(async (req, res, next) => {
+  const analyses = await Analysis.find({}); 
+  res.json({
+    success: true,
+    data: analyses,
+  });
+});
+
+// 1. grt all interviews for admin
+export const getAllInterviewsForAdmin = catchAsync(async (req, res, next) => {
+  const interviews = await InterviewSession.find({});
+  res.json({
+    success: true,
+    data: interviews,
+  });
+});
+
+// 1. grt all roadmap for admin
+export const getAllRoadmapsForAdmin = catchAsync(async (req, res, next) => {
+  const roadmaps = await Roadmap.find({});
+  res.json({
+    success: true,
+    data: roadmaps,
+  });
+});
+export const getAdminDashboardReport = catchAsync(async (req, res, next) => {
+    const [users, analyses, interviews, roadmaps, cvs] = await Promise.all([
+        User.find({}),
+        Analysis.find({}),
+        InterviewSession.find({}),
+        Roadmap.find({}),
+        CV.find({})
+    ]);
+
+    const report = users.map(user => {
+        const userId = user._id.toString();
+        return {
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            status: user.status,
+            createdAt: user.created_at,
+            cvCount: cvs.filter(cv => cv.userId?.toString() === userId).length,
+            analysisCount: analyses.filter(a => a.userId?.toString() === userId).length,
+            interviewCount: interviews.filter(i => i.user_id?.toString() === userId).length,
+            roadmapCount: roadmaps.filter(r => r.userId?.toString() === userId).length
+        };
+    });
+
+    res.json({ success: true, data: report });
+});

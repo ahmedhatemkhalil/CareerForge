@@ -8,6 +8,16 @@
     </svg>
     <span class="text-foreground hidden sm:block">CareerForge</span>
   </div>
+  <div class="flex items-center gap-2">
+      <a routerLink="/admin" routerLinkActive="text-brand-primary border-b-2 border-brand-primary"
+         class="px-3 py-1 text-sm font-medium text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
+        Admin Panel
+      </a>
+      <a routerLink="/admin/revenue" routerLinkActive="text-brand-primary  border-b-2 border-brand-primary"
+         class="px-3 py-1 text-sm font-medium text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
+        Revenue
+      </a>
+    </div>
 
   <div class="flex items-center gap-4">
     <button (click)="toggleTheme()" class="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground">
@@ -47,7 +57,7 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 mb-6 md:mb-8">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3 sm:gap-4 md:gap-6 mb-6 md:mb-8">
         <div class="p-6 rounded-2xl border border-border bg-background shadow-sm transition-colors duration-300">
           <div class="mb-3 flex"><span class="p-2 bg-brand-primary/10 rounded-xl text-brand-primary"><svg
                 xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
@@ -60,6 +70,41 @@
           <div class="text-3xl font-bold tracking-tight text-foreground">{{ stats.totalUsers }}</div>
           <div class="text-xs text-muted-foreground mt-1">Total Users</div>
         </div>
+        <div class="p-6 rounded-2xl border border-border bg-background shadow-sm transition-colors duration-300">
+  <div class="mb-3 flex">
+    <span class="p-2 bg-purple-500/10 rounded-xl text-purple-500">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+      </svg>
+    </span>
+  </div>
+  <div class="text-3xl font-bold tracking-tight text-foreground">{{ stats.totalAnalyses }}</div>
+  <div class="text-xs text-muted-foreground mt-1">Total Analyses</div>
+</div>
+
+<div class="p-6 rounded-2xl border border-border bg-background shadow-sm transition-colors duration-300">
+  <div class="mb-3 flex">
+    <span class="p-2 bg-blue-500/10 rounded-xl text-blue-500">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M23 7l-7 5 7 5V7z" /><rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+      </svg>
+    </span>
+  </div>
+  <div class="text-3xl font-bold tracking-tight text-foreground">{{ stats.totalInterviews }}</div>
+  <div class="text-xs text-muted-foreground mt-1">Total Interviews</div>
+</div>
+
+<div class="p-6 rounded-2xl border border-border bg-background shadow-sm transition-colors duration-300">
+  <div class="mb-3 flex">
+    <span class="p-2 bg-orange-500/10 rounded-xl text-orange-500">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M18 8h1a4 4 0 0 1 0 8h-1" /><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" /><line x1="6" y1="1" x2="6" y2="4" /><line x1="10" y1="1" x2="10" y2="4" /><line x1="14" y1="1" x2="14" y2="4" />
+      </svg>
+    </span>
+  </div>
+  <div class="text-3xl font-bold tracking-tight text-foreground">{{ stats.totalRoadmaps }}</div>
+  <div class="text-xs text-muted-foreground mt-1">Total Roadmaps</div>
+</div>
         <div class="p-6 rounded-2xl border border-border bg-background shadow-sm transition-colors duration-300">
           <div class="mb-3 flex"><span class="p-2 bg-status-success/10 rounded-xl text-status-success"><svg
                 xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
@@ -109,6 +154,9 @@
                 <th class="p-2 sm:p-3 md:p-4">Email</th>
                 <th class="p-2 sm:p-3 md:p-4">Role</th>
                 <th class="p-2 sm:p-3 md:p-4">CVs</th>
+                <th class="p-2 sm:p-3 md:p-4">Analysis</th>
+                <th class="p-2 sm:p-3 md:p-4">Interviews>
+                <th class="p-2 sm:p-3 md:p-4">Roadmaps</th>
                 <th class="p-2 sm:p-3 md:p-4">Status</th>
                 <th class="p-2 sm:p-3 md:p-4">Joined</th>
                 <th class="p-2 sm:p-3 md:p-4">Actions</th>
@@ -131,7 +179,11 @@
                     {{ user.role }}
                   </span>
                 </td>
+
                 <td class="p-2 sm:p-3 md:p-4 text-center font-semibold text-foreground/90">{{ user.cvCount }}</td>
+                               <td class="p-2 sm:p-3 md:p-4 text-center font-semibold">{{ user.analysisCount }}</td>
+<td class="p-2 sm:p-3 md:p-4 text-center font-semibold">{{ user.interviewCount }}</td>
+<td class="p-2 sm:p-3 md:p-4 text-center font-semibold">{{ user.roadmapCount }}</td>
                 <td class="p-2 sm:p-3 md:p-4">
                   <span [ngClass]="{
                       'bg-status-success/10 text-status-success border-status-success/20': user.status?.toLowerCase() === 'active',

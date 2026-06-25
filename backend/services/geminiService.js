@@ -3,12 +3,13 @@ import crypto from 'crypto';
 import { JobDescription } from '../models/jobDescription/JobDescription.js'; 
 
 const sleep = (ms) => new Promise(res => setTimeout(res, ms));
+
 const fetchRealJobsFromSerper = async (optimizedTitle, fallbackTitle) => {
     const searchTitle = optimizedTitle || fallbackTitle || "Full-Stack Developer";
     const exclusions = "-instructor -senior -manager -owner -junior -head -lead -principal";
     
     
-    const targetSites = "(site:linkedin.com/jobs AND site:wuzzuf.net AND site:indeed.com AND site:eg.tanqeeb.com)";
+    const targetSites = "(site:eg.tanqeeb.com OR site:wuzzuf.net OR site:indeed.com OR site:linkedin.com/jobs)";
     const primaryQuery = `"${searchTitle}" ${targetSites} ${exclusions}`;
 
     const makeSearchRequest = async (query) => {
