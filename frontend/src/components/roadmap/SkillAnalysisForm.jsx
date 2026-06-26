@@ -3,8 +3,10 @@ import { useState, useEffect } from 'react';
 import { getAnalyses, postRoadmap } from '../../services/roadmapService';
 import { useNavigate } from 'react-router-dom';
 import { BarChart3 } from 'lucide-react';
+import { usePlanLimitModal } from '@/hooks/usePlanLimitModal';
 
 export default function SkillAnalysisForm() {
+  const { handleError, modal: upgradeModal } = usePlanLimitModal();
   const [analyses, setAnalyses] = useState([]);
   const [selectedId, setSelectedId] = useState('');
   const [commitment, setCommitment] = useState('');
@@ -45,7 +47,9 @@ export default function SkillAnalysisForm() {
       }
     //   navigate('/roadmap-view'); 
     } catch (err) {
-      console.error("Submission failed - Server Response:", err.response?.data || err.message);
+      if (!handleError(err, "roadmap")) {
+        console.error("Submission failed - Server Response:", err.response?.data || err.message);
+      }
     } finally {
       setLoading(false);
     }
@@ -117,6 +121,8 @@ export default function SkillAnalysisForm() {
       >
         {loading ? 'Generating...' : 'Generate AI Roadmap'}
       </button>
+
+      {upgradeModal}
     </form>
   );
 }

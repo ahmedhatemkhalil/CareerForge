@@ -3,7 +3,8 @@ import { Sparkles, ArrowLeft, Loader2, Calendar, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { interviewService } from "../../services/interviewService";
 import { getAllAnalyses } from "../../services/analysisService"; 
-import ConfirmModal from "@/components/common/ConfirmModal"; // تأكدي من صحة المسار
+import ConfirmModal from "@/components/common/ConfirmModal";
+import { usePlanLimitModal } from "@/hooks/usePlanLimitModal";
 
 const formatAnalysisDate = (isoDate) => {
   if (!isoDate) return "Unknown date";
@@ -17,6 +18,7 @@ const formatAnalysisDate = (isoDate) => {
 
 export default function NewInterview() {
   const navigate = useNavigate();
+  const { handleError, modal: upgradeModal } = usePlanLimitModal();
 
   const [selectedAnalysis, setSelectedAnalysis] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -98,8 +100,12 @@ export default function NewInterview() {
   } catch (err) {
     console.error("Start interview failed:", err);
 
-    // ❌ NO fallback
-    alert("Failed to start interview. Please check backend.");
+    if (!handleError(err, "interview")) {
+      alert(
+        err.response?.data?.message ||
+          "Failed to start interview. Please try again."
+      );
+    }
   } finally {
     setLoading(false);
   }
@@ -242,6 +248,8 @@ export default function NewInterview() {
         confirmVariant="default"
         onConfirm={confirmStartInterview}
       />
+
+      {upgradeModal}
     </div>
   );
 }

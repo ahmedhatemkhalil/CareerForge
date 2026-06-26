@@ -34,16 +34,17 @@ const connectDB = async () => {
 
     // Some Windows/network setups fail SRV lookup with local DNS resolvers.
     // For Atlas (mongodb+srv), force reliable public resolvers as a fallback.
-    if (mongoUri.startsWith('mongodb+srv://')) {
-      dns.setServers(['8.8.8.8', '1.1.1.1']);
-    }
+    // if (mongoUri.startsWith('mongodb+srv://')) {
+    //   dns.setServers(['8.8.8.8', '1.1.1.1']);
+    // }
 
     const conn = await mongoose.connect(mongoUri, {
       serverSelectionTimeoutMS: 10000,
     });
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
-    console.error(`❌ Error: ${error.message}`);
+    console.error("FULL ERROR:");
+    console.error(error);
     process.exit(1);
   }
 };
