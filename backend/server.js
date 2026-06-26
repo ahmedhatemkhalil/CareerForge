@@ -29,10 +29,6 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Connect to MongoDB
-connectDB();
-
-// Create Express app
 const app = express();
 
 // Middleware
@@ -66,12 +62,16 @@ app.all(/(.*)/, (req, res, next) => {
   next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
 });
 
-console.log("Is globalErrorHandler a function?", typeof globalErrorHandler);
 app.use(globalErrorHandler);
 
-startInterviewCleanupJob();
-// Start server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
+const startServer = async () => {
+  await connectDB();
+  startInterviewCleanupJob();
+
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+  });
+};
+
+startServer();
