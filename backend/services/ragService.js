@@ -31,17 +31,32 @@ const PLATFORM_SITE_FILTERS = {
 };
 
 const DEFAULT_SITE_FILTER = [
-    "site:udemy.com",
-    "site:coursera.org",
     "site:youtube.com",
-    "site:maharatech.gov.eg",
-    "site:itimooca.iti.gov.eg",
     "site:developer.mozilla.org",
     "site:freecodecamp.org",
     "site:w3schools.com",
     "site:geeksforgeeks.org",
-    "site:react.dev",
+    "site:udemy.com",
+    "site:coursera.org",
 ].join(" OR ");
+
+const normalizePlatformKey = (platform) => {
+    const value = String(platform || "").trim().toLowerCase();
+
+    if (!value) return "";
+    if (value.includes("youtube")) return "youtube";
+    if (value.includes("udemy")) return "udemy";
+    if (value.includes("coursera")) return "coursera";
+    if (value.includes("mahara")) return "maharatech";
+    if (value.includes("mdn") || value.includes("mozilla")) return "mdn";
+    if (value.includes("freecodecamp")) return "freecodecamp";
+    if (value.includes("w3schools")) return "w3schools";
+    if (value.includes("geeksforgeeks")) return "geeksforgeeks";
+    if (value.includes("react")) return "react";
+    if (value === "documentation" || value.includes("doc")) return "documentation";
+
+    return value;
+};
 
 const inferPlatform = (url, fallback = "") => {
     const lowerUrl = String(url).toLowerCase();
@@ -111,87 +126,113 @@ const finalizeResource = (resource) => {
 };
 
 const pickBestResult = (results, platform) => {
-    const normalizedPlatform = String(platform || "").trim().toLowerCase();
+    const normalizedPlatform = normalizePlatformKey(platform);
+    const withLinks = results.filter((result) => result?.link);
+
+    if (withLinks.length === 0) {
+        return null;
+    }
 
     if (normalizedPlatform === "udemy") {
-        const udemyCourse = results.find((result) =>
-            /udemy\.com\/course\//i.test(result.link || "")
-        );
-        if (udemyCourse) {
-            return udemyCourse;
-        }
+        const match = withLinks.find((result) => /udemy\.com/i.test(result.link));
+        if (match) return match;
     }
 
     if (normalizedPlatform === "coursera") {
-        const courseraCourse = results.find((result) =>
-            /coursera\.org\/(learn|specializations)\//i.test(result.link || "")
-        );
-        if (courseraCourse) {
-            return courseraCourse;
-        }
+        const match = withLinks.find((result) => /coursera\.org/i.test(result.link));
+        if (match) return match;
     }
 
     if (normalizedPlatform === "youtube") {
-        const youtubeVideo = results.find((result) =>
-            /(youtube\.com\/watch|youtu\.be\/)/i.test(result.link || "")
+        const match = withLinks.find((result) =>
+            /(youtube\.com|youtu\.be)/i.test(result.link)
         );
-        if (youtubeVideo) {
-            return youtubeVideo;
-        }
+        if (match) return match;
     }
 
     if (normalizedPlatform === "maharatech") {
-        const maharaCourse = results.find((result) =>
-            /(maharatech\.gov\.eg|itimooca\.iti\.gov\.eg)\/course\//i.test(result.link || "")
+        const match = withLinks.find((result) =>
+            /(maharatech\.gov\.eg|itimooca\.iti\.gov\.eg)/i.test(result.link)
         );
-        if (maharaCourse) {
-            return maharaCourse;
-        }
+        if (match) return match;
     }
 
     if (normalizedPlatform === "mdn" || normalizedPlatform === "documentation") {
-        const mdnDoc = results.find((result) =>
-            /developer\.mozilla\.org/i.test(result.link || "")
-        );
-        if (mdnDoc) {
-            return mdnDoc;
-        }
+        const match = withLinks.find((result) => /developer\.mozilla\.org/i.test(result.link));
+        if (match) return match;
     }
 
-    return results.find((result) => result.link);
+    return withLinks[0];
 };
 
-const buildSearchQuery = ({ topic, platform, type }) => {
-    const normalizedPlatform = String(platform || "").trim().toLowerCase();
-    const siteFilter =
-        PLATFORM_SITE_FILTERS[normalizedPlatform] || DEFAULT_SITE_FILTER;
+const buildSearchQuery = ({ topic, platform, type, simple = false }) => {
+    const normalizedPlatform = normalizePlatformKey(platform);
     const typeHint = type === "course" ? "course" : type || "tutorial";
 
+    if (simple) {
+        return `${topic} ${typeHint}`;
+    }
+
     if (normalizedPlatform === "udemy") {
-        return `"${topic}" ${typeHint} site:udemy.com/course`;
+        return `${topic} course site:udemy.com`;
     }
 
     if (normalizedPlatform === "maharatech") {
-        return `"${topic}" course (site:maharatech.gov.eg OR site:itimooca.iti.gov.eg)`;
+        return `${topic} course site:maharatech.gov.eg`;
     }
 
     if (normalizedPlatform === "youtube") {
-        return `"${topic}" tutorial site:youtube.com/watch`;
+        return `${topic} tutorial site:youtube.com`;
     }
 
-    return `"${topic}" ${typeHint} ${siteFilter}`;
+    const siteFilter = PLATFORM_SITE_FILTERS[normalizedPlatform] || DEFAULT_SITE_FILTER;
+    return `${topic} ${typeHint} ${siteFilter}`;
+};
+
+const buildFallbackResource = ({ topic, platform, type, title }) => {
+    const searchTopic = String(topic || title || "career learning").trim();
+    const encodedTopic = encodeURIComponent(`${searchTopic} tutorial`);
+    const normalizedPlatform = normalizePlatformKey(platform);
+
+    if (normalizedPlatform === "udemy") {
+        return finalizeResource({
+            title: title || searchTopic,
+            url: `https://www.udemy.com/courses/search/?q=${encodeURIComponent(searchTopic)}`,
+            type: "course",
+            platform: "Udemy",
+            isFree: false,
+        });
+    }
+
+    if (normalizedPlatform === "coursera") {
+        return finalizeResource({
+            title: title || searchTopic,
+            url: `https://www.coursera.org/search?query=${encodeURIComponent(searchTopic)}`,
+            type: "course",
+            platform: "Coursera",
+            isFree: false,
+        });
+    }
+
+    return finalizeResource({
+        title: title || searchTopic,
+        url: `https://www.youtube.com/results?search_query=${encodedTopic}`,
+        type: type === "course" ? "video" : type || "video",
+        platform: "YouTube",
+        isFree: true,
+    });
 };
 
 const searchWithSerper = async (query) => {
     if (!SERPER_API_KEY) {
-        throw new Error("SERPER_API_KEY is not configured");
+        return [];
     }
 
     const response = await axios.post(
         "https://google.serper.dev/search",
         {
             q: query,
-            num: 5,
+            num: 8,
         },
         {
             headers: {
@@ -215,36 +256,67 @@ export const searchLearningResource = async ({ topic, platform, type, title }) =
         return null;
     }
 
-    const primaryQuery = buildSearchQuery({ topic: searchTopic, platform, type });
+    const normalizedPlatform = normalizePlatformKey(platform);
+    const queries = [
+        buildSearchQuery({ topic: searchTopic, platform: normalizedPlatform, type }),
+        buildSearchQuery({ topic: searchTopic, platform: "", type }),
+        buildSearchQuery({ topic: searchTopic, platform: normalizedPlatform, type, simple: true }),
+    ];
 
     try {
-        let results = await searchWithSerper(primaryQuery);
+        for (const query of queries) {
+            const results = await searchWithSerper(query);
+            const bestMatch = pickBestResult(results, normalizedPlatform);
 
-        if (results.length === 0) {
-            const fallbackQuery = buildSearchQuery({
-                topic: searchTopic,
-                platform: "",
-                type,
-            });
-            results = await searchWithSerper(fallbackQuery);
+            if (bestMatch?.link) {
+                return finalizeResource({
+                    title: title || bestMatch.title || searchTopic,
+                    url: bestMatch.link,
+                    type: type || "article",
+                    platform: inferPlatform(bestMatch.link, platform),
+                    isFree: inferIsFree(bestMatch.link, type),
+                });
+            }
         }
 
-        const bestMatch = pickBestResult(results, platform);
-        if (!bestMatch) {
-            return null;
-        }
-
-        return finalizeResource({
-            title: title || bestMatch.title || searchTopic,
-            url: bestMatch.link,
-            type: type || "article",
-            platform: inferPlatform(bestMatch.link, platform),
-            isFree: inferIsFree(bestMatch.link, type),
+        console.warn(`RAG: no Serper results for "${searchTopic}", using fallback URL`);
+        return buildFallbackResource({
+            topic: searchTopic,
+            platform: normalizedPlatform,
+            type,
+            title,
         });
     } catch (error) {
         console.error("RAG resource search error:", error.message);
-        return null;
+        return buildFallbackResource({
+            topic: searchTopic,
+            platform: normalizedPlatform,
+            type,
+            title,
+        });
     }
+};
+
+const ensureWeekResources = (week) => {
+    const existing = Array.isArray(week.resources) ? week.resources.filter(Boolean) : [];
+
+    if (existing.length > 0) {
+        return existing;
+    }
+
+    if (!week.theme) {
+        return [];
+    }
+
+    return [
+        {
+            title: `Introduction to ${week.theme}`,
+            searchTopic: week.theme,
+            type: "video",
+            platform: "YouTube",
+            isFree: true,
+        },
+    ];
 };
 
 export const enrichResourcesWithRag = async (weeks) => {
@@ -252,8 +324,9 @@ export const enrichResourcesWithRag = async (weeks) => {
 
     for (const week of weeks) {
         const resources = [];
+        const weekResources = ensureWeekResources(week);
 
-        for (const resource of week.resources || []) {
+        for (const resource of weekResources) {
             const hasValidUrl =
                 resource.url &&
                 !resource.url.includes("example.com") &&
@@ -271,13 +344,19 @@ export const enrichResourcesWithRag = async (weeks) => {
                 title: resource.title,
             });
 
-            if (resolved) {
+            if (resolved?.url) {
                 resources.push(resolved);
             }
         }
 
-        if (resources.length === 0) {
-            continue;
+        if (resources.length === 0 && week.theme) {
+            const fallback = buildFallbackResource({
+                topic: week.theme,
+                platform: "youtube",
+                type: "video",
+                title: `Learn ${week.theme}`,
+            });
+            resources.push(fallback);
         }
 
         enrichedWeeks.push({
@@ -286,8 +365,10 @@ export const enrichResourcesWithRag = async (weeks) => {
         });
     }
 
-    return enrichedWeeks.map((week, index) => ({
-        ...week,
-        weekNumber: index + 1,
-    }));
+    return enrichedWeeks
+        .filter((week) => week.resources.length > 0)
+        .map((week, index) => ({
+            ...week,
+            weekNumber: index + 1,
+        }));
 };

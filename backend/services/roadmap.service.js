@@ -36,29 +36,34 @@ const parseAIResponse = (text) => {
 };
 
 const normalizeResource = (resource) => {
-    if (!resource?.title) {
+    const title = resource?.title || resource?.name;
+    if (!title) {
         return null;
     }
 
     const type = String(resource.type || "article").toLowerCase();
 
     return {
-        title: String(resource.title).trim(),
+        title: String(title).trim(),
         url: resource.url ? String(resource.url).trim() : "",
         type: RESOURCE_TYPES.has(type) ? type : "article",
         platform: String(resource.platform || "").trim(),
         isFree: resource.isFree ?? resource.is_free ?? true,
-        searchTopic: String(resource.searchTopic || resource.search_topic || resource.title).trim(),
+        searchTopic: String(
+            resource.searchTopic || resource.search_topic || title
+        ).trim(),
     };
 };
 
 const normalizeWeek = (week, index) => ({
     weekNumber: Number(week.weekNumber ?? week.week_number ?? index + 1),
-    theme: String(week.theme || week.focus || "").trim(),
+    theme: String(week.theme || week.focus || week.title || "").trim(),
     description: String(week.description || "").trim(),
     completed: false,
     completedAt: null,
-    resources: toArray(week.resources).map(normalizeResource).filter(Boolean),
+    resources: toArray(week.resources || week.learning_resources)
+        .map(normalizeResource)
+        .filter(Boolean),
 });
 
 const normalizeRoadmapPlan = (parsed) => {
@@ -229,7 +234,9 @@ export const generateRoadmapPlan = async (input) => {
     const weeksWithRagResources = await enrichResourcesWithRag(normalized.weeks);
 
     if (weeksWithRagResources.length === 0) {
-        throw new Error("AI returned a roadmap but no learning resources could be found");
+        throw new Error(
+            "AI returned a roadmap but no learning resources could be found. Check Langflow output format and SERPER_API_KEY in .env"
+        );
     }
 
     return {
