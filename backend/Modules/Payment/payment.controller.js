@@ -118,6 +118,32 @@ export const getPaymentById = handleError(async (req, res) => {
     res.json(payment);
 });
 
+export const getPaymentStats = handleError(async (req, res) => {
+    const payments = await Payment.find({status: "paid"});
+    const totalRevenue = payments.reduce((sum, payment) => sum + payment.amount, 0);
+    const now = new Date();
+    const activeProUsersCount = await User.countDocuments({
+        plan: "pro",
+        subscriptionStatus: "active"
+    });
+
+    const monthRevenue = payments.filter((payment) => {
+        const date = new Date(payment.createdAt);
+            return (
+                date.getMonth() === now.getMonth() &&
+                date.getFullYear() === now.getFullYear()
+            );
+        })
+        .reduce((sum, payment) => sum + payment.amount, 0);
+
+    res.json({
+        totalRevenue:Number(totalRevenue.toFixed(2)),
+        monthRevenue:Number(monthRevenue.toFixed(2)),
+        totalPayments: payments.length,
+        activeSubscribers: activeProUsersCount || 0
+    });
+});
+
 export const getMyPayments = handleError(async (req, res) => {
     const payments = await Payment.find({userId: req.user.id}).sort({ createdAt: -1 });
     res.json(payments);
