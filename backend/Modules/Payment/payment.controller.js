@@ -65,13 +65,11 @@ export const createPortalSession = handleError(async (req, res) => {
     res.json({url: session.url,});
 });
 
-
 export const getAllPayments = handleError(async (req, res) => {
         const payments = await Payment.find().populate("userId", "name email").sort({ createdAt: -1 });
         res.json(payments);
 });
 
-//get payment by id for admin
 export const getPaymentById = handleError(async (req, res) => {
     const payment = await Payment.findById(req.params.id).populate("userId", "name email");
     if (!payment) {

@@ -5,7 +5,17 @@ export const getSubscription = async () => {
   return data;
 };
 
+export const getMyPayments = async () => {
+  const { data } = await api.get("/payments/my-payments");
+  return data;
+};
+
 export const createCheckoutSession = async () => {
   const { data } = await api.post("/payments/create-checkout-session");
+  return data;
+};
+
+export const createPortalSession = async () => {
+  const { data } = await api.post("/payments/create-portal-session");
   return data;
 };
