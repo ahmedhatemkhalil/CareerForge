@@ -46,7 +46,8 @@ router.post("/", express.raw({type: "application/json",}),
 
                 if (user) {
                     user.subscriptionStatus = subscription.status;
-                    user.cancelAtPeriodEnd = subscription.cancel_at_period_end;
+                    const willCancel = subscription.cancel_at_period_end || (subscription.cancel_at && subscription.status === "active");
+                    user.cancelAtPeriodEnd = !!willCancel;
                     await user.save();
                 }
 
