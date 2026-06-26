@@ -1,8 +1,9 @@
 import express from "express";
 import { verifyToken, adminOnly } from "../../middleware/auth.js";
-import {createCheckoutSession, getSubscription, createPortalSession, getMyPayments, getAllPayments, getPaymentById} from "./payment.controller.js";
+import {createCheckoutSession, confirmCheckoutSession, getSubscription, createPortalSession, getMyPayments, getAllPayments, getPaymentById} from "./payment.controller.js";
 const router = express.Router();
 router.post("/create-checkout-session", verifyToken, createCheckoutSession);
+router.post("/confirm-checkout-session", verifyToken, confirmCheckoutSession);
 router.get("/subscription", verifyToken, getSubscription);
 router.post("/create-portal-session", verifyToken, createPortalSession);
 router.get("/my-payments", verifyToken, getMyPayments);

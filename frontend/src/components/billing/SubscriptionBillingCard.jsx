@@ -15,6 +15,7 @@ import {
   getMyPayments,
   getSubscription,
 } from "@/services/paymentService";
+import useAuthStore from "@/stores/authStore";
 import {
   formatAmount,
   formatPaymentDate,
@@ -22,10 +23,31 @@ import {
 } from "@/utils/paymentFormatters";
 
 const SubscriptionBillingCard = () => {
+  const setUser = useAuthStore((state) => state.setUser);
   const [isLoading, setIsLoading] = useState(true);
   const [isOpeningPortal, setIsOpeningPortal] = useState(false);
   const [subscription, setSubscription] = useState(null);
   const [payments, setPayments] = useState([]);
+
+  const syncAuthPlan = (subscriptionData) => {
+    const currentUser = useAuthStore.getState().user;
+    if (!currentUser || !subscriptionData) return;
+
+    setUser({
+      ...currentUser,
+      plan: subscriptionData.plan,
+      subscriptionStatus: subscriptionData.status,
+      subscriptionCurrentPeriodEnd: subscriptionData.currentPeriodEnd,
+      cancelAtPeriodEnd: subscriptionData.cancelAtPeriodEnd,
+    });
+  };
+
+  const refreshSubscription = async () => {
+    const subscriptionData = await getSubscription();
+    setSubscription(subscriptionData);
+    syncAuthPlan(subscriptionData);
+    return subscriptionData;
+  };
 
   useEffect(() => {
     const fetchBillingData = async () => {
@@ -36,6 +58,7 @@ const SubscriptionBillingCard = () => {
         ]);
 
         setSubscription(subscriptionData);
+        syncAuthPlan(subscriptionData);
         setPayments(Array.isArray(paymentsData) ? paymentsData : []);
       } catch (error) {
         toast.error(
@@ -58,7 +81,14 @@ const SubscriptionBillingCard = () => {
 
     try {
       const { url } = await createPortalSession();
-      window.location.href = url;
+      window.open(url, "_blank", "noopener,noreferrer");
+      setIsOpeningPortal(false);
+
+      const onFocus = () => {
+        window.removeEventListener("focus", onFocus);
+        refreshSubscription().catch(() => {});
+      };
+      window.addEventListener("focus", onFocus);
     } catch (error) {
       toast.error(
         error?.response?.data?.message ||
@@ -107,7 +137,9 @@ const SubscriptionBillingCard = () => {
               {isPro && subscription?.currentPeriodEnd && (
                 <div className="sm:col-span-2">
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    Current period ends on
+                    {subscription?.cancelAtPeriodEnd
+                      ? "Pro access until"
+                      : "Current period ends on"}
                   </p>
                   <p className="mt-1 text-sm font-semibold text-foreground">
                     {formatPaymentDate(subscription.currentPeriodEnd)}
@@ -116,54 +148,16 @@ const SubscriptionBillingCard = () => {
               )}
             </div>
 
-            {payments.length > 0 ? (
-              <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-foreground">
-                  Payment history
-                </h3>
-
-                <div className="space-y-3">
-                  {payments.map((payment) => (
-                    <div
-                      key={payment._id}
-                      className="rounded-xl border border-border bg-card p-4"
-                    >
-                      <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary text-brand-primary">
-                            <CreditCard size={18} />
-                          </div>
-
-                          <div>
-                            <p className="text-sm font-semibold text-foreground">
-                              {formatAmount(payment.amount, payment.currency)}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              Invoice {payment.stripeInvoiceId?.slice(-8) || "—"}
-                            </p>
-                          </div>
-                        </div>
-
-                        <span className="rounded-full bg-status-success/10 px-2.5 py-1 text-xs font-semibold text-status-success">
-                          {formatStatus(payment.status)}
-                        </span>
-                      </div>
-
-                      <div className="mt-4 border-t border-border pt-4 text-sm">
-                        <p className="text-xs text-muted-foreground">Paid on</p>
-                        <p className="mt-1 font-medium text-foreground">
-                          {formatPaymentDate(payment.paidAt)}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                No payment records yet.
+            {isPro && subscription?.cancelAtPeriodEnd && subscription?.currentPeriodEnd && (
+              <p className="rounded-xl border border-status-warning/30 bg-status-warning/10 px-4 py-3 text-sm leading-relaxed text-foreground">
+                Your subscription is set to cancel. You&apos;ll keep Pro until{" "}
+                <span className="font-semibold">
+                  {formatPaymentDate(subscription.currentPeriodEnd)}
+                </span>
+                . After that, your account will move to the Free plan.
               </p>
             )}
+
 
             {isPro && (
               <Button
