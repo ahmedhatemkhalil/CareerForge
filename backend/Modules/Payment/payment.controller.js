@@ -2,6 +2,11 @@ import User from "../../models/User.js";
 import stripe from "../../services/stripe.service.js";
 import Payment from "../../models/Payment.js";
 import { handleError } from "../../middleware/HandleError.js";
+import {
+    applyProSubscription,
+    subscriptionResponse,
+    syncUserSubscription,
+} from "../../services/subscription.service.js";
 
 export const createCheckoutSession = handleError(async (req, res) => {
     const user = await User.findById(req.user.id);
@@ -22,6 +27,10 @@ export const createCheckoutSession = handleError(async (req, res) => {
         customer: customerId,
         payment_method_types: ["card"],
         mode: "subscription",
+        client_reference_id: String(user._id),
+        metadata: {
+            userId: String(user._id),
+        },
         line_items: [
             {
                 price:
@@ -30,11 +39,42 @@ export const createCheckoutSession = handleError(async (req, res) => {
             },
         ],
 
-        success_url: `${process.env.FRONTEND_URL}/payment/success`,
+        success_url: `${process.env.FRONTEND_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${process.env.FRONTEND_URL}/payment/cancel`,
     });
 
     res.json({url: session.url,});
+});
+
+export const confirmCheckoutSession = handleError(async (req, res) => {
+    const sessionId = req.body.session_id;
+
+    if (!sessionId) {
+        return res.status(400).json({ message: "session_id is required" });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+        return res.status(404).json({ message: "User not found" });
+    }
+
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    const sessionUserId = session.metadata?.userId || session.client_reference_id;
+
+    if (sessionUserId !== String(user._id)) {
+        return res.status(403).json({ message: "This payment session does not belong to you" });
+    }
+
+    if (session.payment_status !== "paid") {
+        return res.status(400).json({ message: "Payment is not completed yet" });
+    }
+
+    await applyProSubscription(user, {
+        customerId: session.customer,
+        subscriptionId: session.subscription,
+    });
+
+    res.json(subscriptionResponse(user));
 });
 
 export const getSubscription = handleError(async (req, res) => {
@@ -42,11 +82,9 @@ export const getSubscription = handleError(async (req, res) => {
     if (!user) {
         return res.status(404).json({message: "User not found"});
     }
-    res.json({
-        plan: user.plan,
-        status: user.subscriptionStatus,
-        currentPeriodEnd: user.subscriptionCurrentPeriodEnd,
-    });
+
+    await syncUserSubscription(user);
+    res.json(subscriptionResponse(user));
 });
 
 export const createPortalSession = handleError(async (req, res) => {
@@ -55,10 +93,12 @@ export const createPortalSession = handleError(async (req, res) => {
         return res.status(400).json({ message: "No Stripe customer found",});
     }
 
+    await syncUserSubscription(user);
+
     const session = await stripe.billingPortal.sessions.create(
         {
             customer: user.stripeCustomerId,
-            return_url: `${process.env.FRONTEND_URL}/billing`,
+            return_url: `${process.env.FRONTEND_URL}/pricing`,
         }
     );
 

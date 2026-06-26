@@ -33,23 +33,6 @@ const HeroSection = () => {
                         Sign In
                     </Button>
                 </div>
-
-                <div className="mt-8 flex flex-wrap justify-center gap-6 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-2">
-                        <CircleCheckBig className="w-4 h-4 text-status-success" />
-                        <span>No credit card required</span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                        <CircleCheckBig className="w-4 h-4 text-status-success" />
-                        <span>Free forever plan</span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                        <CircleCheckBig className="w-4 h-4 text-status-success" />
-                        <span>Get started in 1 minute</span>
-                    </div>
-                </div>
             </div>
         </section>
     )

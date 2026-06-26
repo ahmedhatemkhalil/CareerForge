@@ -15,6 +15,13 @@ export const createCheckoutSession = async () => {
   return data;
 };
 
+export const confirmCheckoutSession = async (sessionId) => {
+  const { data } = await api.post("/payments/confirm-checkout-session", {
+    session_id: sessionId,
+  });
+  return data;
+};
+
 export const createPortalSession = async () => {
   const { data } = await api.post("/payments/create-portal-session");
   return data;

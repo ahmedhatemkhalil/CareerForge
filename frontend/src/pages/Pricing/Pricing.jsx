@@ -7,8 +7,10 @@ import {
   createCheckoutSession,
   getSubscription,
 } from "@/services/paymentService";
+import useAuthStore from "@/stores/authStore";
 
 const Pricing = () => {
+  const setUser = useAuthStore((state) => state.setUser);
   const [plan, setPlan] = useState("free");
   const [isLoading, setIsLoading] = useState(true);
   const [isUpgrading, setIsUpgrading] = useState(false);
@@ -18,6 +20,17 @@ const Pricing = () => {
       try {
         const data = await getSubscription();
         setPlan(data.plan || "free");
+
+        const currentUser = useAuthStore.getState().user;
+        if (currentUser) {
+          setUser({
+            ...currentUser,
+            plan: data.plan,
+            subscriptionStatus: data.status,
+            subscriptionCurrentPeriodEnd: data.currentPeriodEnd,
+            cancelAtPeriodEnd: data.cancelAtPeriodEnd,
+          });
+        }
       } catch (error) {
         toast.error(
           error?.response?.data?.message || "Failed to load subscription details"

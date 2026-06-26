@@ -2,6 +2,7 @@ import express from "express";
 import User from "../../models/User.js";
 import stripe from "../../services/stripe.service.js";
 import Payment from "../../models/Payment.js";
+import { applyDowngradeToFree, applyProSubscription } from "../../services/subscription.service.js";
 
 const router = express.Router();
 
@@ -26,15 +27,19 @@ router.post("/", express.raw({type: "application/json",}),
                 const session = event.data.object;
                 const customerId = session.customer;
                 const subscriptionId = session.subscription;
-                const user = await User.findOne({stripeCustomerId: customerId,});
+
+                let user = await User.findOne({ stripeCustomerId: customerId });
+
+                if (!user && session.metadata?.userId) {
+                    user = await User.findById(session.metadata.userId);
+                }
+
+                if (!user && session.client_reference_id) {
+                    user = await User.findById(session.client_reference_id);
+                }
+
                 if (user) {
-                    user.plan = "pro";
-                    user.subscriptionStatus = "active";
-                    user.stripeSubscriptionId = subscriptionId;
-                    const oneMonthFromNow = new Date();
-                    oneMonthFromNow.setMonth(oneMonthFromNow.getMonth() + 1);
-                    user.subscriptionCurrentPeriodEnd = oneMonthFromNow;
-                    await user.save();
+                    await applyProSubscription(user, { customerId, subscriptionId });
                 }
 
                 break;
@@ -59,12 +64,7 @@ router.post("/", express.raw({type: "application/json",}),
                 const user = await User.findOne({stripeSubscriptionId: subscription.id});
 
                 if (user) {
-                    user.plan = "free";
-                    user.subscriptionStatus = "canceled";
-                    user.subscriptionCurrentPeriodEnd = null;
-                    user.cancelAtPeriodEnd = false;
-                    user.stripeSubscriptionId = null;
-                    await user.save();
+                    await applyDowngradeToFree(user);
                 }
 
                 break;
