@@ -8,9 +8,11 @@ import { createJobDescription } from "../../services/jobService";
 import { createAnalysis } from "../../services/analysisService";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
+import { usePlanLimitModal } from "@/hooks/usePlanLimitModal";
 
 const NewAnalysis = () => {
   const navigate = useNavigate();
+  const { handleError, modal: upgradeModal } = usePlanLimitModal();
   const [step, setStep] = useState(1);
   const [cvs, setCvs] = useState([]);
   const [selectedCV, setSelectedCV] = useState(null);
@@ -75,10 +77,12 @@ const NewAnalysis = () => {
       }
     } catch (error) {
       console.error("Analysis failed:", error);
-      toast.error(
-        error.response?.data?.message ||
-          "Something went wrong during AI analysis. Please try again.",
-      );
+      if (!handleError(error, "analysis")) {
+        toast.error(
+          error.response?.data?.message ||
+            "Something went wrong during AI analysis. Please try again.",
+        );
+      }
     } finally {
       setIsAnalyzing(false);
     }
@@ -146,6 +150,8 @@ const NewAnalysis = () => {
           isAnalyzing={isAnalyzing}
         />
       )}
+
+      {upgradeModal}
     </div>
   );
 };

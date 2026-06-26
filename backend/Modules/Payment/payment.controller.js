@@ -65,7 +65,6 @@ export const createPortalSession = handleError(async (req, res) => {
     res.json({url: session.url,});
 });
 
-
 export const getAllPayments = handleError(async (req, res) => {
         const payments = await Payment.find().populate("userId", "name email").sort({ createdAt: -1 });
         res.json(payments);

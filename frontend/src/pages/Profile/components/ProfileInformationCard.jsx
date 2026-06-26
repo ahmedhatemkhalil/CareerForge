@@ -3,6 +3,7 @@ import { Camera, Save } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 import { Button } from '@/components/ui/button'
+import ProPlanBadge from '@/components/common/ProPlanBadge'
 import {
   Card,
   CardContent,
@@ -35,6 +36,7 @@ const ProfileInformationCard = () => {
       try {
         const data = await getCurrentUser()
         setUser(data)
+        setAuthUser(data)
         setName(data.name || '')
       } catch (error) {
         toast.error(
@@ -136,8 +138,16 @@ const ProfileInformationCard = () => {
               </div>
 
               <div className="min-w-0">
-                <p className="font-semibold text-foreground">{user?.name}</p>
+                <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+                  <p className="font-semibold text-foreground">{user?.name}</p>
+                  {user?.plan === 'pro' && <ProPlanBadge />}
+                </div>
                 <p className="text-sm text-muted-foreground">{user?.email}</p>
+                {user?.plan === 'pro' && (
+                  <p className="mt-1 text-xs text-brand-primary">
+                    CareerForge Pro member
+                  </p>
+                )}
               </div>
             </div>
 
