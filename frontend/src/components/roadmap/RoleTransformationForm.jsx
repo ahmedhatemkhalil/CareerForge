@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { postRoadmap } from '../../services/roadmapService';
 import { useNavigate } from 'react-router-dom';
+import { usePlanLimitModal } from '@/hooks/usePlanLimitModal';
 
 export default function RoleTransformationForm() {
+  const { handleError, modal: upgradeModal } = usePlanLimitModal();
   const [form, setForm] = useState({ currentRole: '', targetRole: '', commitment: '' });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -28,7 +30,9 @@ export default function RoleTransformationForm() {
         navigate(`/roadmap/result/${newRoadmapId}`);
       }
     } catch (err) {
-      console.error("Submission failed:", err.response?.data || err);
+      if (!handleError(err, "roadmap")) {
+        console.error("Submission failed:", err.response?.data || err);
+      }
     } finally {
       setLoading(false);
     }
@@ -57,6 +61,8 @@ export default function RoleTransformationForm() {
       >
         {loading ? 'Generating...' : 'Generate AI Roadmap'}
       </button>
+
+      {upgradeModal}
     </form>
   );
 }

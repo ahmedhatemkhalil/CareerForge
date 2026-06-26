@@ -37,6 +37,13 @@ const toPublicUser = (user) => ({
   last_login_at: user.last_login_at,
   created_at: user.created_at,
   updated_at: user.updated_at,
+  subscriptionStatus: user.subscriptionStatus,
+  subscriptionCurrentPeriodEnd: user.subscriptionCurrentPeriodEnd,
+  cancelAtPeriodEnd: user.cancelAtPeriodEnd,
+  usage: user.usage,
+  plan: user.plan,
+  stripeCustomerId: user.stripeCustomerId,
+  stripeSubscriptionId: user.stripeSubscriptionId,
 });
 
 // POST /api/auth/signup

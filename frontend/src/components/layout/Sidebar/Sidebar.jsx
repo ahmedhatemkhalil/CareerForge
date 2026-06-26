@@ -15,6 +15,7 @@ export default function Sidebar() {
   const navigate = useNavigate()
   const logout = useAuthStore((state) => state.logout)
   const user = useAuthStore((state) => state.user)
+  const isPro = user?.plan === 'pro'
   const visibleNavItems = navItems.filter((item) => {
     if (item.adminOnly && user?.role !== 'admin') return false
     if (item.userOnly && user?.role === 'admin') return false
@@ -142,17 +143,28 @@ export default function Sidebar() {
               collapsed ? 'justify-center p-1' : 'flex-1 p-1',
             )}
           >
-            {user?.avatar_url ? (
-              <img
-                src={user.avatar_url}
-                alt={user.name}
-                className="h-10 w-10 shrink-0 rounded-full object-cover"
-              />
-            ) : (
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sidebar-primary text-sm font-semibold text-sidebar-primary-foreground">
-                {getInitials(user?.name)}
-              </div>
-            )}
+            <div className="relative shrink-0">
+              {user?.avatar_url ? (
+                <img
+                  src={user.avatar_url}
+                  alt={user.name}
+                  className="h-10 w-10 shrink-0 rounded-full object-cover"
+                />
+              ) : (
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sidebar-primary text-sm font-semibold text-sidebar-primary-foreground">
+                  {getInitials(user?.name)}
+                </div>
+              )}
+
+              {isPro && (
+                <span
+                  className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-gradient-to-r from-brand-primary to-brand-secondary text-white ring-2 ring-sidebar"
+                  title="Pro plan"
+                >
+                  <Sparkles size={9} className="fill-current" />
+                </span>
+              )}
+            </div>
 
             {!collapsed && (
               <div className="min-w-0 flex-1">

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import PricingSection from "@/components/LandingPage/PricingSection";
+import SubscriptionBillingCard from "@/components/billing/SubscriptionBillingCard";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
 import {
   createCheckoutSession,
@@ -64,6 +65,10 @@ const Pricing = () => {
         onUpgrade={handleUpgrade}
         isUpgrading={isUpgrading}
       />
+
+      <div className="mt-8">
+        <SubscriptionBillingCard />
+      </div>
     </div>
   );
 };
