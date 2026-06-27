@@ -267,3 +267,19 @@ export const deleteInterview = handleError(async (req, res) => {
     await req.session.deleteOne();
     return res.status(200).json({message: "Interview deleted successfully",});
 });
+
+// DELETE /api/interviews
+export const deleteAllInterviews = handleError(async (req, res) => {
+    const sessions = await interviewSessionModel.find({user_id: req.user.id}).select("_id");
+
+    if (!sessions.length) {
+        return res.status(404).json({message: "No interviews found"});
+    }
+
+    const sessionIds = sessions.map(session => session._id);
+
+    await interviewQuestionModel.deleteMany({session_id: { $in: sessionIds }});
+    await interviewSessionModel.deleteMany({_id: { $in: sessionIds }});
+
+    return res.status(200).json({message: "All interviews deleted successfully",});
+});

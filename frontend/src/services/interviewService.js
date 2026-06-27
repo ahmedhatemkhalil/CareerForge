@@ -21,7 +21,7 @@ submitAnswer: async (sessionId, answer) => {
 
  getInterviewById: async (sessionId) => {
     const { data } = await api.get(`/interviews/${sessionId}`);
-    return data; // 👈 تم تعديلها من data.data إلى data لتستقبل الكائن مباشرة
+    return data; 
   },
 
   getAllInterviews: async () => {
@@ -35,5 +35,10 @@ submitAnswer: async (sessionId, answer) => {
   deleteInterview: async (sessionId) => {
     const { data } = await api.delete(`/interviews/${sessionId}`);
     return data.data;
-  }
+  },
+
+  deleteAllInterviews: async () => {
+    const { data } = await api.delete("/interviews");
+  return data;
+},
 };
