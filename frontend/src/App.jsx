@@ -1,18 +1,25 @@
-import { useEffect } from 'react'
+import { useEffect } from "react";
 
-import AppRouter from './AppRouter'
-import { loadUserTheme } from './utils/theme'
-import { loadCurrentUser } from './utils/userProfile'
+import AppRouter from "./AppRouter";
+import LoadingSpinner from "./components/common/LoadingSpinner";
+import useAuthStore from "./stores/authStore";
 
 const App = () => {
+  const isAuthReady = useAuthStore((state) => state.isAuthReady);
+
   useEffect(() => {
-    if (localStorage.getItem('token')) {
-      loadCurrentUser().catch(() => {})
-      loadUserTheme().catch(() => {})
-    }
-  }, [])
+    useAuthStore.getState().initializeAuth();
+  }, []);
 
-  return <AppRouter />
-}
+  if (!isAuthReady) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
-export default App
+  return <AppRouter />;
+};
+
+export default App;

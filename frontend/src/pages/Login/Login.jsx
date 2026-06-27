@@ -12,6 +12,7 @@ import AuthDivider from "@/components/auth/AuthDivider";
 import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 import { loginUser } from "@/services/authService";
 import { loginSchema } from "@/schemas/loginSchema";
+import useAuthStore from "@/stores/authStore";
 import { loadUserTheme } from "@/utils/theme";
 import { loadCurrentUser } from "@/utils/userProfile";
 
@@ -28,8 +29,9 @@ export default function Login() {
   const onSubmit = async (formData) => {
     try {
       const data = await loginUser(formData);
-      localStorage.setItem("token", data.accessToken);
-      localStorage.setItem("refreshToken", data.refreshToken);
+      useAuthStore
+        .getState()
+        .login(data.user, data.accessToken, data.refreshToken);
       await loadCurrentUser();
       await loadUserTheme();
       toast.success("Login successful");
