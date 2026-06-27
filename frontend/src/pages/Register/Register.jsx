@@ -96,7 +96,7 @@ export default function Register() {
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
-                placeholder="••••••••"
+                placeholder="enter your password"
                 {...register("password")}
                 className="h-12 w-full rounded-xl border border-border bg-input-background px-4 pr-12 outline-none transition focus:ring-2 focus:ring-brand-primary/40"
               />
@@ -122,7 +122,7 @@ export default function Register() {
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
-                placeholder="••••••••"
+                placeholder="confirm your password"
                 {...register("confirmPassword")}
                 className="h-12 w-full rounded-xl border border-border bg-input-background px-4 pr-12 outline-none transition focus:ring-2 focus:ring-brand-primary/40"
               />

@@ -62,7 +62,7 @@ export default function Login() {
             </label>
             <input
               type="email"
-              placeholder="m@gmail.com"
+              placeholder="enter your email address"
               {...register("email")}
               className="h-12 w-full rounded-xl border border-border bg-input-background px-4 text-foreground outline-none transition focus:border-brand-primary"
             />
@@ -78,7 +78,7 @@ export default function Login() {
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
-                placeholder="••••••••"
+                placeholder="enter your password"
                 {...register("password")}
                 className="h-12 w-full rounded-xl border border-border bg-input-background px-4 pr-12 text-foreground outline-none transition focus:border-brand-primary"
               />
