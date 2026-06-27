@@ -25,32 +25,23 @@ import NewRoadmap from './pages/Roadmap/NewRoadmap'
 import RoadmapResults from './pages/Roadmap/RoadmapResults'
 import PaymentSuccess from './pages/Payment/PaymentSuccess'
 import Pricing from './pages/Pricing/Pricing'
-
-const ConditionalLayout = () => {
-  const token = localStorage.getItem('token')
-
-  if (token) {
-    return <Layout />
-  }
-
-  return <Outlet />
-}
+import GuestRoute from './components/common/GuestRoute'
 
 const AppRouter = () => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<ConditionalLayout />}>
-          <Route index element={<Landing />} />
-        </Route>
+        <Route path="/" element={<Landing />} />
 
-        <Route element={<AuthLayout />}>
-          <Route path="login" element={<Login />} />
-          <Route path="forgot-password" element={<ForgotPassword />} />
-          <Route path="reset-password/:token" element={<ResetPassword />} />
-          <Route path="verify-email/:token" element={<EmailVerification />} />
-          <Route path="register" element={<Register />} />
-          <Route path="verify-notice" element={<VerifyNotice />} />
+        <Route element={<GuestRoute />}>
+          <Route element={<AuthLayout />}>
+            <Route path="login" element={<Login />} />
+            <Route path="forgot-password" element={<ForgotPassword />} />
+            <Route path="reset-password/:token" element={<ResetPassword />} />
+            <Route path="verify-email/:token" element={<EmailVerification />} />
+            <Route path="register" element={<Register />} />
+            <Route path="verify-notice" element={<VerifyNotice />} />
+          </Route>
         </Route>
 
  <Route path="oauth/callback" element={<GoogleCallback />} />

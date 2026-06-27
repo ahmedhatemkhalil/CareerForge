@@ -9,7 +9,7 @@ export class AuthService {
   private apiUrl = 'http://localhost:5000/api/auth';
 
   login(credentials: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/login`, credentials);
+    return this.http.post(`${this.apiUrl}/admin/login`, credentials);
   }
 
  isAdmin(): boolean {

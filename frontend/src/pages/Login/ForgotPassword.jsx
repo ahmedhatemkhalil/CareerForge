@@ -170,7 +170,7 @@ export default function ForgotPassword() {
                 </label>
                 <input
                   type="email"
-                  placeholder="m@gmail.com"
+                  placeholder="enter your email address"
                   {...register("email")}
                   className="w-full h-12 rounded-xl bg-input-background border border-border px-4 text-foreground outline-none focus:border-brand-primary transition"
                 />
@@ -243,7 +243,7 @@ export default function ForgotPassword() {
                 </label>
                 <input
                   type="password"
-                  placeholder="••••••••"
+                  placeholder="enter your new password"
                   {...registerReset("password")}
                   className="w-full h-12 rounded-xl bg-input-background border border-border px-4 text-foreground outline-none focus:border-brand-primary transition"
                 />
@@ -260,7 +260,7 @@ export default function ForgotPassword() {
                 </label>
                 <input
                   type="password"
-                  placeholder="••••••••"
+                  placeholder="confirm your new password"
                   {...registerReset("confirmPassword")}
                   className="w-full h-12 rounded-xl bg-input-background border border-border px-4 text-foreground outline-none focus:border-brand-primary transition"
                 />
