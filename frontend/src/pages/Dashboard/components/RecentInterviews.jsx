@@ -66,7 +66,7 @@ const RecentInterviews = ({
                     getInterviewScoreStyles(item.score),
                   )}
                 >
-                  {formatInterviewScore(item.score)}/10
+                  {formatInterviewScore(item.score)}
                 </span>
               </div>
             )

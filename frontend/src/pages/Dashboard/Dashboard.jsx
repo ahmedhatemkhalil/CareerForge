@@ -203,11 +203,10 @@ const Dashboard = () => {
             const session = recentInterviews.find(
               (item) => (item._id ?? item.id) === id,
             )
-            if (session?.status === 'Completed') {
+            if (session?.status?.toLowerCase() === 'completed') {
               navigate(`/interview/${id}/result`)
               return
             }
-            navigate(`/live-interview/${id}`)
           }}
           onViewAll={() => navigate('/interview')}
         />

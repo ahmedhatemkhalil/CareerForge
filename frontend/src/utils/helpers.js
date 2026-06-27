@@ -128,7 +128,7 @@ export const getScoreSummary = (score) => {
 
 export const formatInterviewScore = (score) => {
   const value = Number(score) || 0
-  return (value / 10).toFixed(1)
+  return `${Math.round(value)}%`
 }
 
 export const getInterviewScoreStyles = (score) => getScoreStyles(score).badge
