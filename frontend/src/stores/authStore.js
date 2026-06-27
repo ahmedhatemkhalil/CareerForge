@@ -1,22 +1,19 @@
-// src/store/authStore.js
-
 import { create } from "zustand";
 
-const getStoredUser = () => {
-  try {
-    const user = localStorage.getItem("user");
-    return user ? JSON.parse(user) : null;
-  } catch {
-    return null;
-  }
-};
+import { getCurrentUser } from "@/services/user/user";
+import { loadUserTheme } from "@/utils/theme";
 
-const useAuthStore = create((set) => ({
-  user: getStoredUser(),
+const useAuthStore = create((set, get) => ({
+  user: null,
   token: localStorage.getItem("token"),
+  isAuthReady: false,
 
   setUser: (user) => {
-    localStorage.setItem("user", JSON.stringify(user));
+    if (user) {
+      localStorage.setItem("user", JSON.stringify(user));
+    } else {
+      localStorage.removeItem("user");
+    }
     set({ user });
   },
 
@@ -30,7 +27,7 @@ const useAuthStore = create((set) => ({
     }
 
     set({
-      user,
+      user: user ?? get().user,
       token,
     });
   },
@@ -44,6 +41,29 @@ const useAuthStore = create((set) => ({
       user: null,
       token: null,
     });
+  },
+
+  initializeAuth: async () => {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      localStorage.removeItem("user");
+      localStorage.removeItem("refreshToken");
+      set({ user: null, token: null, isAuthReady: true });
+      return;
+    }
+
+    try {
+      const user = await getCurrentUser();
+      localStorage.setItem("user", JSON.stringify(user));
+      set({ user, token, isAuthReady: true });
+      await loadUserTheme().catch(() => {});
+    } catch {
+      localStorage.removeItem("token");
+      localStorage.removeItem("refreshToken");
+      localStorage.removeItem("user");
+      set({ user: null, token: null, isAuthReady: true });
+    }
   },
 }));
 

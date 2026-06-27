@@ -2,6 +2,7 @@
 import { useEffect ,useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { googleLogin } from "../../services/authService";
+import useAuthStore from "../../stores/authStore";
 import { loadUserTheme } from "../../utils/theme";
 import { loadCurrentUser } from "../../utils/userProfile";
 import toast from "react-hot-toast";
@@ -27,14 +28,11 @@ useEffect(() => {
 
         const response = await googleLogin(code);
 
-        localStorage.setItem(
-          "token",
-          response.data.accessToken
+        useAuthStore.getState().login(
+          response.data.user,
+          response.data.accessToken,
+          response.data.refreshToken
         );
-
-        if (response.data.refreshToken) {
-          localStorage.setItem("refreshToken", response.data.refreshToken);
-        }
 
         await loadCurrentUser();
         await loadUserTheme();

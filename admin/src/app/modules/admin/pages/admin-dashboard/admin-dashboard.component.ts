@@ -28,7 +28,7 @@ throw new Error('Method not implemented.');
     totalInterviews: 0,
     totalAnalyses: 0
   };
-  isDarkMode: boolean = true;
+  isDarkMode: boolean = false;
 
   adminName: string = 'Admin';
   adminInitial: string = 'AD';

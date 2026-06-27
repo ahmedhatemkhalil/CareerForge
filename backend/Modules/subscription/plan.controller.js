@@ -40,15 +40,18 @@ export const getAllPlans = async (req, res) => {
 export const updatePlanLimits = async (req, res) => {
     try {
         const { name } = req.params; 
-        const { analysesPerMonth, interviewsPerMonth, roadmapsPerMonth } = req.body;
+   
+        const data = req.body.limits || req.body; 
+
+        console.log("البيانات المستلمة في السيرفر:", data);
 
         const updatedPlan = await SubscriptionPlan.findOneAndUpdate(
             { name },
             { 
                 $set: {
-                    "limits.analysesPerMonth": analysesPerMonth,
-                    "limits.interviewsPerMonth": interviewsPerMonth,
-                    "limits.roadmapsPerMonth": roadmapsPerMonth
+                    "limits.analysesPerMonth": data.analysesPerMonth,
+                    "limits.interviewsPerMonth": data.interviewsPerMonth,
+                    "limits.roadmapsPerMonth": data.roadmapsPerMonth
                 }
             },
             { new: true, runValidators: true }
@@ -58,11 +61,7 @@ export const updatePlanLimits = async (req, res) => {
             return res.status(404).json({ message: "The plan does not exist" });
         }
 
-        return res.status(200).json({ 
-            success: true, 
-            message: `The plan ${name} is updated successfully`, 
-            data: updatedPlan 
-        });
+        return res.status(200).json({ success: true, data: updatedPlan });
     } catch (error) {
         return res.status(500).json({ message: error.message });
     }

@@ -9,4 +9,8 @@ import { RouterOutlet } from '@angular/router';
 })
 export class AppComponent {
   title = 'CareerForge Admin';
+  toggleTheme() {
+  const element = document.body;
+  element.classList.toggle('dark');
+}
 }
