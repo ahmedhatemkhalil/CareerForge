@@ -1,7 +1,7 @@
 import { create } from "zustand";
 
 import { getCurrentUser } from "@/services/user/user";
-import { loadUserTheme } from "@/utils/theme";
+import { initTheme, loadUserTheme } from "@/utils/theme";
 
 const useAuthStore = create((set, get) => ({
   user: null,
@@ -44,6 +44,8 @@ const useAuthStore = create((set, get) => ({
   },
 
   initializeAuth: async () => {
+    initTheme();
+
     const token = localStorage.getItem("token");
 
     if (!token) {
@@ -54,10 +56,10 @@ const useAuthStore = create((set, get) => ({
     }
 
     try {
+      await loadUserTheme().catch(() => {});
       const user = await getCurrentUser();
       localStorage.setItem("user", JSON.stringify(user));
       set({ user, token, isAuthReady: true });
-      await loadUserTheme().catch(() => {});
     } catch {
       localStorage.removeItem("token");
       localStorage.removeItem("refreshToken");

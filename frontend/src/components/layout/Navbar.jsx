@@ -2,11 +2,12 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Moon, Sun, Sparkles, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
+import useThemeStore from "@/stores/themeStore";
 export default function Navbar() {
   const navigate = useNavigate();
-
-  const [darkMode, setDarkMode] = useState(() => document.documentElement.classList.contains("dark"));
+  const theme = useThemeStore((state) => state.theme);
+  const setTheme = useThemeStore((state) => state.setTheme);
+  const darkMode = theme === "dark";
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -21,8 +22,7 @@ export default function Navbar() {
   }, []);
 
   const toggleTheme = () => {
-    document.documentElement.classList.toggle("dark");
-    setDarkMode(!darkMode);
+    setTheme(darkMode ? "light" : "dark");
   };
 
   return (

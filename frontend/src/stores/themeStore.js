@@ -1,12 +1,14 @@
-import { create } from "zustand";
+import { create } from 'zustand'
+
+import { applyTheme, getStoredTheme } from '@/utils/themeStorage'
 
 const useThemeStore = create((set) => ({
-  theme: "light",
+  theme: getStoredTheme(),
 
   setTheme: (theme) => {
-    document.documentElement.classList.toggle("dark", theme === "dark");
-    set({ theme });
+    const resolved = applyTheme(theme)
+    set({ theme: resolved })
   },
-}));
+}))
 
-export default useThemeStore;
+export default useThemeStore
