@@ -3,25 +3,23 @@ import { useEffect, useState } from "react";
 import {
   FileText,
   Calendar,
-  Plus,
   ChevronRight,
   Trash2,
-  Loader2,
+  Plus
 } from "lucide-react";
 import { getAllAnalyses, deleteAnalysis } from "../../services/analysisService";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import ConfirmModal from "../../components/common/ConfirmModal";
-import { getScoreStyles } from "../../utils/helpers";
+import { getScoreStyles, formatAnalysisDate} from "../../utils/helpers";
+import HistoryListSkeleton from "@/components/common/HistoryListSkeleton";
+import EmptyAnalysisState from "@/components/Interview/EmptyInterviewsState";
+import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
+import 'react-circular-progressbar/dist/styles.css';
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "react-hot-toast";
 
-const formatAnalysisDate = (isoDate) => {
-  if (!isoDate) return "Unknown date";
-  const dateOnly = String(isoDate).split("T")[0];
-  return new Date(`${dateOnly}T00:00:00`).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-};
 
 export default function Analyze() {
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -96,7 +94,10 @@ export default function Analyze() {
     fetchAnalysesData();
   }, []);
 
+  const totalAnalysis = analyses.length;
+
   const handleDelete = (analysisId, e) => {
+    e.preventDefault();
     e.stopPropagation();
     setSelectedAnalysisId(analysisId);
     setConfirmOpen(true);
@@ -104,31 +105,27 @@ export default function Analyze() {
 
   const confirmDelete = async () => {
     if (!selectedAnalysisId) return;
-
+    setDeleteLoading(true);
     try {
-      setDeleteLoading(true);
       await deleteAnalysis(selectedAnalysisId);
-      await fetchAnalysesData();
+      const remaining = analyses.filter((item) => item._id !== selectedAnalysisId);
+      setAnalyses(remaining);
+      const withScores = remaining.filter((item) => item.matchScore > 0);
+      setStats({
+        total: withScores.length,
+        avgScore: withScores.length ? Math.round(withScores.reduce((s, i) => s + i.matchScore, 0) / withScores.length) : 0,
+        bestScore: withScores.length ? Math.max(...withScores.map((i) => i.matchScore)) : 0
+      });
       setConfirmOpen(false);
       setSelectedAnalysisId(null);
+      toast.success("Analysis record deleted successfully!");
     } catch (err) {
       console.error("Delete failed:", err);
+      toast.error("Could not delete the analysis. Please try again.");
     } finally {
       setDeleteLoading(false);
     }
   };
-
-  const handleOpenAnalysis = (analysisId) => {
-    navigate(`/analyze/results/${analysisId}`);
-  };
-
-  if (loading) {
-    return (
-      <div className="flex h-96 items-center justify-center text-indigo-600">
-        <Loader2 className="w-9 h-9 animate-spin" />
-      </div>
-    );
-  }
 
   if (error) {
     return (
@@ -137,134 +134,116 @@ export default function Analyze() {
   }
 
   return (
-    <div className="p-6 max-w-5xl mx-auto font-sans text-gray-800 antialiased">
-      <div className="flex justify-between items-center mb-8">
+    <div className="mx-auto w-full max-w-5xl space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">
             CV Analysis
           </h1>
-          <p className="text-sm text-gray-500 mt-1.5 font-medium">
-            {stats.total} analyses · Avg score {stats.avgScore}% · Best{" "}
-            {stats.bestScore}%
-          </p>
+          <div className="text-sm text-muted-foreground font-medium">
+            {loading ? (
+              <Skeleton className="h-4 w-64 mt-1" />
+            ) : totalAnalysis > 0 ? (
+              `${totalAnalysis} analyses · Avg score ${stats.avgScore}% · Best ${stats.bestScore}%`
+            ) : (
+              "No analyses completed yet"
+            )}
+          </div>
         </div>
-        <button
+        <Button
           onClick={() => navigate("/new-analysis")}
-          className="flex items-center gap-2 bg-sidebar-ring hover:bg-sidebar-ring text-white px-5 py-2.5 rounded-xl text-sm font-semibold shadow-sm transition-all duration-200"
+          className="bg-brand-primary hover:bg-brand-primary/90 text-white font-medium inline-flex items-center gap-2 rounded-xl p-5 shadow-xs cursor-pointer w-full sm:w-fit"
         >
-          <Plus size={18} strokeWidth={2.5} />
+          <Plus className="size-4" />
           New Analysis
-        </button>
+        </Button>
       </div>
 
-      <div className="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
-        <div className="flex justify-between items-center px-6 py-5 border-b border-gray-50">
-          <h2 className="text-xl font-bold text-gray-900">Analysis History</h2>
-          <span className="text-sm font-semibold text-gray-400">
-            {analyses.length} records
+      <div className="bg-card border border-border rounded-2xl shadow-xs overflow-hidden">
+        <div className="flex items-center justify-between p-5 border-b border-border bg-card">
+          <h2 className="text-lg font-bold tracking-tight">Analysis History</h2>
+          <span className="text-xs font-semibold text-muted-foreground uppercase bg-muted/50 px-2.5 py-1 rounded-md">
+            {totalAnalysis} records
           </span>
         </div>
-
-        <div className="divide-y divide-gray-50">
-          {analyses.length === 0 ? (
-            <p className="text-center text-gray-400 py-12 font-medium">
-              No analyses yet.
-            </p>
+        <div>
+          {loading ? (
+            <HistoryListSkeleton />
+          ) : totalAnalysis === 0 ? (
+            <EmptyAnalysisState />
           ) : (
-            analyses.map((item) => {
-              const score = item.matchScore || 0;
-              const styles = getScoreStyles(score);
+            <div className="divide-y divide-border">
+              {analyses.map((item) => {
+                const currentScore = item.matchScore || 0;
+                const scoreStyle = getScoreStyles(currentScore);
 
-              const radius = 22;
-              const circumference = 2 * Math.PI * radius;
-              const strokeDashoffset =
-                circumference - (score / 100) * circumference;
+                return (
+                  <Link
+                    key={item._id}
+                    to={`/analyze/results/${item._id}`}
+                    className="flex flex-col sm:flex-row items-center justify-between p-5 gap-4 hover:bg-muted/30 transition-colors group cursor-pointer"
+                  >
+                    <div className="flex items-start sm:items-center gap-5 w-full sm:w-auto">
+                      {/* Circular Progress Indicators */}
+                      <div className="relative size-14 shrink-0 flex items-center justify-center font-bold">
+                        <CircularProgressbar
+                          value={currentScore}
+                          text={`${currentScore}%`}
+                          styles={buildStyles({
+                            textSize: '24px',
+                            textColor: 'currentColor',
+                            pathColor: scoreStyle.stroke,
+                            trailColor: 'var(--muted)', 
+                            strokeLinecap: 'round',
+                            pathTransitionDuration: 0.5,
+                          })}
+                        />
+                      </div>
 
-              return (
-                <div
-                  key={item._id}
-                  onDoubleClick={() => handleOpenAnalysis(item._id)}
-                  className="flex items-center justify-between p-5 hover:bg-slate-50/50 transition-all group relative cursor-pointer"
-                >
-                  <div className="flex items-center gap-5">
-                    <div className="relative w-12 h-12 flex items-center justify-center flex-shrink-0">
-                      <svg className="w-full h-full transform -rotate-90">
-                        <circle
-                          cx="24"
-                          cy="24"
-                          r={radius}
-                          className="stroke-gray-100"
-                          strokeWidth="4"
-                          fill="transparent"
-                        />
-                        <circle
-                          cx="24"
-                          cy="24"
-                          r={radius}
-                          stroke={styles.stroke}
-                          strokeWidth="4"
-                          fill="transparent"
-                          strokeDasharray={circumference}
-                          strokeDashoffset={
-                            score > 0 ? strokeDashoffset : circumference
-                          }
-                          strokeLinecap="round"
-                          className="transition-all duration-500 ease-out"
-                        />
-                      </svg>
-                      <span
-                        className={`absolute font-bold text-xs ${styles.text}`}
+                      {/* Info Metadata */}
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="font-bold text-base text-foreground group-hover:text-brand-primary transition-colors">
+                            {item.jobTitle}
+                          </h3>
+                          <Badge className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${scoreStyle.badge}`}>
+                            {scoreStyle.label}
+                          </Badge>
+                        </div>
+                        
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+                          <span className="flex items-start sm:items-center gap-1">
+                            <FileText className="size-3.5" />
+                            CV: {item.fileName}
+                          </span>
+                          <span className="hidden sm:inline text-muted/60">•</span>
+                          <span className="flex items-center gap-1">
+                            <Calendar className="size-3.5" />
+                            {item.analysisDate}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Buttons */}
+                    <div className="flex items-center gap-3 w-full sm:w-auto justify-end border-t sm:border-none pt-3 sm:pt-0">
+                      <button 
+                        type="button"
+                        onClick={(e) => handleDelete(item._id, e)}
+                        className="p-2 text-status-error/70 hover:text-status-error hover:bg-status-error/10 rounded-xl transition-all opacity-100 sm:opacity-0 group-hover:opacity-100 cursor-pointer"
+                        title="Delete Analysis"
                       >
-                        {score > 0 ? `${score}` : "-"}
-                      </span>
-                    </div>
-
-                    <div>
-                      <div className="flex items-center gap-2.5 flex-wrap">
-                        <h3 className="font-bold text-gray-800 text-base tracking-tight group-hover:text-indigo-600 transition duration-150">
-                          {item.jobTitle}
-                        </h3>
-                        <span
-                          className={`text-[11px] px-2.5 py-0.5 font-bold rounded-full border ${styles.badge}`}
-                        >
-                          {styles.label}
-                        </span>
-                      </div>
-
-                      <div className="flex items-center gap-4 text-xs font-medium text-gray-400 mt-2">
-                        <span className="flex items-center gap-1">
-                          <FileText size={14} className="text-gray-400" />
-                          {item.fileName}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Calendar size={14} className="text-gray-400" />
-                          {item.analysisDate}
-                        </span>
+                        <Trash2 className="size-4.5" />
+                      </button>
+                      
+                      <div className='p-2 hover:bg-primary/10 rounded-xl group-hover:translate-x-1 transition-transform text-muted-foreground'>
+                        <ChevronRight className="size-4.5"/>
                       </div>
                     </div>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={(e) => handleDelete(item._id, e)}
-                      onDoubleClick={(e) => e.stopPropagation()}
-                      className="p-2 text-gray-400 hover:text-red-500 rounded-lg hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all duration-150"
-                      title="Delete analysis"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleOpenAnalysis(item._id)}
-                      className="p-1 text-gray-300 group-hover:text-gray-500 group-hover:translate-x-0.5 transition-all duration-150"
-                      title="View analysis details"
-                    >
-                      <ChevronRight size={18} />
-                    </button>
-                  </div>
-                </div>
-              );
-            })
+                  </Link>
+                );
+              })}
+            </div>
           )}
         </div>
       </div>
@@ -276,7 +255,7 @@ export default function Analyze() {
           setSelectedAnalysisId(null);
         }}
         title="Delete Analysis"
-        message="Are you sure you want to delete this analysis? This action cannot be undone."
+        message="Are you sure you want to delete this CV analysis? This action will permanently remove your data evaluation metrics and cannot be undone."
         confirmLabel="Delete"
         cancelLabel="Cancel"
         confirmVariant="destructive"
