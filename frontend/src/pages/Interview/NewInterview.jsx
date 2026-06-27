@@ -243,7 +243,7 @@ export default function NewInterview() {
         onClose={() => setStartConfirmOpen(false)}
         title="Ready to Start?"
         message={`You are about to start a live interview for "${selectedAnalysis?.jobId?.title || 'Targeted Job Role'}". Make sure you have enough time to finish your answers.`}
-        confirmLabel="Let's Go! 🚀"
+        confirmLabel="Start Interview"
         cancelLabel="Cancel"
         confirmVariant="default"
         onConfirm={confirmStartInterview}

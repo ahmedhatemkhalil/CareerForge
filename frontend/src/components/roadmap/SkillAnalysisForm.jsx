@@ -4,12 +4,13 @@ import { getAnalyses, postRoadmap } from '../../services/roadmapService';
 import { useNavigate } from 'react-router-dom';
 import { BarChart3 } from 'lucide-react';
 import { usePlanLimitModal } from '@/hooks/usePlanLimitModal';
+import WeeklyCommitmentSlider, { DEFAULT_WEEKLY_HOURS } from './WeeklyCommitmentSlider';
 
 export default function SkillAnalysisForm() {
   const { handleError, modal: upgradeModal } = usePlanLimitModal();
   const [analyses, setAnalyses] = useState([]);
   const [selectedId, setSelectedId] = useState('');
-  const [commitment, setCommitment] = useState('');
+  const [hoursPerWeek, setHoursPerWeek] = useState(DEFAULT_WEEKLY_HOURS);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
@@ -28,13 +29,13 @@ export default function SkillAnalysisForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!selectedId || !commitment) return;
+    if (!selectedId) return;
     
     setLoading(true);
     try {
       const payload = {
         analysisId: selectedId,
-        hoursPerWeek: Number(commitment)
+        hoursPerWeek,
       };
 
       const response = await postRoadmap(payload);
@@ -102,17 +103,10 @@ export default function SkillAnalysisForm() {
         )}
       </div>
 
-      <div className="space-y-2">
-        <label className="block text-sm font-medium text-foreground ml-1">
-          Daily Study Commitment
-        </label>
-        <input 
-          className="w-full bg-input-background border border-border p-4 rounded-xl text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-brand-primary transition-all" 
-          placeholder="Enter hours per day (e.g., 2 hours)" 
-          value={commitment}
-          onChange={(e) => setCommitment(e.target.value)} 
-        />
-      </div>
+      <WeeklyCommitmentSlider
+        value={hoursPerWeek}
+        onChange={setHoursPerWeek}
+      />
       
       <button 
         type="submit"
