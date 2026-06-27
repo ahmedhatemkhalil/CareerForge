@@ -199,7 +199,7 @@ export const logout = async (req, res) => {
 
     const session = await Session.findOne({ refresh_token: refreshToken });
     if (!session) {
-      return res.status(404).json({ message: "Session not found" });
+      return res.json({ message: "Logged out successfully" });
     }
 
     if (session.user_id.toString() !== req.user.id) {
