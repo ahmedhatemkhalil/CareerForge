@@ -9,6 +9,20 @@ import {
   CreditCard,
 } from 'lucide-react'
 
+export const isNavItemActive = (pathname, item) => {
+  if (pathname === item.path) return true
+  if (pathname.startsWith(`${item.path}/`)) return true
+  if (
+    item.relatedPaths?.some(
+      (related) =>
+        pathname === related || pathname.startsWith(`${related}/`),
+    )
+  ) {
+    return true
+  }
+  return false
+}
+
 export const navItems = [
   { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
   {
@@ -17,9 +31,24 @@ export const navItems = [
     icon: FileText,
     badge: 'Active',
   },
-  { name: 'CV Analysis', path: '/analyze', icon: BarChart3 },
-  { name: 'Mock Interview', path: '/interview', icon: Mic },
-  { name: 'Career Roadmaps', path: '/roadmap', icon: Map },
+  {
+    name: 'CV Analysis',
+    path: '/analyze',
+    icon: BarChart3,
+    relatedPaths: ['/new-analysis'],
+  },
+  {
+    name: 'Mock Interview',
+    path: '/interview',
+    icon: Mic,
+    relatedPaths: ['/new-interview', '/live-interview'],
+  },
+  {
+    name: 'Career Roadmaps',
+    path: '/roadmap',
+    icon: Map,
+    relatedPaths: ['/new-roadmap'],
+  },
   {
     name: 'Pricing & Plans',
     path: '/pricing',

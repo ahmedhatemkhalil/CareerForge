@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
 import { logoutUser } from '@/services/authService'
 import useAuthStore from '@/stores/authStore'
 import { getInitials } from '@/utils/helpers'
-import { navItems } from './static'
+import { isNavItemActive, navItems } from './static'
 import toast from 'react-hot-toast'
 
 export default function Sidebar() {
@@ -103,7 +103,7 @@ export default function Sidebar() {
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
         {visibleNavItems.map((item) => {
           const Icon = item.icon
-          const active = location.pathname === item.path
+          const active = isNavItemActive(location.pathname, item)
 
           return (
             <Link
