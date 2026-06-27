@@ -15,7 +15,7 @@ export const routes: Routes = [
   },
 { path: 'access-denied', component: AccessDeniedComponent },
 {
-  path: 'admin/revenue',
+  path: 'revenue',
   component: RevenueComponent,
-  canActivate: [adminGuard] 
+  canActivate: [adminGuard]
 },];
