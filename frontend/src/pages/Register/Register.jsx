@@ -1,20 +1,17 @@
-/* eslint-disable no-unused-vars */
-// src/pages/Register.jsx
+// src/pages/Register/Register.jsx
 
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
-
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
 
-import { GoogleIcon } from "../../components/icons/SocialIcons";
-import { registerSchema } from "../../schemas/registerSchema";
-import { registerUser } from "../../services/authService";
-
-const socialButtonClassName =
-  "flex w-full h-12 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-semibold hover:opacity-90 transition";
+import AuthBrandHeader from "@/components/auth/AuthBrandHeader";
+import AuthDivider from "@/components/auth/AuthDivider";
+import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
+import { registerSchema } from "@/schemas/registerSchema";
+import { registerUser } from "@/services/authService";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -28,10 +25,9 @@ export default function Register() {
     resolver: zodResolver(registerSchema),
   });
 
-  // Handle Register
   const handleRegister = async (formData) => {
     try {
-      const data = await registerUser(formData);
+      await registerUser(formData);
       toast.success("Account created successfully!");
 
       navigate("/verify-notice", {
@@ -48,93 +44,53 @@ export default function Register() {
     }
   };
 
- 
-  const handleGoogleLogin = () => {
-    const clientId = "709262554956-ick9aq5hj3342ikue55ljtct3k62bdp9.apps.googleusercontent.com";
-    const redirectUri = "http://localhost:5173/oauth/callback"; // تعديل البورت والمسار ليكون متناسق مع الفيت والـ callback
-
-    localStorage.setItem("oauth_provider", "google"); // حفظ النوع عشان الـ callback
-
-    const url =
-      `https://accounts.google.com/o/oauth2/v2/auth` +
-      `?client_id=${clientId}` +
-      `&redirect_uri=${redirectUri}` +
-      `&response_type=code` +
-      `&scope=openid email profile`;
-
-    window.location.href = url;
-  };
-
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-8 ">
-      <div className="w-full lg:w-[45vw] lg:w-1/2 bg-card rounded-xl   p-10">
-        {/* Title */}
-        <h1 className="text-1xl font-semibold text-center ">
-          Create Account
-        </h1>
+    <div className="flex min-h-screen items-center justify-center bg-background p-8">
+      <div className="w-full rounded-xl bg-card p-10 lg:w-[45vw] lg:w-1/2">
+        <AuthBrandHeader
+          title="Create account"
+          subtitle="Start your career transformation today"
+        />
 
-        <p className="text-sm text-center mt-2">
-          Start your career transformation today
-        </p>
+        <GoogleSignInButton label="Sign up with Google" />
 
-        {/* Social Buttons */}
-        <div className="mt-6 w-full px-4 sm:px-0 sm:max-w-sm mx-auto">
-  <button
-    type="button"
-    onClick={handleGoogleLogin}
-    className={`${socialButtonClassName} w-full h-12 flex items-center justify-center gap-3 rounded-xl border border-border bg-transparent hover:bg-gray-50 dark:hover:bg-gray-800 transition text-foreground font-medium`}
-  >
-    <GoogleIcon />
-    Google
-  </button>
-</div>
-        <div className="flex items-center my-6">
-          <div className="flex-1 h-px bg-border"></div>
-          <span className="px-3 text-[11px] uppercase tracking-widest text-muted-foreground">
-            Or register with email
-          </span>
-          <div className="flex-1 h-px bg-border"></div>
-        </div>
+        <AuthDivider label="Or register with email" />
 
-        {/* Form */}
         <form onSubmit={handleSubmit(handleRegister)} className="space-y-5">
-          {/* Name */}
           <div>
-            <label className="text-sm text-muted-foreground mb-2 block">
+            <label className="mb-2 block text-sm text-muted-foreground">
               Full Name
             </label>
             <input
               type="text"
-              placeholder="Amany Mahmoud"
+              placeholder="enter your full name"
               {...register("name")}
-              className="w-full h-12 rounded-xl bg-input-background border border-border px-4 focus:outline-none focus:ring-2 focus:ring-brand-primary/40 transition"
+              className="h-12 w-full rounded-xl border border-border bg-input-background px-4 outline-none transition focus:ring-2 focus:ring-brand-primary/40"
             />
             {errors.name && (
-              <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
+              <p className="mt-1 text-sm text-red-500">{errors.name.message}</p>
             )}
           </div>
 
-          {/* Email */}
           <div>
-            <label className="text-sm text-muted-foreground mb-2 block">
+            <label className="mb-2 block text-sm text-muted-foreground">
               Email
             </label>
             <input
               type="email"
-              placeholder="m@example.com"
+              placeholder="enter your email address"
               {...register("email")}
-              className="w-full h-12 rounded-xl bg-input-background border border-border px-4 focus:outline-none focus:ring-2 focus:ring-brand-primary/40 transition"
+              className="h-12 w-full rounded-xl border border-border bg-input-background px-4 outline-none transition focus:ring-2 focus:ring-brand-primary/40"
             />
             {errors.email && (
-              <p className="text-red-500 text-sm mt-1">
+              <p className="mt-1 text-sm text-red-500">
                 {errors.email.message}
               </p>
             )}
           </div>
 
-          {/* Password */}
           <div>
-            <label className="text-sm text-muted-foreground mb-2 block">
+            <label className="mb-2 block text-sm text-muted-foreground">
               Password
             </label>
             <div className="relative">
@@ -142,13 +98,8 @@ export default function Register() {
                 type={showPassword ? "text" : "password"}
                 placeholder="••••••••"
                 {...register("password")}
-                className="w-full h-12 rounded-xl bg-input-background border border-border px-4 pr-12"
+                className="h-12 w-full rounded-xl border border-border bg-input-background px-4 pr-12 outline-none transition focus:ring-2 focus:ring-brand-primary/40"
               />
-              {errors.password && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.password.message}
-                </p>
-              )}
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
@@ -157,11 +108,15 @@ export default function Register() {
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
+            {errors.password && (
+              <p className="mt-1 text-sm text-red-500">
+                {errors.password.message}
+              </p>
+            )}
           </div>
 
-          {/* Confirm Password */}
           <div>
-            <label className="text-sm text-muted-foreground mb-2 block">
+            <label className="mb-2 block text-sm text-muted-foreground">
               Confirm Password
             </label>
             <div className="relative">
@@ -169,13 +124,8 @@ export default function Register() {
                 type={showPassword ? "text" : "password"}
                 placeholder="••••••••"
                 {...register("confirmPassword")}
-                className="w-full h-12 rounded-xl bg-input-background border border-border px-4 focus:outline-none focus:ring-2 focus:ring-brand-primary/40 transition"
+                className="h-12 w-full rounded-xl border border-border bg-input-background px-4 pr-12 outline-none transition focus:ring-2 focus:ring-brand-primary/40"
               />
-              {errors.confirmPassword && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.confirmPassword.message}
-                </p>
-              )}
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
@@ -184,19 +134,22 @@ export default function Register() {
                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
+            {errors.confirmPassword && (
+              <p className="mt-1 text-sm text-red-500">
+                {errors.confirmPassword.message}
+              </p>
+            )}
           </div>
 
-          {/* Button */}
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full h-12 rounded-xl bg-gradient-to-r from-brand-primary to-brand-secondary text-white font-semibold hover:opacity-90 transition disabled:opacity-50"
+            className="h-12 w-full rounded-xl bg-gradient-to-r from-brand-primary to-brand-secondary font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
           >
             {isSubmitting ? "Creating..." : "Create Account"}
           </button>
         </form>
 
-        {/* Footer */}
         <div className="mt-6 text-center text-sm text-muted-foreground">
           Already have an account?{" "}
           <Link to="/login" className="text-brand-primary hover:underline">
