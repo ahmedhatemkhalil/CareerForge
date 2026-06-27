@@ -46,6 +46,53 @@ const toPublicUser = (user) => ({
   stripeSubscriptionId: user.stripeSubscriptionId,
 });
 
+const validateUserForLogin = async (user, password) => {
+  if (!user.is_verified) {
+    return { status: 401, message: "Please verify your email first." };
+  }
+  if (user.status === "suspended") {
+    return { status: 403, message: "Your account has been suspended." };
+  }
+  if (user.status === "banned") {
+    return {
+      status: 403,
+      message: user.ban_reason
+        ? `Your account has been banned: ${user.ban_reason}`
+        : "Your account has been banned.",
+    };
+  }
+
+  const match = await bcrypt.compare(password, user.password_hash);
+  if (!match) {
+    return { status: 400, message: "Wrong password" };
+  }
+
+  return null;
+};
+
+const issueLoginResponse = async (user, res) => {
+  user.last_login_at = new Date();
+  await user.save();
+
+  const accessToken = createAccessToken(user);
+  const refreshToken = createRefreshToken(user);
+
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + 7);
+
+  await Session.create({
+    user_id: user._id,
+    refresh_token: refreshToken,
+    expires_at: expiresAt,
+  });
+
+  res.json({
+    accessToken,
+    refreshToken,
+    user: toPublicUser(user),
+  });
+};
+
 // POST /api/auth/signup
 export const signup = async (req, res) => {
   try {
@@ -142,48 +189,48 @@ export const login = async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ message: "User not found" });
 
-    if (!user.is_verified) {
+    const validationError = await validateUserForLogin(user, password);
+    if (validationError) {
       return res
-        .status(401)
-        .json({ message: "Please verify your email first." });
+        .status(validationError.status)
+        .json({ message: validationError.message });
     }
-    if (user.status === "suspended") {
-      return res
-        .status(403)
-        .json({ message: "Your account has been suspended." });
-    }
-    if (user.status === "banned") {
+
+    if (user.role === "admin") {
       return res.status(403).json({
-        message: user.ban_reason
-          ? `Your account has been banned: ${user.ban_reason}`
-          : "Your account has been banned.",
+        message:
+          "Admin accounts must sign in through the admin dashboard, not the user app.",
       });
     }
 
-    const match = await bcrypt.compare(password, user.password_hash);
-    if (!match) return res.status(400).json({ message: "Wrong password" });
+    await issueLoginResponse(user, res);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
 
-    user.last_login_at = new Date();
-    await user.save();
+// POST /api/auth/admin/login
+export const adminLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
 
-    const accessToken = createAccessToken(user);
-    const refreshToken = createRefreshToken(user);
+    const user = await User.findOne({ email });
+    if (!user) return res.status(400).json({ message: "User not found" });
 
-    //refresh token in Session
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
+    if (user.role !== "admin") {
+      return res.status(403).json({
+        message: "Access denied. Admin privileges required.",
+      });
+    }
 
-    await Session.create({
-      user_id: user._id,
-      refresh_token: refreshToken,
-      expires_at: expiresAt,
-    });
+    const validationError = await validateUserForLogin(user, password);
+    if (validationError) {
+      return res
+        .status(validationError.status)
+        .json({ message: validationError.message });
+    }
 
-    res.json({
-      accessToken,
-      refreshToken,
-      user: toPublicUser(user),
-    });
+    await issueLoginResponse(user, res);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

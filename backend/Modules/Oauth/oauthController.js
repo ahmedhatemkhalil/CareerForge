@@ -85,6 +85,13 @@ export const oauthLoginOrRegister = async (req, res) => {
     if (currentUser.status === 'banned') return res.status(403).json({ success: false, error: "Account is banned" });
     if (currentUser.status === 'suspended') return res.status(403).json({ success: false, error: "Account is suspended" });
 
+    if (currentUser.role === 'admin') {
+      return res.status(403).json({
+        success: false,
+        error: "Admin accounts must sign in through the admin dashboard, not the user app.",
+      });
+    }
+
     currentUser.last_login_at = new Date();
     await currentUser.save();
 
