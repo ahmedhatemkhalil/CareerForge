@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { CircleCheckBig, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useNavigate } from "react-router-dom";
 const HeroSection = () => {
     const navigate = useNavigate();

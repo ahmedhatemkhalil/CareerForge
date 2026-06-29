@@ -23,7 +23,7 @@ const EmptyAnalysisState = () => {
                         No Analysis yet
                     </EmptyTitle>
                     <EmptyDescription className="text-sm text-muted-foreground max-w-sm mx-auto mt-1">
-                        Start your first AI mock interview to practice and get evaluated.
+                        Start your first AI analysis to evaluate your CV and uncover skill gaps.
                     </EmptyDescription>
                 </EmptyHeader>
                 <EmptyContent className="flex justify-center">
