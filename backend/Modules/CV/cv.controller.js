@@ -1,4 +1,4 @@
-import { CV } from '../../models/CV/CV.js';
+﻿import { CV } from '../../models/CV/CV.js';
 import { catchAsync, AppError } from '../../utils/validators.js';
 import cloudinary from '../../config/cloudinary.js';
 import { extractTextFromFile } from '../../services/fileParser.js';
