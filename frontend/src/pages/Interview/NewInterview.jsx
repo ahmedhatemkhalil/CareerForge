@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
-import { Sparkles, ArrowLeft, Loader2, Calendar, FileText } from "lucide-react";
+import { Sparkles, Loader2, Calendar, FileText, BarChart3 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { interviewService } from "../../services/interviewService";
 import { getAllAnalyses } from "../../services/analysisService"; 
 import ConfirmModal from "@/components/common/ConfirmModal";
 import { usePlanLimitModal } from "@/hooks/usePlanLimitModal";
+import { toast } from "react-hot-toast";
 
 const formatAnalysisDate = (isoDate) => {
   if (!isoDate) return "Unknown date";
@@ -25,7 +26,6 @@ export default function NewInterview() {
   const [fetchingAnalyses, setFetchingAnalyses] = useState(true);
   const [analysesList, setAnalysesList] = useState([]);
   
-  // حالة مودال تأكيد البدء
   const [startConfirmOpen, setStartConfirmOpen] = useState(false);
 
   useEffect(() => {
@@ -62,7 +62,6 @@ export default function NewInterview() {
     fetchUserAnalyses();
   }, []);
 
-  // دالة تفعيل المودال أولاً بدلاً من تشغيل الـ API مباشرة
   const handleStartTrigger = () => {
     if (!selectedAnalysis) {
       alert("Please select a CV analysis configuration first.");
@@ -71,8 +70,6 @@ export default function NewInterview() {
     setStartConfirmOpen(true);
   };
 
-  // الدالة الفعلية لبدء الـ interview بعد الموافقة في المودال
- // الدالة المعدلة بالكامل لتخطي خطأ الباكيند 500 والدخول لصفحة الـ Live فوراً
  const confirmStartInterview = async () => {
   setStartConfirmOpen(false);
 
@@ -101,7 +98,7 @@ export default function NewInterview() {
     console.error("Start interview failed:", err);
 
     if (!handleError(err, "interview")) {
-      alert(
+      toast.error(
         err.response?.data?.message ||
           "Failed to start interview. Please try again."
       );
@@ -112,52 +109,41 @@ export default function NewInterview() {
 };
 
   return (
-    <div className="max-w-[820px] mx-auto font-sans text-gray-800 antialiased min-h-screen p-6">
+    <div className="mx-auto w-full max-w-5xl space-y-4 sm:space-y-6">
       
-      <div className="mb-6 ml-2 flex items-center gap-3">
-        <button 
-          onClick={() => navigate(-1)} 
-          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-        >
-          <ArrowLeft size={20} />
-        </button>
-        <div>
-          <h1 className="text-[33px] font-bold text-[#0f172a] tracking-tight mb-1">
-            Start Mock Interview
-          </h1>
-          <p className="text-[18px] text-gray-500 font-normal">
-            Select one of your analyzed CVs to start a tailored AI interview
-          </p>
-        </div>
+      <div className="mb-6 ml-2">
+        <h1 className="text-2xl font-bold text-foreground tracking-tight">
+          Start Mock Interview
+        </h1>
+        <p className="text-sm text-muted-foreground">
+          Select one of your analyzed CVs to start a tailored AI interview
+        </p>
       </div>
 
-      <div className="bg-white border border-gray-200 rounded-[20px] p-6 shadow-sm">
+      <div className="bg-card border border-border rounded-xl p-6 shadow-sm space-y-6">
         
-        <div className="mb-6">
-          <label className="block text-[20px] font-bold text-[#0f172a] mb-0.5">
+        <div className="space-y-3">
+          <label className="block text font-bold text-foreground ml-1 mb-4">
             Select CV Analysis Profile
           </label>
-          <span className="block text-[15px] text-gray-400 mb-4">
-            The interview questions will be highly customized based on the selected role and CV match.
-          </span>
 
           {fetchingAnalyses ? (
-            <div className="flex items-center gap-2 text-gray-400 text-xs py-8 justify-center border border-dashed border-gray-200 rounded-xl">
-              <Loader2 className="animate-spin w-5 h-5 text-indigo-600" />
+            <div className="flex items-center gap-2 text-muted-foreground text-xs py-8 justify-center border border-dashed border-border rounded-md">
+              <Loader2 className="animate-spin w-5 h-5 text-brand-primary" />
               Loading your analysis history...
             </div>
           ) : analysesList.length === 0 ? (
-            <div className="text-sm text-gray-400 p-8 border border-dashed border-gray-200 rounded-xl text-center">
+            <div className="text-sm text-muted-foreground p-8 border border-dashed border-border rounded-md text-center">
               No CV analyses found. Please analyze a CV first.
               <button 
                 onClick={() => navigate("/new-analysis")}
-                className="block mx-auto mt-3 text-indigo-600 font-semibold hover:underline"
+                className="block mx-auto mt-3 text-brand-primary font-semibold hover:underline"
               >
                 + Create New Analysis
               </button>
             </div>
           ) : (
-            <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
+            <div className="space-y-3">
               {analysesList.map((analysis) => {
                 const isSelected = selectedAnalysis?._id === analysis._id;
                 const jobTitle = analysis.jobId?.title || "Targeted Job Role";
@@ -168,22 +154,22 @@ export default function NewInterview() {
                   <div
                     key={analysis._id}
                     onClick={() => setSelectedAnalysis(analysis)}
-                    className={`flex items-center justify-between p-4 border rounded-[14px] cursor-pointer transition-all ${
+                    className={`p-4 border rounded-xl cursor-pointer flex items-center justify-between transition-all duration-200 gap-3 ${
                       isSelected
-                        ? "border-[#4f46e5] bg-[#f9f3ff] ring-1 ring-[#4f46e5]"
-                        : "border-gray-200 hover:bg-slate-50/60"
+                        ? "border-brand-primary bg-secondary"
+                        : "border-border bg-card hover:border-brand-primary/50"
                     }`}
                   >
                     <div className="flex items-start gap-3">
-                      <div className={`p-2.5 rounded-xl mt-0.5 ${isSelected ? 'bg-indigo-100 text-[#4f46e5]' : 'bg-slate-100 text-gray-400'}`}>
-                        <Sparkles className="w-4 h-4" />
+                      <div className={`p-2.5 rounded-lg transition-colors flex items-center justify-center ${isSelected ? 'bg-brand-primary text-white' : 'bg-muted text-muted-foreground'}`}>
+                        <BarChart3 size={18} />
                       </div>
                       
                       <div className="flex flex-col">
-                        <span className="text-[15px] font-bold text-[#1e293b] tracking-tight">
+                        <span className="font-semibold text-foreground text-[15px]">
                           {jobTitle}
                         </span>
-                        <div className="flex items-center gap-3 text-[12px] text-gray-400 font-normal mt-1 flex-wrap">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground font-normal mt-0.5 flex-wrap">
                           <span className="flex items-center gap-1">
                             <FileText size={13} />
                             {fileName}
@@ -194,18 +180,20 @@ export default function NewInterview() {
                             {formatAnalysisDate(analysis.createdAt)}
                           </span>
                           <span>•</span>
-                          <span className="text-emerald-600 font-semibold bg-emerald-50 px-1.5 py-0.5 rounded">
+                          <span className="text-status-success font-semibold bg-status-success/10 px-1.5 py-0.5 rounded">
                             Match: {matchScore}%
                           </span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-center pr-1">
-                      <div className={`w-[20px] h-[20px] rounded-full border flex items-center justify-center ${isSelected ? 'border-[#4f46e5]' : 'border-gray-300'}`}>
-                        {isSelected && <div className="w-2.5 h-2.5 rounded-full bg-[#4f46e5]" />}
-                      </div>
-                    </div>
+                    <input 
+                      type="radio" 
+                      name="analysis-selection" 
+                      checked={isSelected} 
+                      onChange={() => setSelectedAnalysis(analysis)} 
+                      className="h-5 w-5 accent-brand-primary cursor-pointer flex-shrink-0"
+                    />
                   </div>
                 );
               })}
@@ -213,31 +201,25 @@ export default function NewInterview() {
           )}
         </div>
 
-        <div className="bg-[#f5f3ff] border border-indigo-50/50 rounded-xl p-3.5 mb-5 flex items-start gap-2.5">
-          <div className="text-[#4f46e5] mt-0.5 flex-shrink-0">
-            <Sparkles className="w-4 h-4" />
+        <div className="bg-secondary/50 border border-border rounded-xl p-4 flex items-center gap-3">
+          <div className="text-brand-primary mt-0.5 flex-shrink-0">
+            <Sparkles size={16} />
           </div>
-          <p className="text-[11.5px] text-[#4f46e5] font-medium leading-relaxed">
+          <p className="text-sm text-muted-foreground leading-relaxed">
             The AI will instantly extract the context of your selected CV analysis profile to trigger specific interview questions. Each of your responses during the interview will be scored from 1 to 10.
           </p>
         </div>
 
         <button
-          onClick={handleStartTrigger} // التغيير هنا
+          onClick={handleStartTrigger} 
           disabled={loading || fetchingAnalyses || !selectedAnalysis}
-          className="w-full flex items-center justify-center gap-1.5 text-white py-3.5 rounded-xl font-bold text-[14px] shadow-sm transition-all disabled:opacity-50 bg-brand-primary"
-          style={{ background: 'linear-gradient(135deg, #4e27e9 0%, #6339e2 100%)' }}
+          className="w-full cursor-pointer bg-brand-primary text-primary-foreground py-4 rounded-xl font-bold hover:bg-brand-primary-hover disabled:opacity-50 transition-all shadow-lg flex items-center justify-center gap-2"
         >
-          {loading ? (
-            <Loader2 className="animate-spin w-4 h-4 text-white" />
-          ) : (
-            <span className="text-md">✨</span>
-          )}
-          Start AI Mock Interview 🌟
+          {loading && <Loader2 className="animate-spin w-4 h-4 text-white" />}
+          Start AI Mock Interview 
         </button>
       </div>
 
-      {/* مودال تأكيد بدء المقابلة */}
       <ConfirmModal
         open={startConfirmOpen}
         onClose={() => setStartConfirmOpen(false)}
