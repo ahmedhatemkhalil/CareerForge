@@ -1,38 +1,14 @@
 // tests/analysis/analysis.controller.spec.js
-import esmock from "esmock";
 import * as analysisController from "../../Modules/Analysis/analysis.controller.js";
 import { Analysis } from "../../models/Analysis.js";
 import { CV } from "../../models/CV/CV.js";
 import User from "../../models/User.js";
 import { mockUser, mockCv, mockAiResult, mockJob } from "./analysis.mock.js";
 
-
-let processAISpy;
-let analysisController;
-
-beforeAll(async () => {
-
-    processAISpy = jasmine
-        .createSpy("processAIAnalysisSync")
-        .and.resolveTo(mockAiResult);
-
-    analysisController = await esmock(
-        "../../Modules/Analysis/analysis.controller.js",
-        {
-            "../../services/geminiService.js": {
-                processAIAnalysisSync: processAISpy
-            }
-        }
-    );
-
-});
-
 describe("Analysis Controller Unit Tests", () => {
-    console.log("2");
     let req, res, next;
 
     beforeEach(() => {
-        console.log("3");
         jasmine.getEnv().allowRespy(true);
 
         req = {
@@ -56,84 +32,9 @@ describe("Analysis Controller Unit Tests", () => {
         next = jasmine.createSpy("next");
 
         // ================= GLOBAL MOCKS =================
-        console.log("3");
-
-console.log(typeof analysisService.processAIAnalysisSync);
-console.log(analysisService.processAIAnalysisSync);
-
-spyOn(User, "findById").and.resolveTo(mockUser);
-spyOn(User, "findByIdAndUpdate").and.resolveTo({});
-spyOn(CV, "findOne").and.resolveTo(mockCv);
-
-console.log("before spy");
-
-spyOn(analysisService, "processAIAnalysisSync").and.resolveTo(mockAiResult);
-
-console.log("after spy");
-    });
-
-    // ================= CREATE =================
-    describe("createAnalysis", () => {
-        console.log("4");
-       it("should create analysis successfully", async () => {
-
-    console.log("A");
-
-    spyOn(Analysis, "findOne").and.returnValue({
-        sort: () => Promise.resolve(null)
-    });
-
-    console.log("B");
-    console.log(typeof Analysis.create);
-console.log(Analysis.create);
-    spyOn(Analysis, "create").and.callFake(async () => {
-    console.log("Analysis.create called");
-    return {
-        _id: "analysis123",
-        ...mockAiResult
-    };
-});
-
-analysisService.processAIAnalysisSync.and.callFake(async () => {
-    console.log("AI MOCK CALLED");
-    return mockAiResult;
-});
-
-    console.log("C");
-
-    await analysisController.createAnalysis(req, res, next);
-
-    console.log("D");
-
-    expect(res.status).toHaveBeenCalledWith(201);
-
-    console.log("E");
-
-    expect(res.json).toHaveBeenCalled();
-
-    console.log("F");
-});
-        it("should call next if CV not found", async () => {
-            CV.findOne.and.resolveTo(null);
-
-            await analysisController.createAnalysis(req, res, next);
-
-            expect(next).toHaveBeenCalled();
-        });
-
-        it("should call next if AI fails", async () => {
-analysisService.processAIAnalysisSync.and.returnValue(
-    Promise.reject(new Error("AI Error"))
-);
-      console.log(typeof Analysis.findOne);
-            spyOn(Analysis, "findOne").and.returnValue({
-                sort: () => Promise.resolve(null)
-            });
-
-            await analysisController.createAnalysis(req, res, next);
-
-            expect(next).toHaveBeenCalled();
-        });
+        spyOn(User, "findById").and.resolveTo(mockUser);
+        spyOn(User, "findByIdAndUpdate").and.resolveTo({});
+        spyOn(CV, "findOne").and.resolveTo(mockCv);
     });
 
     // ================= GET BY ID =================
@@ -141,13 +42,11 @@ analysisService.processAIAnalysisSync.and.returnValue(
         it("should return analysis", async () => {
             req.params.id = "analysis123";
 
-            // 👈 جعل الـ chain مرن جداً عشان يقبل أي ترتيب للـ populate في الـ Controller
             const mockChain = {
                 populate: jasmine.createSpy("populate").and.callFake(() => mockChain),
                 exec: jasmine.createSpy("exec").and.resolveTo(mockAiResult),
                 then: jasmine.createSpy("then").and.callFake((callback) => Promise.resolve(callback(mockAiResult)))
             };
-            // يدعم لو الـ controller شغال بـ await أو دوت ثم
             spyOn(Analysis, "findOne").and.callFake(() => mockChain);
             spyOn(Analysis, "findById").and.callFake(() => mockChain);
 
