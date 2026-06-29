@@ -3,6 +3,8 @@ import { CV } from "../../models/CV/CV.js";
 import User from "../../models/User.js";
 import { catchAsync, AppError } from "../../utils/validators.js";
 import * as analysisService from "../../services/geminiService.js";
+import Roadmap from "../../models/Roadmap.js";
+import { interviewSessionModel } from "../../models/Interview/InterviewSession.js";
 
 // 1. Create Analysis (POST)
 export const createAnalysis = catchAsync(async (req, res, next) => {
@@ -102,11 +104,16 @@ export const deleteAnalysis = catchAsync(async (req, res, next) => {
     _id: req.params.id,
     userId: req.user.id,
   });
-  if (!analysis)
+
+  if (!analysis) {
     return next(new AppError("Analysis not found or unauthorized", 404));
+  }
+  await Roadmap.findOneAndDelete({ analysisId: req.params.id });
+
+  await interviewSessionModel.deleteMany({ analysis_id: req.params.id });
 
   res.status(200).json({
     success: true,
-    message: "Analysis deleted successfully",
+    message: "Analysis and all related career assets deleted successfully",
   });
 });
