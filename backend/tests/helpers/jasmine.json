@@ -7,7 +7,8 @@
   "helpers": [],
   "env": {
     "stopSpecOnExpectationFailure": false,
-    "random": false
+    "random": false,
+    "forbidDuplicateNames": true
   },
   "jsLoader": "import"
 }

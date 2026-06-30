@@ -38,7 +38,6 @@
   },
   "devDependencies": {
     "esmock": "^2.7.6",
-    "jasmine-spec-reporter": "^7.0.0",
     "jasmine": "^6.3.0",
     "nodemon": "^3.1.14",
     "supertest": "^7.2.2"
