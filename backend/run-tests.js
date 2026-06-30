@@ -43,5 +43,5 @@ jasmine.loadConfig({
 });
 
 console.log("🚀 Running Jasmine Tests...\n");
-
+process.env.NODE_ENV = "test";
 jasmine.execute();
