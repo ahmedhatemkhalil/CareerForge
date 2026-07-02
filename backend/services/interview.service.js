@@ -99,5 +99,9 @@ const sendToLangflow = async (inputs, isStart = false) => {
     }
 };
 
-export const startInterviewAI = (payload) => sendToLangflow(payload, true);
-export const continueInterviewAI = (payload) => sendToLangflow(payload, false);
+const interviewService = {
+    startInterviewAI: (payload) => sendToLangflow(payload, true),
+    continueInterviewAI: (payload) => sendToLangflow(payload, false),
+};
+
+export default interviewService;

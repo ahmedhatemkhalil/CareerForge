@@ -2,7 +2,7 @@ import crypto from "crypto";
 import { interviewSessionModel } from "../../models/Interview/InterviewSession.js";
 import { interviewQuestionModel } from "../../models/Interview/InterviewQuestion.js";
 import { Analysis } from "../../models/Analysis.js";
-import {startInterviewAI, continueInterviewAI} from "../../services/interview.service.js";
+import interviewService from "../../services/interview.service.js";
 import { handleError } from "../../middleware/HandleError.js";
 import User from "../../models/User.js"; 
 
@@ -42,7 +42,7 @@ export const startInterview = handleError(async (req, res) => {
         }
 
         const langflowSessionId = crypto.randomUUID();
-        aiResponse = await startInterviewAI({
+        aiResponse = await interviewService.startInterviewAI({
             langflowSessionId,
             jobTitle: analysis.jobId.title,
             jobDescription: analysis.jobId.descriptionText,
@@ -129,7 +129,7 @@ export const submitAnswer = handleError(async (req, res) => {
         answer: q.user_answer,
       }));
 
-    const aiResponse = await continueInterviewAI({
+    const aiResponse = await interviewService.continueInterviewAI({
         langflowSessionId: session.langflow_session_id,
         jobTitle: analysis.jobId.title,
         jobDescription: analysis.jobId.descriptionText,
