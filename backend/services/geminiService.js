@@ -3,50 +3,53 @@ import crypto from 'crypto';
 import { JobDescription } from '../models/jobDescription/JobDescription.js'; 
 
 const sleep = (ms) => new Promise(res => setTimeout(res, ms));
-
 const fetchRealJobsFromSerper = async (optimizedTitle, fallbackTitle) => {
-    const searchTitle = optimizedTitle || fallbackTitle || "Full-Stack Developer";
-    const exclusions = "-instructor -senior -manager -owner -junior -head -lead -principal";
+    const searchTitle = optimizedTitle || fallbackTitle || "MERN Stack Developer";
     
+    let exclusionList = ["instructor", "senior", "manager", "owner", "junior", "head", "lead", "principal"];
     
-    const targetSites = "(site:eg.tanqeeb.com OR site:wuzzuf.net OR site:indeed.com OR site:linkedin.com/jobs)";
-    const primaryQuery = `"${searchTitle}" ${targetSites} ${exclusions}`;
+    exclusionList = exclusionList.filter(word => !searchTitle.toLowerCase().includes(word));
+        const exclusions = exclusionList.map(word => `-${word}`).join(' ');
+
+    const targetSites = "(site:eg.tanqeeb.com OR site:wuzzuf.net OR site:indeed.com OR site:linkedin.com)";
+    const primaryQuery = `"${searchTitle}" jobs ${targetSites} ${exclusions}`;
 
     const makeSearchRequest = async (query) => {
-        const response = await axios.post('https://google.serper.dev/search', {
-            q: query,
-            num: 4, 
-            tbs: "qdr:w" 
-        }, {
-            headers: { 
-                'Content-Type': 'application/json', 
-                'X-API-KEY': process.env.SERPER_API_KEY 
-            }
-        });
+        try {
+            const response = await axios.post('https://google.serper.dev/search', {
+                q: query,
+                num: 4, 
+                gl: "eg",
+                tbs: "qdr:w" 
+            }, {
+                headers: { 
+                    'Content-Type': 'application/json', 
+                    'X-API-KEY': process.env.SERPER_API_KEY 
+                }
+            });
 
-        if (response.data.organic && response.data.organic.length > 0) {
-            return response.data.organic.map(job => ({
-                title: job.title.replace(/ - .*/, ''), 
-                company: job.snippet ? job.snippet.split('-')[0].trim() : "Verified Employer",
-                url: job.link
-            }));
+            if (response.data.organic && response.data.organic.length > 0) {
+                return response.data.organic.map(job => ({
+                    title: job.title.replace(/ - .*/, ''), 
+                    company: job.snippet ? job.snippet.split('-')[0].trim() : "Verified Employer",
+                    url: job.link
+                }));
+            }
+            return [];
+        } catch (apiErr) {
+            console.error("❌ Internal Axios request to Serper failed:", apiErr.response?.data || apiErr.message);
+            return [];
         }
-        return [];
     };
 
     try {
         console.log(` [Primary Search] Hunting on Big Platforms: ${primaryQuery}`);
-    
         let jobs = await makeSearchRequest(primaryQuery);
 
-     
         if (jobs.length === 0) {
             console.log(` No jobs found on big platforms. Switching to Fallback Strategy (Global Search)...`);
-            
-          
-            const fallbackQuery = `"${searchTitle}" jobs in Egypt ${exclusions}`;
+            const fallbackQuery = `"${searchTitle}" vacancies Egypt ${exclusions}`;
             console.log(` [Fallback Search] Hunting everywhere: ${fallbackQuery}`);
-            
             jobs = await makeSearchRequest(fallbackQuery);
         }
 

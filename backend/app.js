@@ -17,6 +17,8 @@ import jobDescriptionRoutes from "./Modules/jobDescription/job.routes.js";
 import paymentRoutes from "./Modules/Payment/payment.routes.js";
 import stripeWebhook from "./Modules/Payment/stripe.webhook.js";
 import planRoutes from "./Modules/subscription/plan.routes.js";
+import coverLetterRoutes from "./Modules/CoverLetter/coverLetterRoutes.js";
+
 
 import { AppError } from "./utils/validators.js";
 import { globalErrorHandler } from "./Modules/Error/error.controller.js";
@@ -50,6 +52,7 @@ app.use("/api", oauthRoutes);
 app.use("/api/cvs", cvRoutes);
 app.use("/api/job-descriptions", jobDescriptionRoutes);
 app.use("/api/plans", planRoutes);
+app.use('/api/cover-letters', coverLetterRoutes);
 
 app.get("/", (req, res) => {
     res.json({
