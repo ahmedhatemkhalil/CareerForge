@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import Layout from './components/layout/Layout'
 import AuthLayout from './components/layout/AuthLayout'
 import ProtectedRoute from './components/common/ProtectedRoute'
@@ -26,6 +26,8 @@ import RoadmapResults from './pages/Roadmap/RoadmapResults'
 import PaymentSuccess from './pages/Payment/PaymentSuccess'
 import Pricing from './pages/Pricing/Pricing'
 import GuestRoute from './components/common/GuestRoute'
+import EmailHistory from './pages/Email/EmailHistory'
+import NewEmail from './pages/Email/NewEmail'
 
 const AppRouter = () => {
   return (
@@ -64,6 +66,9 @@ const AppRouter = () => {
             <Route path="analyze/results/:id" element={<AnalysisResults />} />
             <Route path="new-analysis" element={<NewAnalysis />} />
             <Route path="pricing" element={<Pricing />} />
+            <Route path="email" element={<EmailHistory />} />
+            <Route path="email/new" element={<NewEmail />} />
+            {/* <Route path="/email/:id" element={<EmailResult />} /> */}
           </Route>
         </Route>
         <Route path="payment/success" element={<PaymentSuccess />} />
