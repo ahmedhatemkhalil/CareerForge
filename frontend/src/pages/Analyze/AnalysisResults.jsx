@@ -5,6 +5,7 @@ import { toast } from "react-hot-toast";
 
 import AnalysisDetailsTabs from "./components/AnalysisDetailsTabs";
 import AnalysisResultsCard from "./components/AnalysisResultsCard";
+import DownloadAnalysisPdfButton from "./components/DownloadAnalysisPdfButton";
 import { getAnalysisById } from "../../services/analysisService";
 
 const AnalysisResults = () => {
@@ -63,13 +64,21 @@ const AnalysisResults = () => {
 
   return (
     <div className="mx-auto w-full max-w-4xl space-y-4 pb-2 sm:space-y-6 sm:pb-0">
-      <Link
-        to="/analyze"
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-      >
-        <ArrowLeft className="size-4" />
-        Back to analyses
-      </Link>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <Link
+          to="/analyze"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ArrowLeft className="size-4" />
+          Back to analyses
+        </Link>
+
+        <DownloadAnalysisPdfButton
+          analysis={analysis}
+          roleTitle={roleTitle}
+          cvFileName={cvFileName}
+        />
+      </div>
 
       <AnalysisResultsCard
         score={analysis.matchScore}
