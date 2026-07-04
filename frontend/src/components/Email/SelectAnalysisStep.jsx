@@ -63,7 +63,7 @@ const SelectAnalysisStep = ({loading, analyses, selectedAnalysis, setSelectedAna
                         const analysisId = analysis._id;
                         return (
                             <button key={analysisId} type="button" onClick={() => setSelectedAnalysis(analysisId)}
-                                className={`w-full rounded-xl border-2p-4 text-left transition cursor-pointer
+                                className={`w-full rounded-xl border-2 p-4 text-left transition cursor-pointer
                                     ${
                                         selectedAnalysis === analysisId
                                             ? "border-primary bg-secondary/60"
