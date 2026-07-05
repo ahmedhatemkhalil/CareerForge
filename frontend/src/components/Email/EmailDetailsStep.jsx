@@ -136,6 +136,10 @@ const EmailDetailsStep = ({companyName, setCompanyName, jobTitle,setJobTitle, hr
                         />
                     </div>
 
+                    <p className="rounded-xl border border-border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+                        Both a cover letter and a follow-up email will be generated using the style you choose.
+                    </p>
+
                     {/* template */}
                     <div>
                         <label className="font-bold block mb-3">
@@ -179,7 +183,7 @@ const EmailDetailsStep = ({companyName, setCompanyName, jobTitle,setJobTitle, hr
                                     Generating...
                                 </>
                             ) : (
-                                "Generate Email"
+                                "Generate Cover Letter & Email"
                             )}
                         </Button>
                     </div>
