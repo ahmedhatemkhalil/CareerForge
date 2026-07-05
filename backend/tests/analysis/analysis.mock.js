@@ -1,29 +1,14 @@
-import mongoose from "mongoose";
-
-export const mockUser = {
-  _id: new mongoose.Types.ObjectId().toString(),
-  plan: "free",
-  usage: { analysesThisMonth: 0 },
-  maxLimits: { analysesPerMonth: 2 }
-};
-
-export const mockCv = {
-  _id: new mongoose.Types.ObjectId().toString(),
-  userId: mockUser._id,
-  extractedText: "React Node Express MongoDB"
-};
-
-export const mockJob = {
-  _id: new mongoose.Types.ObjectId().toString(),
-  title: "Node.js Developer"
-};
-
-export const mockAiResult = {
-  matchScore: 85,
-  strengths: ["Express"],
-  weaknesses: ["Docker"],
-  skillGaps: ["AWS"],
-  recommendedActions: ["Learn AWS"],
-  improvedSuggestions: [],
-  matchedJobs: []
+export const mockAiAnalysisResponse = {
+    matchScore: 85,
+    strengths: ["React.js", "Tailwind CSS", "JavaScript"],
+    weaknesses: ["Unit Testing", "Docker"],
+    skillGaps: ["AWS Cloud", "CI/CD Pipelines"],
+    recommendedActions: [
+        "Learn Jest or Jasmine for backend/frontend testing.",
+        "Get familiar with basic Docker containers."
+    ],
+    improvedSuggestions: [
+        "Add your GitHub link to the header.",
+        "Quantify your experience in the project section."
+    ]
 };
