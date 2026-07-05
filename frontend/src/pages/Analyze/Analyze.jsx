@@ -12,7 +12,7 @@ import { Link, useNavigate } from "react-router-dom";
 import ConfirmModal from "../../components/common/ConfirmModal";
 import { getScoreStyles, formatAnalysisDate} from "../../utils/helpers";
 import HistoryListSkeleton from "@/components/common/HistoryListSkeleton";
-import EmptyAnalysisState from "@/components/Interview/EmptyInterviewsState";
+import EmptyAnalysisState from "@/components/Analysis/EmptyAnalysisState";
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
 import { Button } from "@/components/ui/button";
