@@ -5,16 +5,22 @@ const features = [
     title: "CV Analysis",
     desc: "Get a deep AI-powered breakdown of your resume against any job description. Discover skill gaps and get actionable improvement suggestions.",
     icon: Brain,
+    image: "/images/cv.jpg",
+    alt: "CV analysis and resume review",
   },
   {
     title: "Mock Interview",
     desc: "Practice with our AI interviewer that adapts questions to your target role. Receive real-time scoring and detailed feedback on each answer.",
     icon: Mic,
+    image: "/images/interview.jpg",
+    alt: "AI mock interview practice session",
   },
   {
     title: "AI Roadmaps",
     desc: "Generate a customized week-by-week learning plan to get from where you are today to your dream role with curated resources.",
     icon: Map,
+    image: "/images/roadmap.jpg",
+    alt: "Personalized career learning roadmap",
   },
 ];
 
@@ -35,10 +41,18 @@ const FeaturesSection = () => {
         {features.map((item) => {
           const Icon = item.icon;
           return (
-            <div key={item.title} className="group relative bg-card border border-border rounded-2xl p-8 hover:shadow-2xl hover:shadow-brand-primary/10 transition-all duration-300 hover:-translate-y-2 overflow-hidden">
+            <div key={item.title} className="group relative bg-card border border-border rounded-2xl hover:shadow-2xl hover:shadow-brand-primary/10 transition-all duration-300 hover:-translate-y-2 overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-brand-primary/5 to-brand-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+              <div className="overflow-hidden">
+                <img
+                  src={item.image}
+                  alt={item.alt}
+                  className="w-full aspect-[16/10] object-cover object-center transition-transform duration-500 group-hover:scale-105"
+                />
+              </div>
               
-              <div className="relative z-10">
+              <div className="relative z-10 p-8">
                 <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-brand-primary/10 to-brand-secondary/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 group-hover:bg-gradient-to-r group-hover:from-brand-primary group-hover:to-brand-secondary">
                   <Icon className="w-7 h-7 text-brand-primary group-hover:text-white transition-colors duration-300" />
                 </div>
