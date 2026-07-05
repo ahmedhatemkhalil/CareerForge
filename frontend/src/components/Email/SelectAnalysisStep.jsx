@@ -31,7 +31,7 @@ const SelectAnalysisStep = ({loading, analyses, selectedAnalysis, setSelectedAna
             </h3>
 
             <p className="mt-2 text-muted-foreground">
-                No analysis available. Analyze your CV before generating an email.
+                No analysis available. Analyze your CV before generating your application documents.
             </p>
 
             <Button className="mt-6" onClick={() => navigate("/new-analysis")}>
@@ -55,7 +55,7 @@ const SelectAnalysisStep = ({loading, analyses, selectedAnalysis, setSelectedAna
                 </h3>
 
                 <p className="mt-1 mb-5 text-sm text-muted-foreground">
-                    Choose which CV analysis you want to generate a cover letter from.
+                    Choose which CV analysis you want to use for your cover letter and email.
                 </p>
 
                 <div className="space-y-3">

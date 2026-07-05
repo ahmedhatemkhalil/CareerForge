@@ -1,8 +1,14 @@
 // controllers/coverLetterController.js
 import CoverLetter from '../../models/CoverLetter.js';
 import { Analysis } from '../../models/Analysis.js';
+import User from '../../models/User.js';
 
-const getTemplates = (type, companyName, jobTitle, hrName, strengthsBulletPoints, strengthsInline) => {
+const getUserName = async (userId) => {
+  const user = await User.findById(userId).select('name');
+  return user?.name || '[Your Name]';
+};
+
+const getTemplates = (type, companyName, jobTitle, hrName, strengthsBulletPoints, strengthsInline, userName = '[Your Name]') => {
   let coverLetterText = '';
   let emailText = '';
 
@@ -18,9 +24,9 @@ ${strengthsBulletPoints}
 I don't just write code; I love architecting solutions that solve real problems. I’m eager to bring my drive for innovation to your engineering team. Thank you for reading, and I’d love to sync up for a chat soon!
 
 Best regards,
-[Your Name]`;
+${userName}`;
 
-      emailText = `Subject: Quick Question regarding ${jobTitle} role - [Your Name]
+      emailText = `Subject: Quick Question regarding ${jobTitle} role - ${userName}
 
 Hi ${hrName || 'Hiring Team'},
 
@@ -31,7 +37,7 @@ My practical experience focuses heavily on ${strengthsInline.toLowerCase()}, and
 Attached is my resume. Thanks for your time!
 
 Cheers,
-[Your Name]`;
+${userName}`;
       break;
 
     case 'technical': 
@@ -45,9 +51,9 @@ ${strengthsBulletPoints}
 My workflow is strictly aligned with modern architectural paradigms, clean-code methodologies, and scalable database systems. I look forward to deploying these validated technical skills within ${companyName}'s engineering pipeline. Thank you for your evaluation.
 
 Sincerely,
-[Your Name]`;
+${userName}`;
 
-      emailText = `Subject: Technical Profile: Application for ${jobTitle} - [Your Name]
+      emailText = `Subject: Technical Profile: Application for ${jobTitle} - ${userName}
 
 Dear ${hrName || 'Hiring Team'},
 
@@ -58,7 +64,7 @@ My core stack uniquely validates competencies in ${strengthsInline.toLowerCase()
 Thank you for reviewing the attached documentation.
 
 Regards,
-[Your Name]`;
+${userName}`;
       break;
 
     case 'formal':
@@ -76,9 +82,9 @@ Throughout my intensive academic and project execution workflows, I have consist
 Joining ${companyName} represents a milestone where I can apply these validated competencies. Thank you for your time, review, and consideration.
 
 Best regards,
-[Your Name]`;
+${userName}`;
 
-      emailText = `Subject: Application for ${jobTitle} - [Your Name]
+      emailText = `Subject: Application for ${jobTitle} - ${userName}
 
 Dear ${hrName || 'Hiring Team'},
 
@@ -89,7 +95,7 @@ An expert assessment of my technical stack demonstrates deep competencies in key
 Thank you for your valuable time and consideration.
 
 Sincerely,
-[Your Name]`;
+${userName}`;
       break;
   }
 
@@ -121,7 +127,8 @@ export const generateAndSave = async (req, res, next) => {
     const strengthsInline = allStrengths.slice(0, 3).join(', and ');
 
     const chosenType = templateType || 'formal';
-    const { coverLetterText, emailText } = getTemplates(chosenType, companyName, jobTitle, hrName, strengthsBulletPoints, strengthsInline);
+    const userName = await getUserName(userId);
+    const { coverLetterText, emailText } = getTemplates(chosenType, companyName, jobTitle, hrName, strengthsBulletPoints, strengthsInline, userName);
 
     const newCoverLetter = new CoverLetter({
       userId,
@@ -207,7 +214,8 @@ export const updateCoverLetter = async (req, res, next) => {
     const strengthsInline = allStrengths.slice(0, 3).join(', and ');
 
     const chosenType = templateType || coverLetter.templateType;
-    const { coverLetterText, emailText } = getTemplates(chosenType, companyName || coverLetter.companyName, jobTitle || coverLetter.jobTitle, hrName || coverLetter.hrName, strengthsBulletPoints, strengthsInline);
+    const userName = await getUserName(userId);
+    const { coverLetterText, emailText } = getTemplates(chosenType, companyName || coverLetter.companyName, jobTitle || coverLetter.jobTitle, hrName || coverLetter.hrName, strengthsBulletPoints, strengthsInline, userName);
 
     coverLetter.companyName = companyName || coverLetter.companyName;
     coverLetter.jobTitle = jobTitle || coverLetter.jobTitle;

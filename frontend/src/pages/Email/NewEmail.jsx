@@ -56,8 +56,8 @@ const NewEmail = () => {
                 templateType: formData.templateType,
             });
 
-            toast.success("Email generated successfully!");
-            navigate(`/email/${result?._id}`);
+            toast.success("Cover letter and email generated successfully!");
+            navigate(`/email/${result?._id}`, { state: { document: result } });
         } catch (err) {
             console.error(err);
             toast.error(err.response?.data?.message || "Failed to generate email.");
@@ -69,11 +69,11 @@ const NewEmail = () => {
     return (
         <div className="mx-auto w-full max-w-5xl">
             <h1 className="text-3xl font-bold">
-                Generate Email
+                Generate Application Documents
             </h1>
 
             <p className="mt-2 text-muted-foreground">
-                Create a professional email using one of your previous AI analyses.
+                Create a professional cover letter and follow-up email using one of your previous AI analyses.
             </p>
 
             {/* Stepper */}
@@ -95,7 +95,7 @@ const NewEmail = () => {
                         </div>
 
                         <span className={step === 2 ? "font-medium": "text-muted-foreground"}>
-                            Email Details
+                            Job Details
                         </span>
                     </div>
                 </div>

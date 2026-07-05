@@ -28,6 +28,7 @@ import Pricing from './pages/Pricing/Pricing'
 import GuestRoute from './components/common/GuestRoute'
 import EmailHistory from './pages/Email/EmailHistory'
 import NewEmail from './pages/Email/NewEmail'
+import EmailResult from './pages/Email/EmailResult'
 
 const AppRouter = () => {
   return (
@@ -68,7 +69,7 @@ const AppRouter = () => {
             <Route path="pricing" element={<Pricing />} />
             <Route path="email" element={<EmailHistory />} />
             <Route path="email/new" element={<NewEmail />} />
-            {/* <Route path="/email/:id" element={<EmailResult />} /> */}
+            <Route path="email/:id" element={<EmailResult />} />
           </Route>
         </Route>
         <Route path="payment/success" element={<PaymentSuccess />} />

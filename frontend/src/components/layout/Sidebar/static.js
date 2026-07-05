@@ -7,7 +7,7 @@ import {
   User,
   ShieldCheck,
   CreditCard,
-  Mail,
+  Send,
 } from 'lucide-react'
 
 export const isNavItemActive = (pathname, item) => {
@@ -39,6 +39,12 @@ export const navItems = [
     relatedPaths: ['/new-analysis'],
   },
   {
+    name: 'Cover Letter & Email',
+    path: '/email',
+    icon: Send,
+    relatedPaths: ['/email/new'],
+  },
+  {
     name: 'Mock Interview',
     path: '/interview',
     icon: Mic,
@@ -56,8 +62,6 @@ export const navItems = [
     icon: CreditCard,
     userOnly: true,
   },
-  { name: 'Email', path: '/email', icon: Mail },
-  
   { name: 'Profile & Settings', path: '/profile', icon: User },
   {
     name: 'Admin Panel',
