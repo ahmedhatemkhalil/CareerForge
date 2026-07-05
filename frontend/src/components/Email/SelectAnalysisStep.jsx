@@ -31,7 +31,7 @@ const SelectAnalysisStep = ({loading, analyses, selectedAnalysis, setSelectedAna
             </h3>
 
             <p className="mt-2 text-muted-foreground">
-                No analysis available. Analyze your CV before generating your application documents.
+                No analysis available. Analyze your CV before generating a cover letter and email.
             </p>
 
             <Button className="mt-6" onClick={() => navigate("/new-analysis")}>

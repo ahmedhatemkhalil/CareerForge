@@ -23,7 +23,7 @@ const EmptyEmailState = () => {
                     </EmptyMedia>
 
                     <EmptyTitle className="text-xl font-bold mt-4">
-                        No application documents yet
+                        No cover letter or email yet
                     </EmptyTitle>
 
                     <EmptyDescription className="text-sm text-muted-foreground max-w-sm mx-auto mt-1">
@@ -33,7 +33,7 @@ const EmptyEmailState = () => {
 
                 <EmptyContent className="flex justify-center">
                     <Button onClick={() => navigate("/email/new")} className="bg-brand-primary hover:bg-brand-primary/90 text-white rounded-xl px-6 py-5 cursor-pointer">
-                        Generate Documents
+                        Generate Cover Letter & Email
                     </Button>
                 </EmptyContent>
             </Empty>

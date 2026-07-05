@@ -68,12 +68,12 @@ const EmailHistory = () => {
         <div className="mx-auto max-w-5xl space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <h1 className="text-3xl font-bold tracking-tight">
-                    Application Documents
+                    Cover Letter & Email
                 </h1>
 
                 <Button onClick={() => navigate("/email/new")} className="bg-brand-primary hover:bg-brand-primary/90 text-white rounded-xl p-5 gap-2 cursor-pointer">
                     <Plus className="size-4" />
-                    Generate New
+                    Generate Cover Letter & Email
                 </Button>
             </div>
 
@@ -168,7 +168,7 @@ const EmailHistory = () => {
                     setConfirmOpen(false);
                     setSelectedId(null);
                 }}
-                title="Delete Documents"
+                title="Delete Cover Letter & Email"
                 message="Are you sure you want to delete this generated cover letter and email?"
                 confirmLabel="Delete"
                 cancelLabel="Cancel"

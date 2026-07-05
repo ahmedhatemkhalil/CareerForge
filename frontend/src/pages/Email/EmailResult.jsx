@@ -28,7 +28,7 @@ const EmailResult = () => {
                 setResult(data);
             } catch (err) {
                 console.error(err);
-                toast.error(err.response?.data?.message || "Failed to load application documents.");
+                toast.error(err.response?.data?.message || "Failed to load cover letter and email.");
             } finally {
                 setLoading(false);
             }
@@ -65,7 +65,7 @@ const EmailResult = () => {
     if (!result) {
         return (
             <div className="mx-auto w-full max-w-4xl space-y-4 text-center">
-                <p className="text-muted-foreground">Application documents not found.</p>
+                <p className="text-muted-foreground">Cover letter and email not found.</p>
                 <Link
                     to="/email"
                     className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-primary hover:underline"
@@ -99,7 +99,7 @@ const EmailResult = () => {
                 </div>
 
                 <p className="text-muted-foreground">
-                    Generated email and cover letter for your application.
+                    Generated cover letter and email for your application.
                 </p>
             </div>
 
