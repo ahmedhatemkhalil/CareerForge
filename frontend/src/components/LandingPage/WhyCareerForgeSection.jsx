@@ -32,14 +32,6 @@ const WhyCareerForgeSection = () => {
             Traditional job hunting is broken. We built a continuous, AI-powered ecosystem to guide you
             from resume scanning to your dream offer.
           </p>
-
-          <div className="mt-8 overflow-hidden rounded-2xl border border-border shadow-lg">
-            <img
-              src="/images/whyCareer.jpg"
-              alt="Professional preparing for career growth and job success"
-              className="w-full aspect-[4/3] object-cover"
-            />
-          </div>
         </div>
 
         {/* Right Side */}

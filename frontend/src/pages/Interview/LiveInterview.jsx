@@ -118,13 +118,13 @@ export default function LiveInterview() {
 
   if (loading) {
     return (
-      <div className="flex h-96 flex-col items-center justify-center gap-4 text-[#5850ec]">
+      <div className="flex h-96 flex-col items-center justify-center gap-4 text-primary">
         <Loader2 className="w-10 h-10 animate-spin" />
         <div className="text-center">
-          <p className="text-base font-bold text-gray-800">
+          <p className="text-base font-bold text-foreground">
             AI is connecting to your interview session...
           </p>
-          <p className="text-xs text-gray-400 mt-1">Please wait, retrieving tailored questions.</p>
+          <p className="text-xs text-muted-foreground mt-1">Please wait, retrieving tailored questions.</p>
         </div>
       </div>
     );
@@ -133,11 +133,11 @@ export default function LiveInterview() {
   const hasNoAnswer = !displayedAnswer.trim();
 
   return (
-    <div className="p-8 max-w-4xl mx-auto font-sans text-gray-800 antialiased selection:bg-indigo-100">
+    <div className="p-8 max-w-4xl mx-auto font-sans text-foreground antialiased">
       <div className="mb-6">
         <button
           onClick={() => setExitModalOpen(true)}
-          className="flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-800 transition-colors"
+          className="flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft size={16} strokeWidth={2.5} /> Exit interview
         </button>
@@ -145,38 +145,38 @@ export default function LiveInterview() {
 
       <div className="flex justify-between items-end mb-8">
         <div>
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-1">
+          <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest block mb-1">
             Live AI Interview
           </span>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight capitalize">
+          <h1 className="text-3xl font-black tracking-tight capitalize">
             {targetJob}
           </h1>
         </div>
 
-        <div className="flex items-center gap-2 px-4 py-2.5 bg-[#4c3eac] text-white font-bold text-sm rounded-2xl shadow-sm tracking-wide">
+        <div className="flex items-center gap-2 px-4 py-2.5 bg-primary text-primary-foreground font-bold text-sm rounded-xl shadow-sm tracking-wide">
           <MessageSquare size={16} fill="currentColor" className="opacity-90" />
           Question {questionIndex}
         </div>
       </div>
 
-      <div className="bg-white border border-slate-100 rounded-3xl shadow-sm overflow-hidden mb-6">
-        <div className="p-6 bg-[#f4f3ff] border-b border-indigo-50/50">
+      <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden mb-6">
+        <div className="p-6 bg-secondary border-b border-border">
           <div className="flex items-center gap-2 mb-3">
-            <div className="w-5 h-5 flex items-center justify-center font-bold text-xs bg-[#4c3eac] text-white rounded-full">
+            <div className="w-5 h-5 flex items-center justify-center font-bold text-xs bg-primary text-primary-foreground rounded-full">
               {questionIndex}
             </div>
-            <span className="text-xs font-bold text-[#4c3eac] uppercase tracking-wider">
+            <span className="text-xs font-bold text-primary uppercase tracking-wider">
               AI Prompt
             </span>
           </div>
-          <p className="text-lg font-bold text-slate-800 leading-relaxed px-1">
+          <p className="text-lg font-bold text-foreground leading-relaxed px-1">
             {currentQuestion}
           </p>
         </div>
 
         <div className="p-6">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-            <label className="block text-sm font-bold text-slate-900">
+            <label className="block text-sm font-bold text-foreground">
               Your Answer
             </label>
 
@@ -185,11 +185,11 @@ export default function LiveInterview() {
                 type="button"
                 onClick={handleToggleRecording}
                 disabled={submitting}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                className={`cursor-pointer flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold transition-all ${
                   isRecording
-                    ? "bg-red-500 text-white shadow-md shadow-red-100 hover:bg-red-600"
-                    : "bg-indigo-50 text-[#4c3eac] border border-indigo-100 hover:bg-indigo-100"
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
+                    ? "bg-status-error text-white hover:bg-red-600"
+                    : "bg-secondary text-secondary-foreground border border-border hover:bg-accent"
+                } disabled:opacity-50`}
               >
                 {isRecording ? (
                   <>
@@ -218,10 +218,10 @@ export default function LiveInterview() {
                 ? "Type your answer or tap Record answer to speak..."
                 : "Type your answer here..."
             }
-            className={`w-full h-64 p-5 rounded-2xl border font-medium transition text-base resize-none placeholder:text-slate-400/90 leading-relaxed disabled:bg-slate-50 ${
+            className={`w-full h-64 p-5 rounded-xl border font-medium transition text-base resize-none bg-input-background ${
               isRecording
-                ? "border-red-200 bg-red-50/30 focus:border-red-300 focus:ring-4 focus:ring-red-50"
-                : "border-slate-200 focus:outline-none focus:border-[#4c3eac] focus:ring-4 focus:ring-indigo-50/50"
+                ? "border-status-error focus:ring-4 focus:ring-red-500/20"
+                : "border-border border-2 focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
             }`}
           />
 
@@ -238,10 +238,10 @@ export default function LiveInterview() {
           type="button"
           onClick={handleAction}
           disabled={hasNoAnswer || submitting}
-          className={`w-full flex items-center justify-center gap-2 py-4 rounded-2xl font-bold text-base transition-all duration-200 tracking-wide ${
+          className={`w-full flex items-center justify-center gap-2 py-4 rounded-xl font-bold text-base transition-all ${
             hasNoAnswer || submitting
-              ? "bg-[#beb9e4] text-white cursor-not-allowed"
-              : "bg-[#4c3eac] hover:bg-[#3e3194] text-white shadow-md shadow-indigo-100"
+              ? "bg-muted border border-border text-muted-foreground cursor-not-allowed"
+              : "bg-primary hover:bg-primary/90 text-primary-foreground cursor-pointer"
           }`}
         >
           {submitting ? (

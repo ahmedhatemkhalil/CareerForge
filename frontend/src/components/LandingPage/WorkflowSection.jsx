@@ -15,14 +15,6 @@ const WorkflowSection = () => {
         </p>
       </div>
 
-      {/* <div className="w-full min-w-100 overflow-hidden rounded-2xl border border-border shadow-lg mb-14">
-        <img
-          src="/images/workFlow.jpg"
-          alt="CareerForge workflow from CV analysis to interview and roadmap"
-          className="w-full min-h-[240px] sm:min-h-[120px] md:min-h-[200px] object-cove object-center"
-        />
-      </div> */}
-
       <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-8 items-center">
         <div className="space-y-6">
           <div className="border rounded-3xl p-6 bg-card hover:border-brand-primary transition">

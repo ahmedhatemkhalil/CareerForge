@@ -36,9 +36,9 @@ const HeroSection = () => {
 
                 <div className="mt-12 overflow-hidden rounded-2xl border border-border shadow-2xl shadow-brand-primary/10">
                     <img
-                        src="/images/hero.jpg"
+                        src="/images/hero.png"
                         alt="Professional using CareerForge to plan their career on a laptop"
-                        className="w-full aspect-video object-cover"
+                        className="w-full aspect-video "
                     />
                 </div>
             </div>
