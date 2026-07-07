@@ -26,7 +26,7 @@ export default function Navbar() {
   };
 
   return (
-    <nav className={`sticky top-0 z-50 transition-all duration-300 border-b border-border
+    <nav className={`fixed w-full top-0 z-50 transition-all duration-300 border-b border-border
       ${
         scrolled
           ? "bg-background/80 backdrop-blur-lg shadow-md"

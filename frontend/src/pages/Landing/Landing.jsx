@@ -11,7 +11,7 @@ const Landing = () => {
   return (
     <>
     <Navbar/>
-    <div className="bg-background min-h-screen mx-auto w-full max-w-8xl px-4 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
+    <div className="bg-background min-h-screen mx-auto w-full max-w-8xl px-4 pt-20 sm:px-6 lg:px-8 xl:px-10 2xl:px-12">
       <HeroSection/>
       <hr className="max-w-4xl mx-auto border-t-2 "/>
       <FeaturesSection/>
