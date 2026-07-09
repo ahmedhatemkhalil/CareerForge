@@ -150,6 +150,42 @@ describe("User Routes (integration / real DB)", () => {
     expect(res.body.message).toBe("Weak password");
   });
 
+  it("(POST /api/users/me/avatar) should return 401 without token", async () => {
+    const res = await testAgent.post("/api/users/me/avatar");
+
+    expect(res.status).toBe(401);
+    expect(res.body.error).toMatch(/authenticate/i);
+  });
+
+  it("(POST /api/users/me/avatar) should return 400 when no file is uploaded", async () => {
+    await setupTestData({ email: "avatar-missing@test.com" });
+
+    const res = await testAgent
+      .post("/api/users/me/avatar")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe("Please upload an image");
+  });
+
+  it("(POST /api/users/me/avatar) should upload avatar and update user", async () => {
+    await setupTestData({ email: "avatar-upload@test.com" });
+
+    const res = await testAgent
+      .post("/api/users/me/avatar")
+      .set("Authorization", `Bearer ${token}`)
+      .attach("avatar", Buffer.from("fake-image-content"), {
+        filename: "avatar.png",
+        contentType: "image/png",
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body.avatar_url).toMatch(/\/uploads\/avatars\//);
+
+    const savedUser = await User.findById(user._id);
+    expect(savedUser.avatar_url).toBe(res.body.avatar_url);
+  });
+
   it("(DELETE /api/users/me) should delete user from the database", async () => {
     await setupTestData({ email: "delete-user@test.com" });
 
