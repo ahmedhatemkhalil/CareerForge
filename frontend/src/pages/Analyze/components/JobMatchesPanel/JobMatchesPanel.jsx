@@ -8,6 +8,8 @@ const getMatchScoreColor = (score) => {
   return 'var(--status-warning)'
 }
 
+
+
 const JobMatchCard = ({ job }) => {
   const score = job.matchScore ?? 0
   const subtitle = [job.company, job.location].filter(Boolean).join(' · ')
@@ -58,12 +60,25 @@ const JobMatchCard = ({ job }) => {
   )
 }
 
-const JobMatchesPanel = ({ matchedJobs = [] }) => (
-  <div className="grid auto-rows-fr gap-4 sm:grid-cols-2">
-    {matchedJobs.map((job) => (
-      <JobMatchCard key={job._id ?? job.url} job={job} />
-    ))}
-  </div>
-)
+const JobMatchesPanel = ({ matchedJobs = [] }) => { 
+  if (!matchedJobs || matchedJobs.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border p-8 text-center bg-card/50">
+        <Briefcase className="size-8 text-muted-foreground/60 mb-2" />
+        <p className="text-sm font-medium text-foreground">No matching jobs found</p>
+        <p className="text-xs text-muted-foreground max-w-[280px] mt-1">
+          We couldn't find any positions matching your profile at the moment. Try adjusting your preferences.
+        </p>
+      </div>
+    );
+  }
 
+  return (
+    <div className="grid auto-rows-fr gap-4 sm:grid-cols-2">
+      {matchedJobs.map((job) => (
+        <JobMatchCard key={job._id ?? job.url} job={job} />
+      ))}
+    </div>
+  );
+}; 
 export default JobMatchesPanel
