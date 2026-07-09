@@ -1,4 +1,4 @@
-FROM langflowai/langflow:1.3.4
+FROM langflowai/langflow:1.10.1
 
 # Railway volumes are owned by root; Langflow image runs non-root by default
 USER root
@@ -9,6 +9,7 @@ ENV LANGFLOW_DATA_DIR=/data
 ENV LANGFLOW_CONFIG_DIR=/data
 ENV LANGFLOW_SAVE_DB_IN_CONFIG_DIR=true
 ENV LANGFLOW_DATABASE_URL=sqlite:////data/langflow.db
+ENV LANGFLOW_STORE_ENVIRONMENT_VARIABLES=true
 ENV RAILWAY_RUN_UID=0
 
 EXPOSE 7860
