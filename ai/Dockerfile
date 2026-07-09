@@ -13,5 +13,5 @@ ENV RAILWAY_RUN_UID=0
 
 EXPOSE 7860
 
-# /data is created by Railway volume mount — do not mkdir (fails as non-root)
-CMD ["sh", "-c", "exec langflow run --host 0.0.0.0 --port ${PORT:-7860} --database-url sqlite:////data/langflow.db"]
+# /data is provided by Railway volume mount; DB path set via LANGFLOW_DATABASE_URL env
+CMD ["sh", "-c", "exec langflow run --host 0.0.0.0 --port ${PORT:-7860}"]
