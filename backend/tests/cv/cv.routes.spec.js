@@ -2,8 +2,10 @@ import request from "supertest";
 import app from "../../app.js";
 import { CV } from "../../models/CV/CV.js";
 import cloudinary from "../../config/cloudinary.js";
+import * as fileParser from "../../services/fileParser.js";
 import { connectToTestDatabase, clearDatabase, closeDatabase } from "../../config/test-db.js";
 import { createCvTestData } from "./cv.helper.js";
+import { mockCloudinaryUploadResponse } from "./cv.mock.js";
 
 describe("CV Routes Integration Tests", () => {
     const testAgent = request(app);
@@ -24,6 +26,104 @@ describe("CV Routes Integration Tests", () => {
     async function setupData() {
         ({ user, token, cv } = await createCvTestData());
     }
+
+  it("(POST /api/cvs/upload) should return 401 if unauthorized", async () => {
+    const res = await testAgent.post("/api/cvs/upload");
+
+    expect(res.status).toBe(401);
+  });
+
+  it("(POST /api/cvs/upload) should return 400 when no file is uploaded", async () => {
+    await setupData();
+
+    const res = await testAgent
+      .post("/api/cvs/upload")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe("Please upload a CV file");
+  });
+
+  it("(POST /api/cvs/upload) should return 400 for unsupported file type", async () => {
+    await setupData();
+
+    const res = await testAgent
+      .post("/api/cvs/upload")
+      .set("Authorization", `Bearer ${token}`)
+      .attach("cvFile", Buffer.from("plain text"), {
+        filename: "notes.txt",
+        contentType: "text/plain",
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.message).toBe(
+      "Unsupported file type. Only PDF, DOCX, and DOC are allowed!",
+    );
+  });
+
+  it("(POST /api/cvs/upload) should upload CV and save it to the database", async () => {
+    await setupData();
+
+    spyOn(cloudinary.uploader, "upload").and.resolveTo(
+      mockCloudinaryUploadResponse,
+    );
+    spyOn(fileParser, "extractTextFromFile").and.resolveTo("Extracted CV text");
+
+    const res = await testAgent
+      .post("/api/cvs/upload")
+      .set("Authorization", `Bearer ${token}`)
+      .attach("cvFile", Buffer.from("%PDF-1.4 fake pdf content"), {
+        filename: "new-resume.pdf",
+        contentType: "application/pdf",
+      });
+
+    expect(res.status).toBe(201);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data.cvId).toBeDefined();
+    expect(res.body.data.fileUrl).toBe(mockCloudinaryUploadResponse.secure_url);
+    expect(res.body.data.status).toBe("processing");
+
+    const savedCv = await CV.findById(res.body.data.cvId);
+    expect(savedCv).not.toBeNull();
+    expect(savedCv.userId.toString()).toBe(user._id.toString());
+    expect(savedCv.fileName).toBe("new-resume.pdf");
+    expect(savedCv.version).toBe(1);
+    expect(savedCv.isActive).toBe(true);
+  });
+
+  it("(POST /api/cvs/upload) should increment version for same file name", async () => {
+    await setupData();
+
+    spyOn(cloudinary.uploader, "upload").and.resolveTo(
+      mockCloudinaryUploadResponse,
+    );
+    spyOn(fileParser, "extractTextFromFile").and.resolveTo("Extracted CV text");
+
+    const firstUpload = await testAgent
+      .post("/api/cvs/upload")
+      .set("Authorization", `Bearer ${token}`)
+      .attach("cvFile", Buffer.from("%PDF-1.4 first upload"), {
+        filename: "resume.pdf",
+        contentType: "application/pdf",
+      });
+
+    const secondUpload = await testAgent
+      .post("/api/cvs/upload")
+      .set("Authorization", `Bearer ${token}`)
+      .attach("cvFile", Buffer.from("%PDF-1.4 second upload"), {
+        filename: "resume.pdf",
+        contentType: "application/pdf",
+      });
+
+    expect(firstUpload.status).toBe(201);
+    expect(secondUpload.status).toBe(201);
+
+    const firstCv = await CV.findById(firstUpload.body.data.cvId);
+    const secondCv = await CV.findById(secondUpload.body.data.cvId);
+
+    expect(firstCv.version).toBe(2);
+    expect(secondCv.version).toBe(3);
+  });
 
     // 1. Test Get Single CV (Unauthorized)
     it("(GET /api/cvs/:cvId) should return 401 if unauthorized", async () => {
