@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "react-hot-toast";
 import ConfirmModal from "../../components/common/ConfirmModal"; 
 import { getRoadmapProgressColor } from '@/utils/helpers'; 
-import EmptyRoadmapsState from '@/components/Roadmap/EmptyRoadmapsState';
+import EmptyRoadmapsState from '@/components/roadmap/EmptyRoadmapsState';
 import { getAllRoadmaps, deleteRoadmapById } from '@/services/roadmapService';
 import HistoryListSkeleton from '@/components/common/HistoryListSkeleton';
 

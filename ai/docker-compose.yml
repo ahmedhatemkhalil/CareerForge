@@ -1,0 +1,15 @@
+services:
+  langflow:
+    build: .
+    ports:
+      - "7860:7860"
+    environment:
+      LANGFLOW_HOST: 0.0.0.0
+      LANGFLOW_PORT: 7860
+      LANGFLOW_AUTO_LOGIN: "false"
+    volumes:
+      - langflow_data:/app/langflow
+    restart: unless-stopped
+
+volumes:
+  langflow_data:
