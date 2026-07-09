@@ -5,10 +5,11 @@ services:
       - "7860:7860"
     environment:
       LANGFLOW_HOST: 0.0.0.0
-      LANGFLOW_PORT: 7860
       LANGFLOW_AUTO_LOGIN: "false"
+      PORT: 7860
+      LANGFLOW_DATA_DIR: /data
     volumes:
-      - langflow_data:/app/langflow
+      - langflow_data:/data
     restart: unless-stopped
 
 volumes:
