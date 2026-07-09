@@ -1,5 +1,4 @@
-const GOOGLE_CLIENT_ID =
-  "709262554956-ick9aq5hj3342ikue55ljtct3k62bdp9.apps.googleusercontent.com";
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
 export const startGoogleOAuth = () => {
   const redirectUri = `${window.location.origin}/oauth/callback`;
