@@ -14,11 +14,11 @@ RUN npm run build
 
 FROM nginx:alpine
 
-ENV PORT=80
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
 
-COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=build /app/dist/admin/browser /usr/share/nginx/html
 
 EXPOSE 80
 
-CMD ["nginx", "-g", "daemon off;"]
+ENTRYPOINT ["/docker-entrypoint.sh"]
