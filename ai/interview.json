@@ -1,6 +1,6 @@
 {
   "name": "interview agent",
-  "description": "CareerForge interview flow for Langflow 1.3.4",
+  "description": "CareerForge interview flow for Langflow 1.3.4 (Google Gemini)",
   "data": {
     "nodes": [
       {
@@ -170,7 +170,7 @@
                 "trace_as_input": true,
                 "trace_as_metadata": true,
                 "type": "str",
-                "value": "Hello"
+                "value": ""
               },
               "sender": {
                 "advanced": true,
@@ -269,7 +269,8 @@
               }
             }
           },
-          "type": "ChatInput"
+          "type": "ChatInput",
+          "showNode": false
         },
         "dragging": false,
         "height": 234,
@@ -279,8 +280,8 @@
           "width": 360
         },
         "position": {
-          "x": 689.5720422421635,
-          "y": 765.155834131403
+          "x": -208,
+          "y": 224
         },
         "positionAbsolute": {
           "x": 689.5720422421635,
@@ -374,7 +375,7 @@
                 "tool_mode": false,
                 "trace_as_input": true,
                 "type": "prompt",
-                "value": "Job Title: {job_title}\n\nJob Description: {job_description}\n\nCandidate Analysis: {candidate_analysis}\n\nInterview History: {interview_history}\n\nCurrent Candidate Answer: {user_answer}\n\nRespond with valid JSON only."
+                "value": "Job Title: {job_title}\n\nJob Description: {job_description}\n\nCandidate Analysis: {candidate_analysis}\n\nInterview History: {interview_history}\n\nCurrent Candidate Answer: {user_answer}\n\n"
               },
               "tool_placeholder": {
                 "_input_type": "MessageTextInput",
@@ -511,8 +512,8 @@
           "width": 360
         },
         "position": {
-          "x": 690.2015147036818,
-          "y": 1040.6625705470924
+          "x": 169,
+          "y": -300
         },
         "positionAbsolute": {
           "x": 690.2015147036818,
@@ -526,7 +527,7 @@
         "data": {
           "id": "undefined-kVLkG",
           "node": {
-            "description": "## \ud83d\udcd6 README\n\nPerform basic prompting with an OpenAI model.\n\n#### Quick Start\n- Add your **OpenAI API key** to the **OpenAI Model**\n- Open the **Playground** to chat with your bot.\n\n#### Next steps:\n Experiment by changing the prompt and the OpenAI model temperature to see how the bot's responses change.",
+            "description": "## CareerForge Interview Flow\n\n1. Add your **Google API key** to the **Google Generative AI** node\n2. Model: **gemini-2.5-flash**\n3. Open **Playground** and send `start` to begin an interview",
             "display_name": "Read Me",
             "documentation": "",
             "template": {
@@ -562,7 +563,7 @@
         "data": {
           "id": "note-WrEGM",
           "node": {
-            "description": "### \ud83d\udca1 Add your OpenAI API key here \ud83d\udc47",
+            "description": "### Add your Google API key here",
             "display_name": "",
             "documentation": "",
             "template": {
@@ -884,8 +885,8 @@
           "width": 360
         },
         "position": {
-          "x": 1460.070372772908,
-          "y": 872.7273956769025
+          "x": 1031,
+          "y": 507
         },
         "positionAbsolute": {
           "x": 1444.936881624563,
@@ -914,19 +915,17 @@
               "input_value",
               "system_message",
               "stream",
-              "max_tokens",
-              "model_kwargs",
-              "json_mode",
+              "max_output_tokens",
               "model_name",
-              "openai_api_base",
               "api_key",
               "temperature",
-              "seed",
-              "max_retries",
-              "timeout"
+              "top_p",
+              "top_k",
+              "n",
+              "tool_model_enabled"
             ],
             "frozen": false,
-            "icon": "OpenAI",
+            "icon": "GoogleGenerativeAI",
             "legacy": false,
             "metadata": {},
             "minimized": false,
@@ -954,23 +953,32 @@
                 "value": "from typing import Any\n\nimport requests\nfrom loguru import logger\nfrom pydantic.v1 import SecretStr\n\nfrom langflow.base.models.google_generative_ai_constants import GOOGLE_GENERATIVE_AI_MODELS\nfrom langflow.base.models.model import LCModelComponent\nfrom langflow.field_typing import LanguageModel\nfrom langflow.field_typing.range_spec import RangeSpec\nfrom langflow.inputs import DropdownInput, FloatInput, IntInput, SecretStrInput, SliderInput\nfrom langflow.inputs.inputs import BoolInput\nfrom langflow.schema import dotdict\n\n\nclass GoogleGenerativeAIComponent(LCModelComponent):\n    display_name = \"Google Generative AI\"\n    description = \"Generate text using Google Generative AI.\"\n    icon = \"GoogleGenerativeAI\"\n    name = \"GoogleGenerativeAIModel\"\n\n    inputs = [\n        *LCModelComponent._base_inputs,\n        IntInput(\n            name=\"max_output_tokens\", display_name=\"Max Output Tokens\", info=\"The maximum number of tokens to generate.\"\n        ),\n        DropdownInput(\n            name=\"model_name\",\n            display_name=\"Model\",\n            info=\"The name of the model to use.\",\n            options=GOOGLE_GENERATIVE_AI_MODELS,\n            value=\"gemini-1.5-pro\",\n            refresh_button=True,\n            combobox=True,\n        ),\n        SecretStrInput(\n            name=\"api_key\",\n            display_name=\"Google API Key\",\n            info=\"The Google API Key to use for the Google Generative AI.\",\n            required=True,\n            real_time_refresh=True,\n        ),\n        FloatInput(\n            name=\"top_p\",\n            display_name=\"Top P\",\n            info=\"The maximum cumulative probability of tokens to consider when sampling.\",\n            advanced=True,\n        ),\n        SliderInput(\n            name=\"temperature\",\n            display_name=\"Temperature\",\n            value=0.1,\n            range_spec=RangeSpec(min=0, max=2, step=0.01),\n            info=\"Controls randomness. Lower values are more deterministic, higher values are more creative.\",\n        ),\n        IntInput(\n            name=\"n\",\n            display_name=\"N\",\n            info=\"Number of chat completions to generate for each prompt. \"\n            \"Note that the API may not return the full n completions if duplicates are generated.\",\n            advanced=True,\n        ),\n        IntInput(\n            name=\"top_k\",\n            display_name=\"Top K\",\n            info=\"Decode using top-k sampling: consider the set of top_k most probable tokens. Must be positive.\",\n            advanced=True,\n        ),\n        BoolInput(\n            name=\"tool_model_enabled\",\n            display_name=\"Tool Model Enabled\",\n            info=\"Whether to use the tool model.\",\n            value=False,\n        ),\n    ]\n\n    def build_model(self) -> LanguageModel:  # type: ignore[type-var]\n        try:\n            from langchain_google_genai import ChatGoogleGenerativeAI\n        except ImportError as e:\n            msg = \"The 'langchain_google_genai' package is required to use the Google Generative AI model.\"\n            raise ImportError(msg) from e\n\n        google_api_key = self.api_key\n        model = self.model_name\n        max_output_tokens = self.max_output_tokens\n        temperature = self.temperature\n        top_k = self.top_k\n        top_p = self.top_p\n        n = self.n\n\n        return ChatGoogleGenerativeAI(\n            model=model,\n            max_output_tokens=max_output_tokens or None,\n            temperature=temperature,\n            top_k=top_k or None,\n            top_p=top_p or None,\n            n=n or 1,\n            google_api_key=SecretStr(google_api_key).get_secret_value(),\n        )\n\n    def get_models(self, tool_model_enabled: bool | None = None) -> list[str]:\n        try:\n            import google.generativeai as genai\n\n            genai.configure(api_key=self.api_key)\n            model_ids = [\n                model.name.replace(\"models/\", \"\")\n                for model in genai.list_models()\n                if \"generateContent\" in model.supported_generation_methods\n            ]\n            model_ids.sort(reverse=True)\n        except (ImportError, ValueError) as e:\n            logger.exception(f\"Error getting model names: {e}\")\n            model_ids = GOOGLE_GENERATIVE_AI_MODELS\n        if tool_model_enabled:\n            try:\n                from langchain_google_genai.chat_models import ChatGoogleGenerativeAI\n            except ImportError as e:\n                msg = \"langchain_google_genai is not installed.\"\n                raise ImportError(msg) from e\n            for model in model_ids:\n                model_with_tool = ChatGoogleGenerativeAI(\n                    model=self.model_name,\n                    google_api_key=self.api_key,\n                )\n                if not self.supports_tool_calling(model_with_tool):\n                    model_ids.remove(model)\n        return model_ids\n\n    def update_build_config(self, build_config: dotdict, field_value: Any, field_name: str | None = None):\n        if field_name in {\"base_url\", \"model_name\", \"tool_model_enabled\", \"api_key\"} and field_value:\n            try:\n                if len(self.api_key) == 0:\n                    ids = GOOGLE_GENERATIVE_AI_MODELS\n                else:\n                    try:\n                        ids = self.get_models(tool_model_enabled=self.tool_model_enabled)\n                    except (ImportError, ValueError, requests.exceptions.RequestException) as e:\n                        logger.exception(f\"Error getting model names: {e}\")\n                        ids = GOOGLE_GENERATIVE_AI_MODELS\n                build_config[\"model_name\"][\"options\"] = ids\n                build_config[\"model_name\"][\"value\"] = ids[0]\n            except Exception as e:\n                msg = f\"Error getting model names: {e}\"\n                raise ValueError(msg) from e\n        return build_config\n",
                 "name": "code"
               },
-              "google_api_key": {
+              "api_key": {
+                "_input_type": "SecretStrInput",
                 "type": "str",
                 "required": true,
                 "show": true,
                 "advanced": false,
                 "password": true,
-                "name": "google_api_key",
+                "name": "api_key",
                 "display_name": "Google API Key",
+                "load_from_db": false,
                 "value": ""
               },
-              "model": {
+              "model_name": {
+                "_input_type": "DropdownInput",
                 "type": "str",
                 "required": false,
                 "show": true,
-                "name": "model",
+                "name": "model_name",
                 "display_name": "Model",
-                "value": "gemini-1.5-flash"
+                "value": "gemini-2.5-flash",
+                "options": [
+                  "gemini-2.5-flash",
+                  "gemini-2.0-flash",
+                  "gemini-1.5-flash",
+                  "gemini-1.5-pro"
+                ]
               },
               "temperature": {
                 "type": "float",
@@ -996,6 +1004,16 @@
                 "display_name": "Max Output Tokens",
                 "value": 2048
               },
+              "stream": {
+                "_input_type": "BoolInput",
+                "type": "bool",
+                "required": false,
+                "show": true,
+                "advanced": true,
+                "name": "stream",
+                "display_name": "Stream",
+                "value": false
+              },
               "input_value": {
                 "type": "str",
                 "required": false,
@@ -1016,7 +1034,7 @@
                 "input_types": [
                   "Message"
                 ],
-                "value": ""
+                "value": "You are CareerForge AI Interviewer.\n\nYour role is to conduct a structured, adaptive technical interview based on the input provided by the Prompt Template.\n\nIMPORTANT RULES:\n- Ask ONLY ONE question per response.\n- Never provide answers, hints, or explanations.\n- Be professional, structured, and concise.\n- Do NOT repeat or rephrase previous questions.\n- Do NOT deviate from job-relevant competencies.\n\nINTERVIEW BEHAVIOR (ADAPTIVE, PROGRESSIVE & MULTI-COMPETENCY):\n- Start from basic concepts and increase difficulty gradually.\n- Ensure balanced coverage across all competencies.\n- Avoid focusing too long on one topic (max 2 consecutive questions per competency).\n- Always evaluate candidate answers before generating next question.\n\n- ADAPT DIFFICULTY ON THE FLY:\n  * If the candidate's last answer was strong (Score >= 7), increase the difficulty of the next question (move from basic theory to complex scenarios, edge cases, or optimizations).\n  * If the candidate's last answer was weak or they didn't know (Score < 5), lower the difficulty for the next question, or pivot immediately to a foundational concept in a new competency to rebuild momentum.\n\nINTERVIEW LENGTH (CRITICAL):\n- Minimum questions: 5\n- Maximum questions: 8\n* Count the number of questions already asked using the Interview History.\n* You MUST NOT under any circumstances end the interview (isCompleted: true) if total questions asked is less than 5, even if all answers are wrong, completely incorrect, or the candidate says \"I don't know\".\n* You MUST end the interview (isCompleted: true) immediately when reaching 8 questions.\n* Never generate a nextQuestion when isCompleted is true.\n* Never generate isCompleted: true before the minimum number of questions is reached.\n\nANSWER EVALUATION:\nFor each answer:\n- Evaluate correctness, technical depth, and clarity.\n- Assign score (0\u201310) for the single answer.\n- Provide concise feedback.\n- If the candidate says \"I don't know\", refuses to answer, or asks for help, treat it as incorrect (score: 0) and move to the next question.\n\nOUTPUT FORMAT (STRICT):\n- Return ONLY a valid JSON object.\n- Do NOT include any markdown formatting (like ```json ... \n```), preamble, introduction, or text outside the JSON object.\n\nCONTINUE FORMAT (Use this if total questions asked is < 5 OR (total questions asked is >= 5 and < 8 and candidate is still being evaluated)):\n{\n  \"isCompleted\": false,\n  \"score\": 0,    // Score for the current answer (0-10)\n  \"feedback\": \"\", // Feedback for the current answer\n  \"nextQuestion\": \"\"\n}\n\nFINAL FORMAT (Use this ONLY when ending the interview after completing at least 5 to 8 questions):\n{\n  \"isCompleted\": true,\n  \"score\": 0,          \n  \"feedback\": \"\",\n  \"overall_score\": 0, // Overall score scaled from 0 to 100 (matches database)\n  \"overall_feedback\": \"\",\n  \"tips_for_improvement\": [], // Array of strings\n  \"hiringRecommendation\": \"\" // Must be one of: \"Strong Hire\", \"Hire\", \"Consider\", \"No Hire\"\n}"
               }
             },
             "tool_mode": false,
@@ -1034,8 +1052,8 @@
           "width": 360
         },
         "position": {
-          "x": 1071.3015591664102,
-          "y": 724.6650363109242
+          "x": 634,
+          "y": -43
         },
         "selected": false,
         "type": "genericNode"
@@ -1043,6 +1061,7 @@
     ],
     "edges": [
       {
+        "animated": false,
         "className": "",
         "data": {
           "sourceHandle": {
@@ -1054,7 +1073,7 @@
             ]
           },
           "targetHandle": {
-            "fieldName": "system_message",
+            "fieldName": "input_value",
             "id": "GoogleModel-interview",
             "inputTypes": [
               "Message"
@@ -1062,17 +1081,19 @@
             "type": "str"
           }
         },
-        "id": "reactflow__edge-Prompt-interview{\u0153dataType\u0153:\u0153Prompt\u0153,\u0153id\u0153:\u0153Prompt-interview\u0153,\u0153name\u0153:\u0153prompt\u0153,\u0153output_types\u0153:[\u0153Message\u0153]}-GoogleModel-interview{\u0153fieldName\u0153:\u0153system_message\u0153,\u0153id\u0153:\u0153GoogleModel-interview\u0153,\u0153inputTypes\u0153:[\u0153Message\u0153],\u0153type\u0153:\u0153str\u0153}",
+        "id": "edge-Prompt-interview-prompt-GoogleModel-interview-input_value",
+        "selected": false,
         "source": "Prompt-interview",
         "sourceHandle": "{\u0153dataType\u0153: \u0153Prompt\u0153, \u0153id\u0153: \u0153Prompt-interview\u0153, \u0153name\u0153: \u0153prompt\u0153, \u0153output_types\u0153: [\u0153Message\u0153]}",
         "target": "GoogleModel-interview",
-        "targetHandle": "{\u0153fieldName\u0153: \u0153system_message\u0153, \u0153id\u0153: \u0153GoogleModel-interview\u0153, \u0153inputTypes\u0153: [\u0153Message\u0153], \u0153type\u0153: \u0153str\u0153}"
+        "targetHandle": "{\u0153fieldName\u0153: \u0153input_value\u0153, \u0153id\u0153: \u0153GoogleModel-interview\u0153, \u0153inputTypes\u0153: [\u0153Message\u0153], \u0153type\u0153: \u0153str\u0153}"
       },
       {
+        "animated": false,
         "className": "",
         "data": {
           "sourceHandle": {
-            "dataType": "OpenAIModel",
+            "dataType": "GoogleGenerativeAIModel",
             "id": "GoogleModel-interview",
             "name": "text_output",
             "output_types": [
@@ -1090,17 +1111,16 @@
             "type": "str"
           }
         },
-        "id": "reactflow__edge-GoogleModel-interview{\u0153dataType\u0153:\u0153OpenAIModel\u0153,\u0153id\u0153:\u0153GoogleModel-interview\u0153,\u0153name\u0153:\u0153text_output\u0153,\u0153output_types\u0153:[\u0153Message\u0153]}-ChatOutput-interview{\u0153fieldName\u0153:\u0153input_value\u0153,\u0153id\u0153:\u0153ChatOutput-interview\u0153,\u0153inputTypes\u0153:[\u0153Message\u0153],\u0153type\u0153:\u0153str\u0153}",
+        "id": "edge-GoogleModel-interview-text_output-ChatOutput-interview-input_value",
+        "selected": false,
         "source": "GoogleModel-interview",
-        "sourceHandle": "{\u0153dataType\u0153: \u0153OpenAIModel\u0153, \u0153id\u0153: \u0153GoogleModel-interview\u0153, \u0153name\u0153: \u0153text_output\u0153, \u0153output_types\u0153: [\u0153Message\u0153]}",
+        "sourceHandle": "{\u0153dataType\u0153: \u0153GoogleGenerativeAIModel\u0153, \u0153id\u0153: \u0153GoogleModel-interview\u0153, \u0153name\u0153: \u0153text_output\u0153, \u0153output_types\u0153: [\u0153Message\u0153]}",
         "target": "ChatOutput-interview",
         "targetHandle": "{\u0153fieldName\u0153: \u0153input_value\u0153, \u0153id\u0153: \u0153ChatOutput-interview\u0153, \u0153inputTypes\u0153: [\u0153Data\u0153, \u0153DataFrame\u0153, \u0153Message\u0153], \u0153type\u0153: \u0153str\u0153}"
       },
       {
+        "animated": false,
         "className": "",
-        "source": "ChatInput-interview",
-        "target": "Prompt-interview",
-        "id": "edge-chat-prompt-user-answer",
         "data": {
           "sourceHandle": {
             "dataType": "ChatInput",
@@ -1118,13 +1138,19 @@
             ],
             "type": "str"
           }
-        }
+        },
+        "id": "edge-ChatInput-interview-message-Prompt-interview-user_answer",
+        "selected": false,
+        "source": "ChatInput-interview",
+        "sourceHandle": "{\u0153dataType\u0153: \u0153ChatInput\u0153, \u0153id\u0153: \u0153ChatInput-interview\u0153, \u0153name\u0153: \u0153message\u0153, \u0153output_types\u0153: [\u0153Message\u0153]}",
+        "target": "Prompt-interview",
+        "targetHandle": "{\u0153fieldName\u0153: \u0153user_answer\u0153, \u0153id\u0153: \u0153Prompt-interview\u0153, \u0153inputTypes\u0153: [\u0153Message\u0153], \u0153type\u0153: \u0153str\u0153}"
       }
     ],
     "viewport": {
-      "x": -37.61270157375441,
-      "y": -155.91266341888854,
-      "zoom": 0.7575251406952855
+      "x": 171,
+      "y": 282,
+      "zoom": 0.725
     }
   },
   "is_component": false,

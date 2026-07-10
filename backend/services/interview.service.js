@@ -8,6 +8,34 @@ const flowId = process.env.LANGFLOW_INTERVIEW_FLOW_ID || "a8fe870f-c60a-44fe-a69
 const LANGFLOW_API_URL = `${langflowBaseUrl}/api/v1/run/${flowId}`;
 const LANGFLOW_API_KEY = process.env.LANGFLOW_API_KEY;
 const LANGFLOW_PROMPT_ID = process.env.LANGFLOW_PROMPT_ID;
+const LANGFLOW_GOOGLE_NODE_ID = process.env.LANGFLOW_GOOGLE_NODE_ID || "GoogleModel-interview";
+const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY;
+
+const extractAIText = (data) => {
+    const outputs = data?.outputs?.[0]?.outputs;
+    if (!Array.isArray(outputs)) return null;
+
+    for (const output of outputs) {
+        const results = output?.results;
+        const artifacts = output?.artifacts;
+        const nested = output?.outputs;
+
+        const candidates = [
+            results?.message?.text,
+            results?.message?.message,
+            results?.message?.data?.text,
+            typeof artifacts?.message === "string" ? artifacts.message : artifacts?.message?.text,
+            nested?.message?.message,
+            nested?.message?.text,
+        ];
+
+        for (const value of candidates) {
+            if (typeof value === "string" && value.trim()) return value;
+        }
+    }
+
+    return null;
+};
 // Helpers
 const toArray = (val) => Array.isArray(val) ? val : val ? [val] : [];
 
@@ -56,6 +84,9 @@ const sendToLangflow = async (inputs, isStart = false) => {
                     interview_history: historyText,
                     candidate_analysis: candidateAnalysisString,
                 },
+                ...(GOOGLE_API_KEY && LANGFLOW_GOOGLE_NODE_ID
+                    ? { [LANGFLOW_GOOGLE_NODE_ID]: { api_key: GOOGLE_API_KEY } }
+                    : {}),
             },
         };
 
@@ -67,7 +98,7 @@ const sendToLangflow = async (inputs, isStart = false) => {
             timeout: 60000 
         });
 
-        const aiText = response.data?.outputs?.[0]?.outputs?.[0]?.results?.message?.text || response.data?.outputs?.[0]?.outputs?.[0]?.artifacts?.message;
+        const aiText = extractAIText(response.data);
 
         if (!aiText) throw new Error("No AI text in response"); 
 
