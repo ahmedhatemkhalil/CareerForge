@@ -76,9 +76,10 @@ export const updateTheme = async (theme) => {
 
 
 export const googleLogin = async (code) => {
+  const redirectUri = `${window.location.origin}/oauth/callback`;
   const { data } = await api.post("/oauth/google", {
     code,
-    redirectUri: "http://localhost:5173/oauth/callback",
+    redirectUri,
   });
   return data;
 };

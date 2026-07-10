@@ -39,11 +39,11 @@ export const getOauthUserData = async (provider, code, redirectUri) => {
   config.tokenUrl,
   new URLSearchParams({
     code,
-    client_id: process.env.GOOGLE_CLIENT_ID,
-    client_secret: process.env.GOOGLE_CLIENT_SECRET,
-    redirect_uri: "http://localhost:5173/oauth/callback", // تأكدي أن هذا هو المسار بالضبط
+    client_id: config.clientId,
+    client_secret: config.clientSecret,
+    redirect_uri: redirectUri,
     grant_type: 'authorization_code'
-  }).toString(), // تأكدي من تحويلها لـ string
+  }).toString(),
   {
     headers: {
       "Content-Type": "application/x-www-form-urlencoded"
