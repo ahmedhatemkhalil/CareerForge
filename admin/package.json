@@ -22,7 +22,7 @@
     "axios": "^1.18.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "ngx-toastr": "^20.0.5",
+    "ngx-toastr": "^19.1.0",
     "rxjs": "~7.8.0",
     "tailwind-merge": "^3.6.0",
     "tailwindcss": "^4.3.1",
