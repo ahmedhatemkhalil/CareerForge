@@ -1,81 +1,265 @@
-
-import Roadmap from "../../models/Roadmap.js";
+import Roadmap, { RoadmapWeek, Resource, syncRoadmapProgress } from "../../models/Roadmap.js";
+import { Analysis } from "../../models/Analysis.js";
+import { generateRoadmapPlan } from "../../services/roadmap.service.js";
 import mongoose from "mongoose";
+import User from "../../models/User.js"; 
 
-const buildFakeRoadmapData = (currentRole, targetRole) => ({
-    skillGaps: [
-        "System Design and Architecture",
-        "Team Leadership",
-        "Advanced TypeScript",
-        "Performance Optimization",
-        "Mentoring junior developers",
-    ],
-    timeline: "3-5 months",
-    weeklyPlan: [
-        {
-            week: 1,
-            focus: ["System Design and Architecture", "Team Leadership", "Advanced TypeScript", "Performance Optimization", "Mentoring junior developers"],
-            resource: ["Udemy: System Design and Architecture", "Udemy: Team Leadership", "Udemy: Advanced TypeScript", "Udemy: Performance Optimization", "Udemy: Mentoring junior developers"],
-            completed: false,
-        },
-        {
-            week: 2,
-            focus: "System Design Basics",
-            resource: "YouTube: System Design Interview",
-            completed: false,
-        },
-        {
-            week: 3,
-            focus: "Performance Optimization",
-            resource: "Web.dev: Optimize your app",
-            completed: false,
-        },
-        {
-            week: 4,
-            focus: "Leadership & Mentoring",
-            resource: "Book: The Manager's Path",
-            completed: false,
-        },
-        {
-            week: 5,
-            focus: `Build a ${targetRole}-level Project`,
-            resource: "GitHub: System design example",
-            completed: false,
-        },
-    ],
+const formatResource = (resource) => ({
+    _id: resource._id,
+    title: resource.title,
+    url: resource.url,
+    type: resource.type,
+    platform: resource.platform,
+    isFree: resource.isFree,
 });
+
+const formatWeek = (week, resources = []) => ({
+    _id: week._id,
+    weekNumber: week.weekNumber,
+    theme: week.theme,
+    description: week.description,
+    completed: week.completed,
+    completedAt: week.completedAt,
+    resources: resources.map(formatResource),
+});
+
+const formatRoadmapSummary = (roadmap) => ({
+    _id: roadmap._id,
+    analysisId: roadmap.analysisId?._id ?? roadmap.analysisId ?? null,
+    currentRole: roadmap.currentRole,
+    targetRole: roadmap.targetRole,
+    matchScore: roadmap.matchScore ?? null,
+    hoursPerWeek: roadmap.hoursPerWeek,
+    totalWeeks: roadmap.totalWeeks,
+    completedWeeks: roadmap.completedWeeks,
+    progress: roadmap.progress,
+    status: roadmap.status,
+    aiTokensUsed: roadmap.aiTokensUsed,
+    createdAt: roadmap.createdAt,
+    updatedAt: roadmap.updatedAt,
+});
+
+const formatRoadmap = (roadmap, weeksWithResources = []) => ({
+    ...formatRoadmapSummary(roadmap),
+    weeks: weeksWithResources
+        .filter((week) => (week.resources || []).length > 0)
+        .map((week) => formatWeek(week, week.resources || [])),
+});
+
+const attachResourcesToWeeks = async (weeks) => {
+    const weekIds = weeks.map((week) => week._id);
+    const resources = await Resource.find({ weekId: { $in: weekIds } });
+
+    const resourcesByWeekId = resources.reduce((acc, resource) => {
+        const key = String(resource.weekId);
+        if (!acc[key]) {
+            acc[key] = [];
+        }
+        acc[key].push(resource);
+        return acc;
+    }, {});
+
+    return weeks.map((week) => ({
+        ...week.toObject(),
+        resources: resourcesByWeekId[String(week._id)] || [],
+    }));
+};
+
+const getRoadmapWithWeeks = async (roadmapId, userId) => {
+    const roadmap = await Roadmap.findOne({ _id: roadmapId, userId });
+
+    if (!roadmap) {
+        return null;
+    }
+
+    const weeks = await RoadmapWeek.find({ roadmapId }).sort({ weekNumber: 1 });
+    const weeksWithResources = await attachResourcesToWeeks(weeks);
+
+    return formatRoadmap(roadmap.toObject(), weeksWithResources);
+};
+
+const saveWeeksAndResources = async (roadmapId, weeks) => {
+    const weeksToSave = weeks.filter((week) => week.resources?.length > 0);
+
+    const insertedWeeks = await RoadmapWeek.insertMany(
+        weeksToSave.map(({ resources, ...week }) => ({
+            ...week,
+            roadmapId,
+        }))
+    );
+
+    const weekByNumber = Object.fromEntries(
+        insertedWeeks.map((week) => [week.weekNumber, week])
+    );
+
+    const resourceDocs = weeksToSave.flatMap((week) => {
+        const weekDoc = weekByNumber[week.weekNumber];
+        if (!weekDoc || !week.resources?.length) {
+            return [];
+        }
+
+        return week.resources
+            .filter((resource) => resource.url)
+            .map((resource) => ({
+                title: resource.title,
+                url: resource.url,
+                type: resource.type,
+                platform: resource.platform,
+                isFree: resource.isFree,
+                weekId: weekDoc._id,
+            }));
+    });
+
+    if (resourceDocs.length > 0) {
+        await Resource.insertMany(resourceDocs);
+    }
+};
+
+const resolveRoadmapInput = async (userId, body) => {
+    const { analysisId, currentRole, targetRole, hoursPerWeek = 10 } = body;
+
+    if (analysisId) {
+        if (!mongoose.Types.ObjectId.isValid(analysisId)) {
+            return { error: "Invalid analysisId", status: 400 };
+        }
+
+        const analysis = await Analysis.findOne({ _id: analysisId, userId }).populate(
+            "jobId",
+            "title descriptionText"
+        );
+
+        if (!analysis) {
+            return { error: "Analysis not found", status: 404 };
+        }
+
+        if (analysis.status !== "completed") {
+            return {
+                error: "Analysis must be completed before generating a roadmap",
+                status: 400,
+            };
+        }
+
+        const skillGaps = analysis.skillGaps?.length
+            ? analysis.skillGaps
+            : [];
+        const weaknesses = analysis.weaknesses?.length ? analysis.weaknesses : [];
+
+        if (skillGaps.length === 0 && weaknesses.length === 0) {
+            return {
+                error: "Analysis has no missing skills or weaknesses to build a roadmap from",
+                status: 400,
+            };
+        }
+
+        const jobTitle = analysis.jobId?.title?.trim() || "";
+        const resolvedTargetRole =
+            String(targetRole || "").trim() || jobTitle || "Target role";
+
+        const plan = await generateRoadmapPlan({
+            currentRole: currentRole ? String(currentRole).trim() : "",
+            targetRole: resolvedTargetRole,
+            hoursPerWeek,
+            skillGaps,
+            weaknesses,
+            strengths: analysis.strengths,
+            recommendedActions: analysis.recommendedActions,
+            matchScore: analysis.matchScore,
+            jobDescription: analysis.jobId?.descriptionText || "",
+            jobTitle,
+        });
+
+        const roadmapPayload = {
+            userId,
+            analysisId,
+            targetRole: resolvedTargetRole,
+            matchScore: analysis.matchScore ?? null,
+            hoursPerWeek,
+            weeks: plan.weeks,
+            aiTokensUsed: plan.aiTokensUsed,
+        };
+
+        return { data: roadmapPayload };
+    }
+
+    const trimmedCurrentRole = String(currentRole || "").trim();
+    const trimmedTargetRole = String(targetRole || "").trim();
+
+    if (!trimmedCurrentRole) {
+        return { error: "currentRole is required when analysisId is not provided", status: 400 };
+    }
+
+    if (!trimmedTargetRole) {
+        return { error: "targetRole is required when currentRole is provided", status: 400 };
+    }
+
+    const plan = await generateRoadmapPlan({
+        currentRole: trimmedCurrentRole,
+        targetRole: trimmedTargetRole,
+        hoursPerWeek,
+        skillGaps: [],
+        weaknesses: [],
+    });
+
+    return {
+        data: {
+            userId,
+            analysisId: null,
+            currentRole: trimmedCurrentRole,
+            targetRole: trimmedTargetRole,
+            hoursPerWeek,
+            weeks: plan.weeks,
+            aiTokensUsed: plan.aiTokensUsed,
+        },
+    };
+};
 
 export const createRoadmap = async (req, res) => {
     try {
         if (!req.user || !req.user.id) {
             return res.status(401).json({ error: "Please authenticate" });
         }
-
-        const { currentRole, targetRole, hoursPerWeek = 10 } = req.body;
-
-        if (!currentRole || !String(currentRole).trim()) {
-            return res.status(400).json({ error: "currentRole is required" });
+        const user = await User.findById(req.user.id);
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
         }
 
-        if (!targetRole || !String(targetRole).trim()) {
-            return res.status(400).json({ error: "targetRole is required" });
+        const userPlanName = req.body.plan || user.plan || "free";
+        const allowedLimit = user.maxLimits?.roadmapsPerMonth || (userPlanName === "pro" ? 20 : 1);
+        const currentUsage = user.usage?.roadmapsThisMonth || 0;
+
+        if (currentUsage >= allowedLimit) {
+            return res.status(403).json({ 
+error: `You have exceeded your monthly roadmap limit for your current plan (Maximum allowed: ${allowedLimit}). Please upgrade your plan.`            });
         }
 
-        const fakeAI = buildFakeRoadmapData(currentRole, targetRole);
+        const resolved = await resolveRoadmapInput(req.user.id, req.body);
+        if (resolved.error) {
+            return res.status(resolved.status).json({ error: resolved.error });
+        }
+
+        const { weeks, ...roadmapData } = resolved.data;
+        const weeksWithResources = weeks.filter((week) => week.resources?.length > 0);
 
         const roadmap = await Roadmap.create({
-            userId: req.user.id,
-            currentRole: String(currentRole).trim(),
-            targetRole: String(targetRole).trim(),
-            hoursPerWeek,
-            skillGaps: fakeAI.skillGaps,
-            timeline: fakeAI.timeline,
-            weeklyPlan: fakeAI.weeklyPlan,
+            ...roadmapData,
+            totalWeeks: weeksWithResources.length,
         });
 
-        return res.status(201).json(roadmap);
+        await saveWeeksAndResources(roadmap._id, weeksWithResources);
+        await syncRoadmapProgress(roadmap._id);
+
+        const result = await getRoadmapWithWeeks(roadmap._id, req.user.id);
+        
+        await User.findByIdAndUpdate(req.user.id, { 
+            $inc: { "usage.roadmapsThisMonth": 1 } 
+        });
+
+        return res.status(201).json(result);
     } catch (err) {
-        return res.status(500).json({ error: err.message });
+        console.error("Create roadmap error:", err.message);
+        return res.status(502).json({
+            error: err.message || "Failed to generate roadmap with AI",
+        });
     }
 };
 
@@ -87,9 +271,11 @@ export const getAllRoadmaps = async (req, res) => {
 
         const roadmaps = await Roadmap.find({ userId: req.user.id })
             .sort({ createdAt: -1 })
-            .select("_id currentRole targetRole timeline progress createdAt");
+            .select(
+                "_id analysisId currentRole targetRole matchScore hoursPerWeek totalWeeks completedWeeks progress status aiTokensUsed createdAt updatedAt"
+            );
 
-        return res.status(200).json(roadmaps);
+        return res.status(200).json(roadmaps.map((roadmap) => formatRoadmapSummary(roadmap.toObject())));
     } catch (err) {
         return res.status(500).json({ error: err.message });
     }
@@ -106,7 +292,7 @@ export const getRoadmapById = async (req, res) => {
             return res.status(404).json({ error: "Roadmap not found" });
         }
 
-        const roadmap = await Roadmap.findOne({ _id: id, userId: req.user.id });
+        const roadmap = await getRoadmapWithWeeks(id, req.user.id);
         if (!roadmap) {
             return res.status(404).json({ error: "Roadmap not found" });
         }
@@ -138,13 +324,15 @@ export const updateRoadmapProgress = async (req, res) => {
             { _id: id, userId: req.user.id },
             { progress },
             { returnDocument: "after", runValidators: true }
-        ).select("_id currentRole targetRole progress timeline createdAt");
+        ).select(
+            "_id analysisId currentRole targetRole matchScore progress totalWeeks completedWeeks status hoursPerWeek createdAt updatedAt"
+        );
 
         if (!roadmap) {
             return res.status(404).json({ error: "Roadmap not found" });
         }
 
-        return res.status(200).json(roadmap);
+        return res.status(200).json(formatRoadmapSummary(roadmap.toObject()));
     } catch (err) {
         return res.status(500).json({ error: err.message });
     }
@@ -167,24 +355,20 @@ export const markWeekCompleted = async (req, res) => {
         }
 
         const weekNumber = Number(weekNum);
-        const weekToUpdate = roadmap.weeklyPlan.find((week) => week.week === weekNumber);
-        if (!weekToUpdate) {
+        const week = await RoadmapWeek.findOneAndUpdate(
+            { roadmapId: id, weekNumber },
+            { completed: true, completedAt: new Date() },
+            { returnDocument: "after" }
+        );
+
+        if (!week) {
             return res.status(404).json({ error: "Week not found" });
         }
 
-        weekToUpdate.completed = true;
-        // roadmap.calculateProgress();
-        await roadmap.save();
+        await syncRoadmapProgress(id);
+        const result = await getRoadmapWithWeeks(id, req.user.id);
 
-        return res.status(200).json({
-            _id: roadmap._id,
-            currentRole: roadmap.currentRole,
-            targetRole: roadmap.targetRole,
-            weeklyPlan: roadmap.weeklyPlan,
-            progress: roadmap.progress,
-            timeline: roadmap.timeline,
-            createdAt: roadmap.createdAt,
-        });
+        return res.status(200).json(result);
     } catch (err) {
         return res.status(500).json({ error: err.message });
     }
@@ -207,23 +391,20 @@ export const unmarkWeekCompleted = async (req, res) => {
         }
 
         const weekNumber = Number(weekNum);
-        const weekToUpdate = roadmap.weeklyPlan.find((week) => week.week === weekNumber);
-        if (!weekToUpdate) {
+        const week = await RoadmapWeek.findOneAndUpdate(
+            { roadmapId: id, weekNumber },
+            { completed: false, completedAt: null },
+            { returnDocument: "after" }
+        );
+
+        if (!week) {
             return res.status(404).json({ error: "Week not found" });
         }
 
-        weekToUpdate.completed = false;
-        await roadmap.save();
+        await syncRoadmapProgress(id);
+        const result = await getRoadmapWithWeeks(id, req.user.id);
 
-        return res.status(200).json({
-            _id: roadmap._id,
-            currentRole: roadmap.currentRole,
-            targetRole: roadmap.targetRole,
-            weeklyPlan: roadmap.weeklyPlan,
-            progress: roadmap.progress,
-            timeline: roadmap.timeline,
-            createdAt: roadmap.createdAt,
-        });
+        return res.status(200).json(result);
     } catch (err) {
         return res.status(500).json({ error: err.message });
     }
@@ -250,13 +431,25 @@ export const deleteRoadmap = async (req, res) => {
         return res.status(500).json({ error: err.message });
     }
 };
+
 export const deleteAllRoadmaps = async (req, res) => {
     try {
         if (!req.user || !req.user.id) {
             return res.status(401).json({ error: "Please authenticate" });
         }
 
+        const roadmaps = await Roadmap.find({ userId: req.user.id }).select("_id");
+        const roadmapIds = roadmaps.map((roadmap) => roadmap._id);
+        const weeks = await RoadmapWeek.find({ roadmapId: { $in: roadmapIds } }).select("_id");
+        const weekIds = weeks.map((week) => week._id);
+
+        if (weekIds.length > 0) {
+            await Resource.deleteMany({ weekId: { $in: weekIds } });
+        }
+
+        await RoadmapWeek.deleteMany({ roadmapId: { $in: roadmapIds } });
         await Roadmap.deleteMany({ userId: req.user.id });
+
         return res.status(200).json({ message: "All roadmaps deleted successfully" });
     } catch (err) {
         return res.status(500).json({ error: err.message });

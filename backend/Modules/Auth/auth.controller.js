@@ -1,30 +1,3 @@
-/**
- * AUTHENTICATION CONTROLLER
- * =========================
- * 
- * PURPOSE:
- * This file contains the actual logic for authentication endpoints.
- * It handles signup, login, profile management, and account deletion.
- * 
- * ASSIGNED TO: AMANY
- * 
- * WHAT EACH FUNCTION DOES:
- * -------------------------------------------------
- * | Function        | Purpose                              |
- * |-----------------|--------------------------------------|
- * | signup          | Creates new user + returns JWT token |
- * | login           | Authenticates user + returns JWT token|
- * | getProfile      | Returns logged-in user's data         |
- * | updateProfile   | Updates user's name/email/preferences |
- * | changePassword  | Updates user's password               |
- * | deleteAccount   | Deletes user + all related data       |
- * -------------------------------------------------
- * 
- * RELATED FILES:
- * - models/User.js (database operations)
- * - routes/auth.js (endpoint definitions)
- * - middleware/auth.js (authentication)
- */
 import crypto from "crypto";
 import User from "../../models/User.js";
 import UserSettings from "../../models/UserSettings.js";
@@ -33,27 +6,24 @@ import {
   isStrongPassword,
   isValidName,
   passwordsMatch,
- 
 } from "../../utils/validators.js";
 import jwt from "jsonwebtoken";
-
+import bcrypt from "bcrypt";
 import sendEmail from "../../Email/email.js";
 import { template } from "../../Email/emailTemplate.js";
 import EmailVerification from "../../models/EmailVerification.js";
 import Session from "../../models/Session.js";
 
 const createAccessToken = (user) =>
-  jwt.sign(
-    { id: user._id, role: user.role },
-    process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRES_IN || "1d" }
-  );
+  jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN || "1d",
+  });
 
 const createRefreshToken = (user) =>
   jwt.sign(
     { id: user._id, role: user.role, type: "refresh" },
     process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "7d" }
+    { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "7d" },
   );
 
 const toPublicUser = (user) => ({
@@ -67,7 +37,61 @@ const toPublicUser = (user) => ({
   last_login_at: user.last_login_at,
   created_at: user.created_at,
   updated_at: user.updated_at,
+  subscriptionStatus: user.subscriptionStatus,
+  subscriptionCurrentPeriodEnd: user.subscriptionCurrentPeriodEnd,
+  cancelAtPeriodEnd: user.cancelAtPeriodEnd,
+  usage: user.usage,
+  plan: user.plan,
+  stripeCustomerId: user.stripeCustomerId,
+  stripeSubscriptionId: user.stripeSubscriptionId,
 });
+
+const validateUserForLogin = async (user, password) => {
+  if (!user.is_verified) {
+    return { status: 401, message: "Please verify your email first." };
+  }
+  if (user.status === "suspended") {
+    return { status: 403, message: "Your account has been suspended." };
+  }
+  if (user.status === "banned") {
+    return {
+      status: 403,
+      message: user.ban_reason
+        ? `Your account has been banned: ${user.ban_reason}`
+        : "Your account has been banned.",
+    };
+  }
+
+  const match = await bcrypt.compare(password, user.password_hash);
+  if (!match) {
+    return { status: 400, message: "Wrong password" };
+  }
+
+  return null;
+};
+
+const issueLoginResponse = async (user, res) => {
+  user.last_login_at = new Date();
+  await user.save();
+
+  const accessToken = createAccessToken(user);
+  const refreshToken = createRefreshToken(user);
+
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + 7);
+
+  await Session.create({
+    user_id: user._id,
+    refresh_token: refreshToken,
+    expires_at: expiresAt,
+  });
+
+  res.json({
+    accessToken,
+    refreshToken,
+    user: toPublicUser(user),
+  });
+};
 
 // POST /api/auth/signup
 export const signup = async (req, res) => {
@@ -77,9 +101,12 @@ export const signup = async (req, res) => {
     if (!name || !email || !password || !confirmPassword) {
       return res.status(400).json({ message: "All fields are required" });
     }
-    if (!isValidName(name)) return res.status(400).json({ message: "Name too short" });
-    if (!isValidEmail(email)) return res.status(400).json({ message: "Invalid email" });
-    if (!isStrongPassword(password)) return res.status(400).json({ message: "Weak password" });
+    if (!isValidName(name))
+      return res.status(400).json({ message: "Name too short" });
+    if (!isValidEmail(email))
+      return res.status(400).json({ message: "Invalid email" });
+    if (!isStrongPassword(password))
+      return res.status(400).json({ message: "Weak password" });
     if (!passwordsMatch(password, confirmPassword)) {
       return res.status(400).json({ message: "Passwords do not match" });
     }
@@ -98,7 +125,7 @@ export const signup = async (req, res) => {
       is_verified: false,
     });
 
-    //verification email 
+    //verification email
     const verificationToken = crypto.randomBytes(32).toString("hex");
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 24);
@@ -111,20 +138,19 @@ export const signup = async (req, res) => {
     });
 
     const verifyUrl = `http://localhost:5000/api/auth/verify-email/${verificationToken}`;
-    
+
     sendEmail({
       email: user.email,
       subject: "Verify Your Email - CareerForge",
       html: template(verifyUrl),
-    }).catch(err => console.error("Email send failed:", err));
+    }).catch((err) => console.error("Email send failed:", err));
     await UserSettings.create({ user_id: user._id });
 
     return res.status(201).json({
-      message: "User registered successfully. Please check your email to verify your account.",
+      message:
+        "User registered successfully. Please check your email to verify your account.",
       userId: user._id,
-      message: "Check your email to verify your account",
     });
-
   } catch (err) {
     res.status(500).json(err.message);
   }
@@ -141,68 +167,20 @@ export const updateTheme = async (req, res) => {
 
     // req.user.id comes from your auth middleware
     const updatedUser = await User.findByIdAndUpdate(
-      req.user.id, 
-      { theme }, 
-      { new: true } // Returns the updated document
+      req.user.id,
+      { theme },
+      { new: true }, // Returns the updated document
     );
 
     res.status(200).json({
       message: "Theme updated successfully",
-      theme: updatedUser.theme
+      theme: updatedUser.theme,
     });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
-//verifyEmail
-export const verifyEmail = async (req, res) => {
-  try {
-    const { token } = req.params;
 
-    // 1. Find user by the verification token
-    const user = await User.findOne({ verifyToken: token });
-
-    if (!user) {
-      return res.status(400).send(`
-        <div style="font-family: Arial; text-align: center; padding: 50px;">
-          <h1 style="color: red;">Invalid or Expired Token</h1>
-          <p>The verification link is invalid or has already been used.</p>
-        </div>
-      `);
-    }
-
-    // 2. Update user status
-    user.isVerified = true;
-    user.verifyToken = undefined; // Remove token so it can't be used again
-
-    await user.save();
-
-    // 3. Return success response with a link to your Frontend Login page
-    return res.send(`
-      <div style="font-family: Arial; text-align: center; padding: 50px;">
-        <h1 style="color: green;">✔ Email Verified Successfully</h1>
-        <p>Your account is now active. You can proceed to login.</p>
-        
-        // <a href="http://localhost:5000/login" 
-        //    style="
-        //      display: inline-block;
-        //      margin-top: 20px;
-        //      padding: 12px 20px;
-        //      background: #000;
-        //      color: #fff;
-        //      text-decoration: none;
-        //      border-radius: 8px;
-        //      font-weight: bold;
-        //    ">
-        //   Go to Login
-        // </a>
-      </div>
-    `);
-
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
 // LOGIN
 export const login = async (req, res) => {
   try {
@@ -211,44 +189,48 @@ export const login = async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ message: "User not found" });
 
-    if (!user.is_verified) {
-      return res.status(401).json({ message: "Please verify your email first." });
+    const validationError = await validateUserForLogin(user, password);
+    if (validationError) {
+      return res
+        .status(validationError.status)
+        .json({ message: validationError.message });
     }
-    if (user.status === "suspended") {
-      return res.status(403).json({ message: "Your account has been suspended." });
-    }
-    if (user.status === "banned") {
+
+    if (user.role === "admin") {
       return res.status(403).json({
-        message: user.ban_reason
-          ? `Your account has been banned: ${user.ban_reason}`
-          : "Your account has been banned.",
+        message:
+          "Admin accounts must sign in through the admin dashboard, not the user app.",
       });
     }
 
-    const match = await bcrypt.compare(password, user.password_hash);
-    if (!match) return res.status(400).json({ message: "Wrong password" });
+    await issueLoginResponse(user, res);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
 
-    user.last_login_at = new Date();
-    await user.save();
+// POST /api/auth/admin/login
+export const adminLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
 
-    const accessToken = createAccessToken(user);
-    const refreshToken = createRefreshToken(user);
+    const user = await User.findOne({ email });
+    if (!user) return res.status(400).json({ message: "User not found" });
 
-    //refresh token in Session 
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7); 
+    if (user.role !== "admin") {
+      return res.status(403).json({
+        message: "Access denied. Admin privileges required.",
+      });
+    }
 
-    await Session.create({
-      user_id: user._id,
-      refresh_token: refreshToken,
-      expires_at: expiresAt,
-    });
+    const validationError = await validateUserForLogin(user, password);
+    if (validationError) {
+      return res
+        .status(validationError.status)
+        .json({ message: validationError.message });
+    }
 
-    res.json({
-      accessToken,
-      refreshToken,
-      user: toPublicUser(user),
-    });
+    await issueLoginResponse(user, res);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -264,11 +246,13 @@ export const logout = async (req, res) => {
 
     const session = await Session.findOne({ refresh_token: refreshToken });
     if (!session) {
-      return res.status(404).json({ message: "Session not found" });
+      return res.json({ message: "Logged out successfully" });
     }
 
     if (session.user_id.toString() !== req.user.id) {
-      return res.status(403).json({ message: "Unauthorized to delete this session" });
+      return res
+        .status(403)
+        .json({ message: "Unauthorized to delete this session" });
     }
 
     await Session.deleteOne({ _id: session._id });
@@ -292,7 +276,9 @@ export const refresh = async (req, res) => {
     });
 
     if (!existingSession) {
-      return res.status(401).json({ message: "Invalid or expired refresh token" });
+      return res
+        .status(401)
+        .json({ message: "Invalid or expired refresh token" });
     }
 
     const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
@@ -309,7 +295,7 @@ export const refresh = async (req, res) => {
 
     const accessToken = createAccessToken(user);
     const newRefreshToken = createRefreshToken(user);
-    
+
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
@@ -327,7 +313,6 @@ export const refresh = async (req, res) => {
 
 //Update User
 
-
 // GET /api/auth/sessions
 export const getSessions = async (req, res) => {
   try {
@@ -339,7 +324,7 @@ export const getSessions = async (req, res) => {
     }).select("-refresh_token");
 
     res.json({
-      sessions: sessions.map(session => ({
+      sessions: sessions.map((session) => ({
         id: session._id,
         created_at: session.created_at,
         expires_at: session.expires_at,
@@ -391,9 +376,9 @@ export const resendVerification = async (req, res) => {
     }
 
     const user = await User.findOne({ email });
-    
+
     if (!user) {
-      return res.status(404).json({ message: "User not found" });  
+      return res.status(404).json({ message: "User not found" });
     }
 
     if (user.is_verified) {
@@ -402,7 +387,7 @@ export const resendVerification = async (req, res) => {
 
     await EmailVerification.updateMany(
       { user_id: user._id, is_used: false },
-      { is_used: true }
+      { is_used: true },
     );
 
     const verificationToken = crypto.randomBytes(32).toString("hex");
@@ -417,7 +402,7 @@ export const resendVerification = async (req, res) => {
     });
 
     const verifyUrl = `http://localhost:5000/api/auth/verify-email/${verificationToken}`;
-    
+
     await sendEmail({
       email: user.email,
       subject: "Verify Your Email - CareerForge",

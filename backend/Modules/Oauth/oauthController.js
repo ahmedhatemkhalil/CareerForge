@@ -6,8 +6,16 @@ import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 
 const generateAuthTokens = (user) => {
-  const accessToken = jwt.sign({ userId: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '15m' });
-  const refreshToken = jwt.sign({ userId: user._id, type: 'refresh' }, process.env.REFRESH_SECRET, { expiresIn: '7d' });
+  const accessToken = jwt.sign(
+    { id: user._id, role: user.role }, 
+    process.env.JWT_SECRET, 
+    { expiresIn: '15m' }
+  );
+  const refreshToken = jwt.sign(
+    { id: user._id, type: 'refresh' }, 
+    process.env.REFRESH_SECRET, 
+    { expiresIn: '7d' }
+  );
   return { accessToken, refreshToken, expiresIn: 900 };
 };
 
@@ -22,13 +30,20 @@ export const oauthLoginOrRegister = async (req, res) => {
     const oauthData = await getOauthUserData(provider, code, redirectUri);
 
     let isNewUser = false;
-    let userId;
+    let currentUser = null;
 
-    const oauthAccount = await OAuthAccount.findOne({ provider, provider_id: oauthData.providerId });
+    let oauthAccount = await OAuthAccount.findOne({ provider, provider_id: oauthData.providerId });
 
     if (oauthAccount) {
-      userId = oauthAccount.user_id;
-    } else {
+      currentUser = await User.findById(oauthAccount.user_id);
+      
+      if (!currentUser) {
+        await OAuthAccount.deleteOne({ _id: oauthAccount._id });
+        oauthAccount = null;
+      }
+    }
+
+    if (!oauthAccount) {
       let user = await User.findOne({ email: oauthData.email });
 
       if (!user) {
@@ -38,26 +53,44 @@ export const oauthLoginOrRegister = async (req, res) => {
         const hashedPassword = await bcrypt.hash(randomPassword, 10);
 
         user = await User.create({
-          name: oauthData.name,
+          name: oauthData.name || 'OAuth User',
           email: oauthData.email,
           password_hash: hashedPassword,
-          avatar_url: oauthData.avatarUrl,
-          is_verified: true 
+          avatar_url: oauthData.avatarUrl || null,
+          is_verified: true,
+          status: 'active',
+          role: 'user'
         });
 
-        userId = user._id;
+        await OAuthAccount.create({ 
+          user_id: user._id, 
+          provider, 
+          provider_id: oauthData.providerId 
+        });
 
-        await OAuthAccount.create({ user_id: userId, provider, provider_id: oauthData.providerId });
+        currentUser = user;
       } else {
-        userId = user._id;
-        await OAuthAccount.create({ user_id: userId, provider, provider_id: oauthData.providerId });
+        const existingLink = await OAuthAccount.findOne({ user_id: user._id, provider });
+        if (!existingLink) {
+          await OAuthAccount.create({ user_id: user._id, provider, provider_id: oauthData.providerId });
+        }
+        currentUser = user;
       }
     }
 
-    const currentUser = await User.findById(userId);
+    if (!currentUser || !currentUser._id) {
+      return res.status(404).json({ success: false, error: "User not found" });
+    }
     
-    if (currentUser.status === 'banned') return res.status(403).json({ success: false, error: "Account is banned", banReason: currentUser.ban_reason });
-    if (currentUser.status === 'suspended') return res.status(403).json({ success: false, error: "Account is suspended. Contact support" });
+    if (currentUser.status === 'banned') return res.status(403).json({ success: false, error: "Account is banned" });
+    if (currentUser.status === 'suspended') return res.status(403).json({ success: false, error: "Account is suspended" });
+
+    if (currentUser.role === 'admin') {
+      return res.status(403).json({
+        success: false,
+        error: "Admin accounts must sign in through the admin dashboard, not the user app.",
+      });
+    }
 
     currentUser.last_login_at = new Date();
     await currentUser.save();
@@ -66,12 +99,12 @@ export const oauthLoginOrRegister = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "OAuth login successful",
+      message: isNewUser ? "OAuth registration successful" : "OAuth login successful",
       data: {
         ...tokens,
         isNewUser,
         user: {
-          id: currentUser._id,
+          id: currentUser._id, 
           name: currentUser.name,
           email: currentUser.email,
           avatarUrl: currentUser.avatar_url,
@@ -83,16 +116,15 @@ export const oauthLoginOrRegister = async (req, res) => {
     });
 
   } catch (error) {
+    console.error("OAuth Error: ", error); 
     if (error.message === 'INVALID_PROVIDER') return res.status(400).json({ success: false, error: "Provider not supported" });
     if (error.message === 'INVALID_CODE') return res.status(400).json({ success: false, error: "Invalid OAuth code" });
-    
-    console.error(error);
     return res.status(500).json({ success: false, error: "Internal Server Error" });
   }
 };
 
 // ==========================================
-//  POST /api/auth/oauth/{provider}/link
+// POST /api/auth/oauth/{provider}/link
 // ==========================================
 export const linkOauthAccount = async (req, res) => {
   const { provider } = req.params;
@@ -117,15 +149,15 @@ export const linkOauthAccount = async (req, res) => {
     return res.status(200).json({ success: true, message: "OAuth account linked successfully" });
 
   } catch (error) {
+    console.error("Link OAuth Error: ", error);
     if (error.message === 'INVALID_PROVIDER') return res.status(400).json({ success: false, error: "Provider not supported" });
     if (error.message === 'INVALID_CODE') return res.status(400).json({ success: false, error: "Invalid OAuth code" });
-    
     return res.status(500).json({ success: false, error: "Internal Server Error" });
   }
 };
 
 // ==========================================
-//  DELETE /api/auth/oauth/{provider}/unlink
+// DELETE /api/auth/oauth/{provider}/unlink
 // ==========================================
 export const unlinkOauthAccount = async (req, res) => {
   const { provider } = req.params;
@@ -134,7 +166,7 @@ export const unlinkOauthAccount = async (req, res) => {
   try {
     const oauthAccount = await OAuthAccount.findOne({ user_id: userId, provider });
     if (!oauthAccount) {
-      return res.status(404).json({ success: false, error: "OAuth account not found" });
+      return res.status(404).json({ success: false, error: "Linked OAuth account not found" });
     }
 
     const totalLinkedOauth = await OAuthAccount.countDocuments({ user_id: userId });
@@ -152,6 +184,7 @@ export const unlinkOauthAccount = async (req, res) => {
     return res.status(200).json({ success: true, message: "OAuth account unlinked successfully" });
 
   } catch (error) {
+    console.error("Unlink OAuth Error: ", error);
     return res.status(500).json({ success: false, error: "Internal Server Error" });
   }
 };

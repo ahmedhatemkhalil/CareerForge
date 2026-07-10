@@ -1,19 +1,28 @@
 import api from "./api";
 
 export const registerUser = async (userData) => {
-  const { data } = await api.post("/auth/register", userData);
+  const { data } = await api.post("/auth/signup", userData);
   return data;
 };
-export const verifyEmail = async (data) => {
-  return await api.post("/auth/verify-email", data);
+export const verifyEmail = async (token) => {
+  const { data } = await api.get(`/auth/verify-email/${token}`);
+  return data;
+};
+export const resendVerification = async (email) => {
+  return await api.post("/auth/resend-verification", email);
 };
 export const loginUser = async (userData) => {
   const { data } = await api.post("/auth/login", userData);
   return data;
 };
 
+export const logoutUser = async (refreshToken) => {
+  const { data } = await api.post("/auth/logout", { refreshToken });
+  return data;
+};
+
 export const forgotPassword = async (email) => {
-  const { data } = await api.post("/auth/forgot-password", {
+  const { data } = await api.post("/users/forgot-password", {
     email,
   });
 
@@ -21,7 +30,7 @@ export const forgotPassword = async (email) => {
 };
 
 export const verifyResetOtp = async ({ email, otp }) => {
-  const { data } = await api.post("/auth/verify-reset-otp", {
+  const { data } = await api.post("/users/verify-reset-otp", {
     email,
     otp,
   });
@@ -30,7 +39,7 @@ export const verifyResetOtp = async ({ email, otp }) => {
 };
 
 export const resetPasswordWithOtp = async ({ email, otp, password }) => {
-  const { data } = await api.post("/auth/reset-password-otp", {
+  const { data } = await api.post("/users/reset-password-otp", {
     email,
     otp,
     password,
@@ -39,7 +48,7 @@ export const resetPasswordWithOtp = async ({ email, otp, password }) => {
   return data;
 };
 export const resendOtpRequest = async (email) => {
-  const { data } = await api.post("/auth/resend-otp", {
+  const { data } = await api.post("/users/resend-otp", {
     email,
   });
 
@@ -65,12 +74,12 @@ export const updateTheme = async (theme) => {
   return data;
 };
 
-// export const getCustomColors = async () => {
-//   const { data } = await api.get(`/auth/colors`);
-//   return data;
-// };
 
-// export const updateCustomColors = async (customColors) => {
-//   const { data } = await api.put(`/auth/colors`, { customColors });
-//   return data;
-// };
+export const googleLogin = async (code) => {
+  const redirectUri = `${window.location.origin}/oauth/callback`;
+  const { data } = await api.post("/oauth/google", {
+    code,
+    redirectUri,
+  });
+  return data;
+};

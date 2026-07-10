@@ -1,23 +1,13 @@
 import Joi from 'joi';
 
-export const createAnalysisSchema = Joi.object({
-    jobDescription: Joi.string()
-        .min(10)
-        .optional()
-        .messages({
-            'string.base': 'Job description must be a string',
-            'string.min': 'Job description is too short, must be at least 10 characters',
-            'string.empty': 'Job description cannot be empty'
-        }),
-})
+const objectIdString = Joi.string().hex().length(24).required();
 
-export const updateAnalysisSchema = Joi.object({
-    jobDescription: Joi.string().min(10).optional()
+export const createAnalysisSchema = Joi.object({
+    cvId: objectIdString.messages({ 'string.length': 'Invalid CV ID format' }),
+    jobId: objectIdString.messages({ 'string.length': 'Invalid Job ID format' })
 });
 
-export const getAnalysisByIdSchema = Joi.object({
-    id: Joi.string().hex().length(24).required().messages({
-        'string.length': 'Invalid Analysis ID format',
-        'any.required': 'Analysis ID is required'
-    })
+export const updateAnalysisSchema = Joi.object({
+    status: Joi.string().valid('pending', 'completed', 'failed').optional(),
+    matchScore: Joi.number().min(0).max(100).optional()
 });

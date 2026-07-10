@@ -1,0 +1,172 @@
+<div [ngClass]="isDarkMode ? 'dark' : ''"
+  class="min-h-screen font-sans bg-background text-foreground transition-colors duration-300">
+ <nav class="sticky top-0 z-40 bg-background/80 backdrop-blur-md border-b border-border px-4 py-3 flex items-center justify-between">
+  <div class="flex items-center gap-2 text-brand-primary font-bold text-xl">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="m12 3-1.912 5.886H3.886L9.073 12.5l-1.912 5.886 5.191-3.772 5.192 3.772-1.912-5.886 5.187-4.614h-6.202L12 3z" />
+    </svg>
+    <span class="text-foreground hidden sm:block">CareerForge</span>
+  </div>
+  <div class="flex items-center gap-2">
+      <a routerLink="/admin" routerLinkActive="text-brand-primary border-b-2 border-brand-primary"
+         class="px-3 py-1 text-sm font-medium text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
+        Admin Panel
+      </a>
+      <a routerLink="/revenue" routerLinkActive="text-brand-primary  border-b-2 border-brand-primary"
+         class="px-3 py-1 text-sm font-medium text-muted-foreground cursor-pointer hover:text-foreground transition-colors">
+        Revenue
+      </a>
+    </div>
+
+  <div class="flex items-center gap-4">
+    <button (click)="toggleTheme()" class="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground">
+       @if (isDarkMode) { 🌙 } @else { ☀️ }
+    </button>
+
+    <div class="flex items-center gap-3 pl-4 border-l border-border">
+      <div class="text-right hidden md:block">
+        <p class="text-sm font-semibold text-foreground">{{ adminName }}</p>
+        <p class="text-xs text-muted-foreground">Administrator</p>
+      </div>
+      <div class="w-9 h-9 rounded-full bg-brand-primary flex items-center justify-center text-white font-bold text-xs uppercase shadow-sm">
+        {{ adminInitial }}
+      </div>
+
+      <button (click)="logout()" class="p-2 text-status-error hover:bg-status-error/10 rounded-lg transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" x2="9" y1="12" y2="12" />
+        </svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="p-4 md:p-8 bg-background min-h-screen text-foreground transition-colors duration-300">
+  <div class="flex justify-between items-center mb-8">
+  <div>
+    <h1 class="text-3xl font-bold">Revenue Management</h1>
+    <p class="text-muted-foreground">Stripe subscription analytics and transaction log</p>
+  </div>
+  <button (click)="openEditModal()" class="bg-brand-primary text-white px-4 py-2 rounded-lg ...">
+  Edit Plans
+</button>
+</div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div *ngFor="let stat of statsArray" class="bg-card border border-border p-6 rounded-2xl shadow-sm">
+      <div class="flex justify-between items-start mb-4">
+        <div class="p-2 rounded-lg bg-muted text-brand-primary">
+          <span class="text-xl">{{ stat.icon }}</span>
+        </div>
+      </div>
+      <p class="text-muted-foreground-bold text-sm">{{ stat.label }}</p>
+            <p class="text-xs text-muted-foreground mt-1">{{ stat.subtext }}</p>
+      <h3 class="text-2xl font-bold mt-1">{{ stat.value }}</h3>
+    </div>
+  </div>
+
+
+
+  <div  class="bg-card border border-border rounded-2xl p-6 overflow-hidden">
+    <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+      <h2 class="text-xl font-semibold">Transaction Log</h2>
+      <select (change)="onStatusChange($event)" class="bg-muted border border-border rounded-lg px-4 py-2 text-sm w-full sm:w-auto outline-none focus:ring-2 focus:ring-brand-primary">
+        <option>All Statuses</option>
+        <option>Refunded</option>
+        <option>Failed</option>
+        <option>paid</option>
+      </select>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="text-muted-foreground text-xs uppercase border-b border-border">
+            <th class="pb-4 px-2">User</th>
+            <th class="pb-4 px-2">Stripe Transaction ID</th>
+            <th class="pb-4 px-2">Date & Time</th>
+            <th class="pb-4 px-2">Plan</th>
+            <th class="pb-4 px-2">Amount</th>
+            <th class="pb-4 px-2">Status</th>
+
+          </tr>
+        </thead>
+       <tbody *ngIf="filteredTransactions.length > 0">
+<tr *ngFor="let tx of transactions" class="border-b border-border last:border-0 hover:bg-muted/50">
+ <td class="py-4 px-2">
+  <div class="flex items-center gap-3">
+    <div class="w-9 h-9 rounded-full bg-[#6366f1] text-white flex items-center justify-center text-xs font-bold uppercase shadow-sm shrink-0">
+      {{ tx.userName ? tx.userName.substring(0, 2) : 'US' }}
+    </div>
+
+    <span class="font-medium text-foreground">
+      {{ tx.userName }}
+    </span>
+  </div>
+</td>
+  <td class="py-4 px-2 font-mono text-sm text-muted-foreground">{{ tx.stripeInvoiceId }}</td>
+  <td class="py-4 px-2">{{tx.paidAt | date:'short'}}</td>
+
+  <td class="py-4 px-2">
+    <span class="px-2 py-1 rounded text-xs font-semibold uppercase bg-muted">
+      {{ tx.plan || 'Free' }}
+    </span>
+  </td>
+
+  <td class="py-4 px-2 font-semibold">${{ tx.amount }}</td>
+
+  <td class="py-4 px-2">
+    <span [class]="'px-3 py-1 rounded-full text-xs font-medium ' + getStatusClass(tx.status)">
+      {{ tx.status | titlecase }}
+    </span>
+  </td>
+</tr>
+</tbody>
+<tbody *ngIf="filteredTransactions.length === 0">
+    <tr>
+      <td colspan="6" class="text-center py-10 text-gray-500 italic">
+        <div class="flex flex-col items-center justify-center">
+          <span class="text-2xl mb-2">🔍</span>
+          <p>No transactions match the selected status.</p>
+        </div>
+      </td>
+    </tr>
+  </tbody>
+      </table>
+    </div>
+  </div>
+  <div *ngIf="isModalOpen" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+  <div class="bg-card w-full max-w-md p-6 rounded-2xl border border-border shadow-2xl">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-xl font-bold">Edit Plan Limits</h2>
+      <button (click)="isModalOpen = false" class="text-muted-foreground hover:text-foreground">✕</button>
+    </div>
+
+    <select [(ngModel)]="selectedPlan" (change)="loadPlanLimits()" class="w-full bg-muted border border-border rounded-lg px-4 py-2 mb-6 outline-none">
+      <option value="" disabled>Select a plan</option>
+      <option value="free">Free Plan</option>
+      <option value="pro">Pro Plan</option>
+    </select>
+
+    <div *ngIf="currentPlanData" class="space-y-4">
+      <div>
+        <label class="text-xs uppercase text-muted-foreground">Analyses / Month</label>
+        <input type="number" [(ngModel)]="currentPlanData.limits.analysesPerMonth" class="w-full bg-muted border border-border rounded-lg px-4 py-2 mt-1">
+      </div>
+      <div>
+        <label class="text-xs uppercase text-muted-foreground">Interviews / Month</label>
+        <input type="number" [(ngModel)]="currentPlanData.limits.interviewsPerMonth" class="w-full bg-muted border border-border rounded-lg px-4 py-2 mt-1">
+      </div>
+      <div>
+        <label class="text-xs uppercase text-muted-foreground">Roadmaps / Month</label>
+        <input type="number" [(ngModel)]="currentPlanData.limits.roadmapsPerMonth" class="w-full bg-muted border border-border rounded-lg px-4 py-2 mt-1">
+      </div>
+
+      <div class="flex gap-2 mt-6">
+        <button (click)="savePlanChanges()" class="flex-1 bg-brand-primary text-white py-2 rounded-lg hover:opacity-90">Save Changes</button>
+        <button (click)="isModalOpen = false" class="flex-1 bg-muted py-2 rounded-lg hover:bg-border">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>

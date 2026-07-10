@@ -8,54 +8,67 @@
 :root {
   --font-heading: var(--font-sans);
   --font-sans: "Inter Variable", sans-serif;
-  --font-size: 16px; 
+  --font-size: 16px;
 
   /* Layout Base Colors (Light Mode) */
-  --background: #ffffff;
-  --foreground: #0A0A0A;
+  --background: #F8FAFC;
+  --foreground: #0F172A;
   --card: #ffffff;
-  --card-foreground: #0A0A0A;
+  --card-foreground: #0F172A;
   --popover: #ffffff;
-  --popover-foreground: #0A0A0A;
+  --popover-foreground: #0F172A;
   
-  --primary: #0A0A0A;
+  --primary: #4F46A0;
   --primary-foreground: #ffffff;
-  --secondary: #ECECF0;
-  --secondary-foreground: #0A0A0A;
+  --secondary: #EEECF9;
+  --secondary-foreground: #4F46A0;
   
-  --muted: #F4F4F4;
-  --muted-foreground: #717182;
-  --accent: #E9EBEF;
-  --accent-foreground: #0A0A0A;
-  --border: rgba(0, 0, 0, 0.1);
+  --muted: #F1F5F9;
+  --muted-foreground: #64748B;
+  --accent: #EEECF9;
+  --accent-foreground: #4F46A0;
+  --border: #E2E8F0;
   --input: transparent;
-  --input-background: #F3F3F5;
-  --radius: 0.625rem;
+  --input-background: #F8FAFC;
+  --switch-background: #CBD5E1;
+  --radius: 0.75rem;
 
   /* Sidebar Colors (Light Mode) */
-  --sidebar: #FAFAFA;
-  --sidebar-foreground: #0A0A0A;
-  --sidebar-primary: #615FFF;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0F172A;
+  --sidebar-primary: #4F46A0;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #ECECF0;
-  --sidebar-accent-foreground: #0A0A0A;
-  --sidebar-border: #E6E6E6;
-  --sidebar-ring: #615FFF;
+  --sidebar-accent: #EEECF9;
+  --sidebar-accent-foreground: #4F46A0;
+  --sidebar-border: #E2E8F0;
+  --sidebar-ring: #4F46A0;
 
-  --brand-primary: #615FFF;            
-  --brand-primary-hover: #4F39F6;
-  --gradient-brand-from: #615FFF;
-  --gradient-brand-to: #9810FA;
+  /* Brand Colors */
+  --brand-primary: #4F46A0;
+  --brand-primary-hover: #6D68C4;
+  --gradient-brand-from: #4F46A0;
+  --gradient-brand-to: #7C3AED;
   --gradient-brand: linear-gradient(90deg, var(--gradient-brand-from), var(--gradient-brand-to));
-  --brand-secondary: #AD46FF;          
-  --brand-tertiary: #00B8DB;           
-  --brand-blue: #2B7FFF;               
+  --brand-secondary: #7C3AED;
+  --brand-tertiary: #0EA5E9;
+  --brand-blue: #3B82F6;
+
+  /* AI Colors */
+  --ai-accent: #7C3AED;
+  --ai-accent-foreground: #ffffff;
 
   /* Status Colors */
-  --status-success: #00C950;           
-  --status-warning: #FF6900;           
-  --status-error: #FB2C36;             
-  --status-info: #65C9FF;
+  --status-success: #10B981;
+  --status-warning: #F59E0B;
+  --status-error: #EF4444;
+  --status-info: #0EA5E9;
+
+  /* Chart Colors */
+  --chart-1: #4F46A0;
+  --chart-2: #7C3AED;
+  --chart-3: #0EA5E9;
+  --chart-4: #10B981;
+  --chart-5: #F59E0B;
 
   --font-weight-medium: 500;
   --font-weight-normal: 400;
@@ -63,55 +76,71 @@
 
 .dark {
   /* Layout Base Colors (Dark Mode) */
-  --background: #0B0F1A;               
-  --foreground: #FAFAFA;
-  --card: #151925;
-  --card-foreground: #FAFAFA;
-  --popover: #151925;
-  --popover-foreground: #FAFAFA;
+  --background: #090D16;
+  --foreground: #F1F5F9;
+  --card: #131C2E;
+  --card-foreground: #F1F5F9;
+  --popover: #131C2E;
+  --popover-foreground: #F1F5F9;
   
-  --primary: #FAFAFA;
-  --primary-foreground: #0B0F1A;
-  --secondary: #262626;
-  --secondary-foreground: #FAFAFA;
+  --primary: #6D68C4;
+  --primary-foreground: #ffffff;
+  --secondary: #1E1A3A;
+  --secondary-foreground: #A5A0E8;
   
-  --muted: #1B171F;                    
-  --muted-foreground: #A1A1A1;
-  --accent: #262626;
-  --accent-foreground: #FAFAFA;
-  --border: rgba(255, 255, 255, 0.1);
-  --input: rgba(255, 255, 255, 0.05);
-  --input-background: #1B171F;
-  --ring: #615FFF;
+  --muted: #1E293B;
+  --muted-foreground: #94A3B8;
+  --accent: #1E1A3A;
+  --accent-foreground: #A5A0E8;
+  --border: #1E293B;
+  --input: #1E293B;
+  --input-background: #1E293B;
+  --switch-background: #334155;
+  --radius: 0.75rem;
 
   /* Sidebar Colors (Dark Mode) */
-  --sidebar: #151925;
-  --sidebar-foreground: #FAFAFA;
-  --sidebar-primary: #615FFF;
+  --sidebar: #0E1424;
+  --sidebar-foreground: #F1F5F9;
+  --sidebar-primary: #6D68C4;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #1B171F;
-  --sidebar-accent-foreground: #FAFAFA;
-  --sidebar-border: rgba(255, 255, 255, 0.1);
-  --sidebar-ring: #615FFF;
+  --sidebar-accent: #1E1A3A;
+  --sidebar-accent-foreground: #A5A0E8;
+  --sidebar-border: #1E293B;
+  --sidebar-ring: #6D68C4;
 
-  --brand-primary: #615FFF;
-  --brand-primary-hover: #7E80FF;
-  --gradient-brand-from: #615FFF;
-  --gradient-brand-to: #9810FA;
+  /* Brand Colors (Dark Mode) */
+  --brand-primary: #6D68C4;
+  --brand-primary-hover: #8B86E6;
+  --gradient-brand-from: #6D68C4;
+  --gradient-brand-to: #9F7AEA;
   --gradient-brand: linear-gradient(90deg, var(--gradient-brand-from), var(--gradient-brand-to));
-  --brand-secondary: #AD46FF;
-  --brand-tertiary: #00B8DB;
-  --brand-blue: #2B7FFF;
+  --brand-secondary: #9F7AEA;
+  --brand-tertiary: #38BDF8;
+  --brand-blue: #60A5FA;
+
+  /* AI Colors (Dark Mode) */
+  --ai-accent: #9F7AEA;
+  --ai-accent-foreground: #ffffff;
 
   /* Status Colors (Dark Mode) */
-  --status-success: #00C950;
-  --status-warning: #FF6900;
-  --status-error: #FB2C36;
-  --status-info: #65C9FF;
+  --status-success: #34D399;
+  --status-warning: #FCD34D;
+  --status-error: #F87171;
+  --status-info: #38BDF8;
+
+  /* Chart Colors (Dark Mode) */
+  --chart-1: #6D68C4;
+  --chart-2: #9F7AEA;
+  --chart-3: #38BDF8;
+  --chart-4: #34D399;
+  --chart-5: #FCD34D;
+
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
 }
 
 @theme inline {
-  /* Base Shadcn Colors mapping */
+  /* Layout Colors */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -127,12 +156,14 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--status-error);
+  --color-destructive-foreground: var(--primary-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-input-background: var(--input-background);
+  --color-switch-background: var(--switch-background);
   --color-ring: var(--ring);
 
-  /* Sidebar utilities */
+  /* Sidebar Colors */
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -142,18 +173,29 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  /* Custom Brand Utilities */
+  /* Brand Colors */
   --color-brand-primary: var(--brand-primary);
   --color-brand-primary-hover: var(--brand-primary-hover);
   --color-brand-secondary: var(--brand-secondary);
   --color-brand-tertiary: var(--brand-tertiary);
   --color-brand-blue: var(--brand-blue);
 
-  /* Custom Status Utilities */
+  /* AI Colors */
+  --color-ai-accent: var(--ai-accent);
+  --color-ai-accent-foreground: var(--ai-accent-foreground);
+
+  /* Status Colors */
   --color-status-success: var(--status-success);
   --color-status-warning: var(--status-warning);
   --color-status-error: var(--status-error);
   --color-status-info: var(--status-info);
+
+  /* Chart Colors */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
 
   /* Radius Utilities */
   --radius-sm: calc(var(--radius) - 4px);
@@ -167,6 +209,12 @@
     @apply border-border outline-ring/50;
   }
 
+  html,
+  body,
+  #root {
+    @apply m-0 h-full w-full;
+  }
+
   body {
     @apply bg-background text-foreground font-sans;
   }
@@ -174,4 +222,26 @@
   html {
     font-size: var(--font-size);
   }
+}
+
+@keyframes pricing-shimmer {
+  0% {
+    background-position: 200% center;
+  }
+  100% {
+    background-position: -200% center;
+  }
+}
+
+.pricing-btn-shimmer {
+  background-image: linear-gradient(
+    90deg,
+    var(--gradient-brand-from) 0%,
+    var(--gradient-brand-to) 40%,
+    #a78bfa 50%,
+    var(--gradient-brand-to) 60%,
+    var(--gradient-brand-from) 100%
+  );
+  background-size: 200% auto;
+  animation: pricing-shimmer 4s linear infinite;
 }

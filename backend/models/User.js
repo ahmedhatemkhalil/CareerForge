@@ -36,6 +36,41 @@ const userSchema = new mongoose.Schema(
 
     is_verified: { type: Boolean, default: false },
 
+    stripeCustomerId: {
+      type: String,
+      default: null,
+    },
+
+    stripeSubscriptionId: {
+      type: String,
+      default: null,
+    },
+
+    plan: {
+      type: String,
+      enum: ["free", "pro"],
+      default: "free",
+    },
+
+    subscriptionStatus: {
+      type: String,
+      default: null,
+    },
+
+    subscriptionCurrentPeriodEnd: {
+      type: Date,
+      default: null,
+    },
+    cancelAtPeriodEnd: {
+      type: Boolean,
+      default: false,
+    },
+    usage: {
+      analysesThisMonth: { type: Number, default: 0 },
+      interviewsThisMonth: { type: Number, default: 0 },
+      roadmapsThisMonth: { type: Number, default: 0 }
+    },
+
     last_login_at: { type: Date, default: null },
   },
   {

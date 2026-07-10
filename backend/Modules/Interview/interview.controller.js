@@ -1,142 +1,285 @@
-import {interviewModel} from "../../models/Interview.js";
+import crypto from "crypto";
+import { interviewSessionModel } from "../../models/Interview/InterviewSession.js";
+import { interviewQuestionModel } from "../../models/Interview/InterviewQuestion.js";
+import { Analysis } from "../../models/Analysis.js";
+import interviewService from "../../services/interview.service.js";
 import { handleError } from "../../middleware/HandleError.js";
-import {generateFirstQuestion, evaluateAnswerAndGetNext, generateSummaryReport} from "../../services/ai.static.js";
+import User from "../../models/User.js"; 
 
-export const createInterview = handleError(async (req,res)=>{
-    const { jobDescription } = req.body;
-    if(!jobDescription || jobDescription.trim() === ""){
-        return res.status(400).json({message:"Job description is required"});
+// Post /api/interviews/start
+export const startInterview = handleError(async (req, res) => {
+    const { analysisId } = req.body;
+
+    if (!analysisId) {
+        return res.status(400).json({ message: "analysisId is required" });
     }
-    
-    const firstQuestion = await generateFirstQuestion(jobDescription);
-    const interview = await interviewModel.create({
-        user: req.user.id,
-        jobDescription: jobDescription.trim(),
-        qaList: [
-            {
-                question: firstQuestion,
-            },
-        ],
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+        return res.status(404).json({ message: "User not found" });
+    }
+
+    const userPlanName = user.plan || "free"; 
+    const allowedLimit = user.maxLimits?.interviewsPerMonth || (userPlanName === "pro" ? 99 : 1);
+    const currentUsage = user.usage?.interviewsThisMonth || 0;
+
+    if (currentUsage >= allowedLimit) {
+        return res.status(403).json({ 
+            message: `You have exceeded your monthly interview limit for your current plan (Maximum allowed: ${allowedLimit}). Please upgrade your plan.`
+        });
+    }
+
+    await User.findByIdAndUpdate(req.user.id, {
+        $inc: { "usage.interviewsThisMonth": 1 }
     });
 
-    res.status(201).json({
-        data: {
-            interviewId: interview._id,
-            status: interview.status,
-            currentQuestion: {
-                questionNumber: 1,
-                totalQuestions: 8,
-                question: firstQuestion,
+    let aiResponse;
+    try {
+        const analysis = await Analysis.findOne({_id: analysisId, userId: req.user.id}).populate("jobId");
+        if (!analysis?.jobId) {
+            await User.findByIdAndUpdate(req.user.id, { $inc: { "usage.interviewsThisMonth": -1 } });
+            return res.status(404).json({ message: "Analysis or Associated Job not found" });
+        }
+
+        const langflowSessionId = crypto.randomUUID();
+        aiResponse = await interviewService.startInterviewAI({
+            langflowSessionId,
+            jobTitle: analysis.jobId.title,
+            jobDescription: analysis.jobId.descriptionText,
+            matchScore: analysis.matchScore,
+            strengths: analysis.strengths,
+            weaknesses: analysis.weaknesses,
+            skillGaps: analysis.skillGaps,
+        });
+
+        if (!aiResponse?.nextQuestion || aiResponse.error) {
+            throw new Error("AI Generation Failed");
+        }
+
+        const session = await interviewSessionModel.create({
+            user_id: req.user.id,
+            analysis_id: analysis._id,
+            jobTitle: analysis.jobId.title,
+            status: "in_progress",
+            started_at: new Date(),
+            langflow_session_id: langflowSessionId,
+        });
+
+        const firstQuestion = await interviewQuestionModel.create({
+            session_id: session._id,
+            question_text: aiResponse.nextQuestion,
+            order_index: 1,
+        });
+
+
+        return res.status(201).json({
+            message: "Interview started successfully",
+            data: {
+                sessionId: session._id,
+                question: firstQuestion.question_text,
+                order: 1,
+                isCompleted: false,
             },
-        },
-    });
+        });
+
+    } catch (error) {
+        await User.findByIdAndUpdate(req.user.id, {
+            $inc: { "usage.interviewsThisMonth": -1 }
+        });
+        
+        console.error("Start Interview Error:", error.message);
+        return res.status(500).json({ message: "Failed to start interview due to an external error. Please try again." });
+    }
 });
 
-export const submitAnswer = handleError(async (req, res)=>{
-    const interview = req.interview;
-    const { userAnswer } = req.body;
+// POST /api/interviews/:sessionId/answer
+export const submitAnswer = handleError(async (req, res) => {
+    const { answer } = req.body;
 
-    if (interview.status === "completed") {
+    if (!answer?.trim()) {
+        return res.status(400).json({ message: "Answer is required" });
+    }
+
+    const session = req.session;
+
+    if (session.status === "completed") {
         return res.status(400).json({ message: "Interview already completed" });
     }
 
-    if (!userAnswer || userAnswer.trim() === "") {
-        return res.status(400).json({message: "userAnswer is required"});
+    const analysis = await Analysis.findById(session.analysis_id).populate("jobId");
+
+    const currentQuestion = await interviewQuestionModel.findOne({
+      session_id: session._id,
+      answer_status: { $in: ["pending", "failed"] },
+    }).sort({ order_index: 1 });
+
+    if (!currentQuestion) {
+      return res.status(400).json({ message: "No active question found" });
     }
 
-    const currentQA = interview.qaList[interview.currentQuestionIndex];
-    if (!currentQA) {
-        return res.status(400).json({ message: "No active question found." });
+    currentQuestion.user_answer = answer.trim();
+    currentQuestion.answer_status = "processing";
+    await currentQuestion.save();
+
+    const allQuestions = await interviewQuestionModel.find({ session_id: session._id }).sort({ order_index: 1 });
+
+    const interviewHistory = allQuestions.filter(q => q.answer_status === "completed" && q.user_answer)
+      .map(q => ({
+        question: q.question_text,
+        answer: q.user_answer,
+      }));
+
+    const aiResponse = await interviewService.continueInterviewAI({
+        langflowSessionId: session.langflow_session_id,
+        jobTitle: analysis.jobId.title,
+        jobDescription: analysis.jobId.descriptionText,
+        matchScore: analysis.matchScore,
+        strengths: analysis.strengths,
+        weaknesses: analysis.weaknesses,
+        skillGaps: analysis.skillGaps,
+        interviewHistory,
+        candidateAnswer: answer.trim(),
+    });
+
+    if (!aiResponse || aiResponse.error) {
+        currentQuestion.answer_status = "failed";
+        await currentQuestion.save();
+        return res.status(500).json({message: "Please try submitting your answer again.",});
     }
 
-    const currentQuestionNumber = interview.currentQuestionIndex + 1;
+    const questionsCount = currentQuestion.order_index;
+    const MIN_QUESTIONS = 5;
+    const MAX_QUESTIONS = 8;
 
-    const aiResponse = await evaluateAnswerAndGetNext({jobDescription:interview.jobDescription, questionNumber:currentQuestionNumber});
-
-    currentQA.userAnswer = userAnswer.trim();
-    currentQA.feedback = aiResponse.feedback;
-    currentQA.score = aiResponse.score;
-    
-    if (aiResponse.nextQuestion) {
-        interview.qaList.push({question:aiResponse.nextQuestion});
-        interview.currentQuestionIndex += 1;
+    if (aiResponse.isCompleted && questionsCount < MIN_QUESTIONS) {
+        aiResponse.isCompleted = false;
     }
 
-    await interview.save();
-    
-    const isFinished = !aiResponse.nextQuestion;
+    if (questionsCount >= MAX_QUESTIONS) {
+        aiResponse.isCompleted = true;
+    }
 
-    res.status(200).json({
-        data: {
-            answeredQuestion: {
-                questionNumber:currentQuestionNumber,
-                question:currentQA.question,
-                userAnswer:currentQA.userAnswer,
-                feedback:currentQA.feedback,
-                score:currentQA.score,
-            },
+    if (!aiResponse.isCompleted && !aiResponse.nextQuestion) {
+        currentQuestion.answer_status = "failed";
+        await currentQuestion.save();
 
-            nextQuestion:
-                aiResponse.nextQuestion
-                    ? {
-                        questionNumber:currentQuestionNumber + 1,
-                        totalQuestions:interview.totalQuestions,
-                        question:aiResponse.nextQuestion,
-                    }
-                    : null,
+        return res.status(500).json({
+            message: "AI failed to generate next question",
+        });
+    }
 
-            isFinished,
-        },
+    // SAVE AI RESULT
+    currentQuestion.score = aiResponse.score ?? 0;
+    currentQuestion.ai_feedback = aiResponse.feedback || "No feedback provided.";
+    currentQuestion.answer_status = "completed";
+    await currentQuestion.save();
+
+    // finish
+    if (aiResponse.isCompleted) {
+        const completedQuestions = await interviewQuestionModel.find({session_id: session._id, answer_status: "completed",});
+        const totalScore = completedQuestions.reduce((sum, q) => sum + (q.score || 0), 0);
+        const overallScore = completedQuestions.length > 0 ? Math.round((totalScore / (completedQuestions.length * 10)) * 100 ) : 0;
+
+        session.status = "completed";
+        session.total_questions = questionsCount;
+        session.overall_score = overallScore; 
+        session.overall_feedback = aiResponse.overall_feedback ?? aiResponse.generalFeedback;
+        session.tips_for_improvement = (aiResponse.tips_for_improvement ?? aiResponse.tipsForImprovement) || [];
+        session.hiringRecommendation = aiResponse.hiringRecommendation;
+        session.completed_at = new Date();
+
+        await session.save();
+
+        return res.status(200).json({
+            isCompleted: true,
+            score: currentQuestion.score,
+            feedback: currentQuestion.ai_feedback,
+            overallScore: session.overall_score,
+            generalFeedback: session.overall_feedback,
+            tipsForImprovement: session.tips_for_improvement,
+            hiringRecommendation: session.hiringRecommendation,
+        });
+    }
+
+    // next Question
+    const nextQuestion = await interviewQuestionModel.create({
+        session_id: session._id,
+        question_text: aiResponse.nextQuestion,
+        order_index: currentQuestion.order_index + 1,
+        answer_status: "pending",
+    });
+
+    return res.status(200).json({
+        isCompleted: false,
+        score: aiResponse.score,
+        feedback: aiResponse.feedback,
+        nextQuestion: nextQuestion.question_text,
     });
 });
 
-export const completeInterview = handleError(async (req, res)=>{
-    const interview = req.interview;
-    
-    if (interview.status === "completed") {
-        return res.status(400).json({message:"Interview already completed",});
-    }
-
-    const answeredQuestions = interview.qaList.filter((q) => q.userAnswer);
-
-    if (answeredQuestions.length !== interview.totalQuestions) {
-        return res.status(400).json({message: "Please answer all questions first"});
-    }
-    
-    const summary = await generateSummaryReport({qaList: interview.qaList});
-    interview.summary = summary;
-    interview.status = "completed";
-    await interview.save();
-
-    res.status(200).json({
-        message:"Interview completed successfully",
-        data: {
-            interviewId: interview._id,
-            status: interview.status,
-            summary: interview.summary,
-            completedAt: interview.updatedAt,
-        },
-    });
-});
-
+// GET /api/interviews
 export const getAllInterviews = handleError(async (req, res) => {
-    const interviews = await interviewModel.find({user: req.user.id, status: "completed",})
-    .select("jobDescription totalQuestions summary.overallScore createdAt updatedAt")
-    .sort({ createdAt: -1 });
+    const interviews = await interviewSessionModel
+        .find({user_id: req.user.id, status: "completed"})
+        .populate({
+            path: "analysis_id",
+            select: "cvId",
+            populate: {
+                path: "cvId",
+                select: "fileName",
+            },
+        })
+        .sort({ createdAt: -1 });
 
-    res.status(200).json({count: interviews.length, data: interviews,});
+    const formattedInterviews = interviews.map((interview) => {
+        return {
+            id: interview._id,
+            jobTitle: interview.jobTitle,
+            score: interview.overall_score,
+            status: interview.status,
+            hiringRecommendation: interview.hiringRecommendation,
+            interviewDate: interview.createdAt,
+            started_at: interview.started_at,
+            completed_at: interview.completed_at,
+            cvName:interview.analysis_id?.cvId?.fileName || null,
+        };
+    });
+
+    return res.status(200).json({
+        count: formattedInterviews.length,
+        data: formattedInterviews,
+    });
 });
 
-export const getInterviewById =handleError(async (req, res)=>{
-    const interview = await interviewModel.findOne({_id: req.params.id, user: req.user.id, status: "completed"});
-    if(!interview){
-        return res.status(404).json({message: "Interview not found"})
+// // GET /api/interviews/:sessionId
+export const getInterviewById = handleError(async (req, res) => {
+    const questions = await interviewQuestionModel.find({session_id: req.session._id}).sort({order_index: 1,});
+
+    return res.status(200).json({
+        session: req.session,
+        questions,
+    });
+});
+
+// DELETE /api/interviews/:sessionId
+export const deleteInterview = handleError(async (req, res) => {
+    await interviewQuestionModel.deleteMany({ session_id: req.session._id });
+    await req.session.deleteOne();
+    return res.status(200).json({message: "Interview deleted successfully",});
+});
+
+// DELETE /api/interviews
+export const deleteAllInterviews = handleError(async (req, res) => {
+    const sessions = await interviewSessionModel.find({user_id: req.user.id}).select("_id");
+
+    if (!sessions.length) {
+        return res.status(404).json({message: "No interviews found"});
     }
-    res.status(200).json({data:interview});
-});
 
-export const deleteInterview =handleError(async (req, res)=>{
-    const interview = req.interview;
-    await interview.deleteOne();
-    res.status(200).json({message: "Interview deleted successfully"});
+    const sessionIds = sessions.map(session => session._id);
+
+    await interviewQuestionModel.deleteMany({session_id: { $in: sessionIds }});
+    await interviewSessionModel.deleteMany({_id: { $in: sessionIds }});
+
+    return res.status(200).json({message: "All interviews deleted successfully",});
 });

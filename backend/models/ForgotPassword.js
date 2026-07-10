@@ -55,6 +55,6 @@ const forgotPasswordSchema = new mongoose.Schema(
 );
 
 // Auto-delete expired OTPs
-forgotPasswordSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+forgotPasswordSchema.index( { expireAfterSeconds: 0 });
 
 export default mongoose.model("ForgotPassword", forgotPasswordSchema);
