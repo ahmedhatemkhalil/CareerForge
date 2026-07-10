@@ -1,12 +1,15 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { RevenueStats, Transaction, User } from '../interfaces/admin.interface';
+import { environment } from '../../../../environments/environment';
+import { RevenueStats, Transaction } from '../interfaces/admin.interface';
 
 @Injectable({ providedIn: 'root' })
 export class AdminService {
 
-  private apiUrl = 'http://localhost:5000/api/admin';
+  private apiUrl = `${environment.apiUrl}/admin`;
+  private paymentsUrl = `${environment.apiUrl}/payments`;
+  private plansUrl = `${environment.apiUrl}/plans`;
 
   constructor(private http: HttpClient) {}
 
@@ -26,49 +29,43 @@ getUserActivityReport() {
     return this.http.get(`${this.apiUrl}/dashboard-report`);
 }
 
-  // دوال الإدارة
   updateUserStatus(id: string, status: string, role: string, banReason: string | null = null): Observable<any> {
     return this.http.put(`${this.apiUrl}/users/${id}/ban`, { status, role, ban_reason: banReason });
   }
 
   deleteUser(id: string): Observable<any> { return this.http.delete(`${this.apiUrl}/users/${id}`); }
 
-// في admin.service.ts
 getRevenueStats(): Observable<RevenueStats> {
-  return this.http.get<RevenueStats>(`http://localhost:5000/api/admin/revenue-stats`);
+  return this.http.get<RevenueStats>(`${this.apiUrl}/revenue-stats`);
 }
 
 getAllTransactions(): Observable<Transaction[]> {
-  return this.http.get<Transaction[]>(`http://localhost:5000/api/payments/all-transactions`);
+  return this.http.get<Transaction[]>(`${this.paymentsUrl}/all-transactions`);
 }
 
-
-// في admin.service.ts
 private getHeaders() {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem('accessToken');
   return { 'Authorization': `Bearer ${token}` };
 }
 
 getAllPayments(): Observable<any[]> {
-  return this.http.get<any[]>(`http://localhost:5000/api/payments`, { headers: this.getHeaders() });
+  return this.http.get<any[]>(this.paymentsUrl, { headers: this.getHeaders() });
 }
 
 getAllUsers(): Observable<any[]> {
-  return this.http.get<any[]>(`http://localhost:5000/api/admin/users`, { headers: this.getHeaders() });
+  return this.http.get<any[]>(`${this.apiUrl}/users`, { headers: this.getHeaders() });
 }
 
 getStats(): Observable<any> {
-  return this.http.get(`http://localhost:5000/api/payments/stats`);
+  return this.http.get(`${this.paymentsUrl}/stats`);
 }
 
 updatePlan(planName: string, limits: any): Observable<any> {
-  return this.http.put(`http://localhost:5000/api/plans/${planName}`, { limits });
+  return this.http.put(`${this.plansUrl}/${planName}`, { limits });
 }
 
 getPlans(): Observable<any> {
-  return this.http.get(`http://localhost:5000/api/plans`);
+  return this.http.get(this.plansUrl);
 }
 
 }
-
-
