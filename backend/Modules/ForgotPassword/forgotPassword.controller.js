@@ -79,7 +79,7 @@ export const forgotPassword = async (req, res) => {
         success: true,
       });
     } catch (err) {
-      // Delete the record if email fails
+      console.error("Forgot password email failed:", err.message);
       await ForgotPassword.deleteOne({ _id: forgotPasswordRecord._id });
       return res
         .status(500)
