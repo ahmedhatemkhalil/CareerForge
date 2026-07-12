@@ -1,33 +1,32 @@
 import nodemailer from "nodemailer";
 
+const EMAIL_USER = process.env.EMAIL_USER;
+const EMAIL_PASS = process.env.EMAIL_PASS;
+
 export default async function sendEmail({ email, subject, html }) {
-  const emailUser = process.env.EMAIL_USER;
-  const emailPass = process.env.EMAIL_PASS;
-
-  if (!emailUser || !emailPass) {
-    throw new Error("EMAIL_USER and EMAIL_PASS must be set in environment variables");
-  }
-
   try {
+    if (!EMAIL_USER || !EMAIL_PASS) {
+      throw new Error("EMAIL_USER and EMAIL_PASS must be set in environment variables");
+    }
+
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
-        user: emailUser,
-        pass: emailPass,
+        user: EMAIL_USER,
+        pass: EMAIL_PASS,
       },
     });
 
     const info = await transporter.sendMail({
-      from: `"CareerForge" <${emailUser}>`,
+      from: `"CareerForge" <${EMAIL_USER}>`,
       to: email,
       subject,
       html,
     });
 
     console.log("Message sent:", info.messageId);
-    return info;
+
   } catch (error) {
-    console.error("Email error:", error.message);
-    throw error;
+    console.log("Email error:", error.message);
   }
 }
