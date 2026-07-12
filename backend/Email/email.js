@@ -5,13 +5,13 @@ export default async function sendEmail({ email, subject, html }) {
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
-        user: "amanymahmoudemam2003@gmail.com",
-        pass: "tvxm fzim ywql sqqd",
+        user: "ahmedhatemkhalil@gmail.com",
+        pass: "ocby novi sybv djmu",
       },
     });
 
     const info = await transporter.sendMail({
-      from: '"CareerForge" <amanymahmoudemam2003@gmail.com>',
+      from: '"CareerForge" <ahmedhatemkhalil@gmail.com>',
       to: email,
       subject,
       html,
