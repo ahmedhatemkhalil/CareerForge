@@ -6,7 +6,7 @@ export default async function sendEmail({ email, subject, html }) {
       service: "gmail",
       auth: {
         user: "amanymahmoudemam2003@gmail.com",
-        pass: "tvxm fzim ywql sqqd",
+        pass: "drjt fyad xgzr pagd",
       },
     });
 
