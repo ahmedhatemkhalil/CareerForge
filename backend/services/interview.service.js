@@ -56,6 +56,48 @@ const parseAIResponse = (text) => {
     }
 };
 
+const VALID_HIRING_RECOMMENDATIONS = new Set([
+    "Strong Hire",
+    "Hire",
+    "Consider",
+    "No Hire",
+]);
+
+const normalizeHiringRecommendation = (value) => {
+    if (!value) return null;
+
+    const trimmed = String(value).trim();
+    if (VALID_HIRING_RECOMMENDATIONS.has(trimmed)) {
+        return trimmed;
+    }
+
+    const lower = trimmed.toLowerCase();
+
+    if (
+        lower.includes("not recommended") ||
+        lower.includes("no hire") ||
+        lower.includes("do not hire") ||
+        lower === "reject" ||
+        lower === "rejected"
+    ) {
+        return "No Hire";
+    }
+
+    if (lower.includes("strong hire")) {
+        return "Strong Hire";
+    }
+
+    if (lower.includes("consider") || lower.includes("maybe")) {
+        return "Consider";
+    }
+
+    if (lower.includes("hire") || lower.includes("recommended")) {
+        return "Hire";
+    }
+
+    return "Consider";
+};
+
 // Core 
 const sendToLangflow = async (inputs, isStart = false) => {
     try { 
@@ -114,7 +156,7 @@ const sendToLangflow = async (inputs, isStart = false) => {
             overallScore: parsed.overall_score ?? parsed.overallScore ?? null,
             generalFeedback: parsed.overall_feedback ?? parsed.generalFeedback ?? null,
             tipsForImprovement: parsed.tips_for_improvement ?? parsed.tipsForImprovement ?? [],
-            hiringRecommendation: parsed.hiringRecommendation ?? null,
+            hiringRecommendation: normalizeHiringRecommendation(parsed.hiringRecommendation),
         };
 
     } catch (error) { 
