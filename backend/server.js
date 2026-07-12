@@ -6,7 +6,7 @@ import app from "./app.js";
 import connectDB from "./config/db.js";
 import "./cron/resetUsageCron.js";
 import { startInterviewCleanupJob } from "./cron/interviewCleanup.cron.js";
-import { isEmailConfigured } from "./Email/email.js";
+import { isEmailConfigured, getEmailProviderName } from "./Email/email.js";
 
 const startServer = async () => {
     await connectDB();
@@ -14,11 +14,11 @@ const startServer = async () => {
     const PORT = process.env.PORT || 5000;
     app.listen(PORT, () => {
         console.log(`🚀 Server running on port ${PORT}`);
-        console.log(
-            isEmailConfigured()
-                ? "✉️  Email configured (EMAIL_USER + EMAIL_PASS set)"
-                : "⚠️  Email NOT configured — set EMAIL_USER and EMAIL_PASS on this service"
-        );
+        if (isEmailConfigured()) {
+            console.log(`✉️  Email configured via ${getEmailProviderName()}`);
+        } else {
+            console.log("⚠️  Email NOT configured — set SENDGRID_API_KEY (production) or EMAIL_USER + EMAIL_PASS (local)");
+        }
     });
 };
 
