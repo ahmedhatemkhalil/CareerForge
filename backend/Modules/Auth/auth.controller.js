@@ -14,6 +14,15 @@ import { template } from "../../Email/emailTemplate.js";
 import EmailVerification from "../../models/EmailVerification.js";
 import Session from "../../models/Session.js";
 
+const getBackendUrl = () => {
+  const configuredUrl = process.env.BACKEND_URL?.trim();
+  if (configuredUrl) {
+    return configuredUrl.replace(/\/$/, "");
+  }
+
+  return `http://localhost:${process.env.PORT || 5000}`;
+};
+
 const createAccessToken = (user) =>
   jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN || "1d",
@@ -137,7 +146,7 @@ export const signup = async (req, res) => {
       expires_at: expiresAt,
     });
 
-    const verifyUrl = `http://localhost:5000/api/auth/verify-email/${verificationToken}`;
+    const verifyUrl = `${getBackendUrl()}/api/auth/verify-email/${verificationToken}`;
 
     sendEmail({
       email: user.email,
@@ -401,7 +410,7 @@ export const resendVerification = async (req, res) => {
       expires_at: expiresAt,
     });
 
-    const verifyUrl = `http://localhost:5000/api/auth/verify-email/${verificationToken}`;
+    const verifyUrl = `${getBackendUrl()}/api/auth/verify-email/${verificationToken}`;
 
     await sendEmail({
       email: user.email,
