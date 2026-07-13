@@ -7,6 +7,7 @@ import {
     subscriptionResponse,
     syncUserSubscription,
 } from "../../services/subscription.service.js";
+import { recordPaymentFromCheckoutSession } from "../../services/payment.service.js";
 
 const getFrontendUrl = () =>
     (process.env.FRONTEND_URL || "http://localhost:5173").replace(/\/$/, "");
@@ -61,7 +62,9 @@ export const confirmCheckoutSession = handleError(async (req, res) => {
         return res.status(404).json({ message: "User not found" });
     }
 
-    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    const session = await stripe.checkout.sessions.retrieve(sessionId, {
+        expand: ["invoice", "payment_intent"],
+    });
     const sessionUserId = session.metadata?.userId || session.client_reference_id;
 
     if (sessionUserId !== String(user._id)) {
@@ -76,6 +79,8 @@ export const confirmCheckoutSession = handleError(async (req, res) => {
         customerId: session.customer,
         subscriptionId: session.subscription,
     });
+
+    await recordPaymentFromCheckoutSession(user, session);
 
     res.json(subscriptionResponse(user));
 });
@@ -109,8 +114,20 @@ export const createPortalSession = handleError(async (req, res) => {
 });
 
 export const getAllPayments = handleError(async (req, res) => {
-        const payments = await Payment.find().populate("userId", "name email").sort({ createdAt: -1 });
-        res.json(payments);
+    const payments = await Payment.find()
+        .populate("userId", "name email plan")
+        .sort({ createdAt: -1 })
+        .lean();
+
+    res.json(
+        payments.map((payment) => ({
+            ...payment,
+            userName: payment.userId?.name || "Unknown User",
+            userEmail: payment.userId?.email || null,
+            userPlan: payment.userId?.plan || null,
+            userId: payment.userId?._id || payment.userId,
+        }))
+    );
 });
 
 export const getPaymentById = handleError(async (req, res) => {

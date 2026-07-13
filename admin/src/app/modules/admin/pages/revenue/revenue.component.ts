@@ -56,13 +56,21 @@ currentPlanData: any = null;
         const userArray = Array.isArray(users) ? users : [users];
 
         this.transactions = payments.map((pay: any) => {
-          const targetId = (pay.userId && typeof pay.userId === 'object') ? pay.userId._id : pay.userId;
-          const user = userArray.find((u: any) => u._id === targetId);
+          const populatedName =
+            pay.userName ||
+            (typeof pay.userId === 'object' ? pay.userId?.name : null);
+          const targetId =
+            pay.userId && typeof pay.userId === 'object'
+              ? pay.userId._id
+              : pay.userId;
+          const user = userArray.find(
+            (u: any) => String(u._id) === String(targetId)
+          );
 
           return {
             ...pay,
-            userName: user?.name || 'Unknown User',
-            plan: user?.plan || 'Free',
+            userName: populatedName || user?.name || 'Unknown User',
+            plan: pay.userPlan || user?.plan || 'free',
             stripeInvoiceId: pay.stripeInvoiceId || 'N/A',
             amount: pay.amount || 0,
             status: pay.status || 'paid',

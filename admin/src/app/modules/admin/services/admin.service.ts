@@ -57,7 +57,7 @@ getAllUsers(): Observable<any[]> {
 }
 
 getStats(): Observable<any> {
-  return this.http.get(`${this.paymentsUrl}/stats`);
+  return this.http.get(`${this.paymentsUrl}/stats`, { headers: this.getHeaders() });
 }
 
 updatePlan(planName: string, limits: any): Observable<any> {

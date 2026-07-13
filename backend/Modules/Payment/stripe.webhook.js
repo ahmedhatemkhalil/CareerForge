@@ -1,8 +1,11 @@
 import express from "express";
 import User from "../../models/User.js";
 import stripe from "../../services/stripe.service.js";
-import Payment from "../../models/Payment.js";
 import { applyDowngradeToFree, applyProSubscription } from "../../services/subscription.service.js";
+import {
+    recordPaymentFromCheckoutSession,
+    recordPaymentFromInvoice,
+} from "../../services/payment.service.js";
 
 const router = express.Router();
 
@@ -40,6 +43,7 @@ router.post("/", express.raw({type: "application/json",}),
 
                 if (user) {
                     await applyProSubscription(user, { customerId, subscriptionId });
+                    await recordPaymentFromCheckoutSession(user, session);
                 }
 
                 break;
@@ -73,12 +77,6 @@ router.post("/", express.raw({type: "application/json",}),
             case "invoice.paid":
             case "invoice.payment_succeeded": {
                 const invoice = event.data.object;
-                const existingPayment = await Payment.findOne({stripeInvoiceId: invoice.id});
-
-                if (existingPayment) {
-                    break;
-                }
-
                 const user = await User.findOne({
                     stripeCustomerId: invoice.customer,
                 });
@@ -87,19 +85,7 @@ router.post("/", express.raw({type: "application/json",}),
                     break;
                 }
 
-                await Payment.create({
-                    userId: user._id,
-                    stripeCustomerId: invoice.customer,
-                    stripePaymentIntentId:
-                        invoice.payment_intent,
-                    stripeInvoiceId: invoice.id,
-                    amount:
-                        (invoice.amount_paid || 0) / 100,
-                    currency: invoice.currency,
-                    status: "paid",
-                    paymentMethod:
-                        invoice.collection_method,
-                });
+                await recordPaymentFromInvoice(invoice, user);
 
                 break;
             }

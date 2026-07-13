@@ -92,7 +92,7 @@
           </tr>
         </thead>
        <tbody *ngIf="filteredTransactions.length > 0">
-<tr *ngFor="let tx of transactions" class="border-b border-border last:border-0 hover:bg-muted/50">
+<tr *ngFor="let tx of filteredTransactions" class="border-b border-border last:border-0 hover:bg-muted/50">
  <td class="py-4 px-2">
   <div class="flex items-center gap-3">
     <div class="w-9 h-9 rounded-full bg-[#6366f1] text-white flex items-center justify-center text-xs font-bold uppercase shadow-sm shrink-0">

@@ -247,7 +247,7 @@ export const getAdminDashboardReport = catchAsync(async (req, res, next) => {
             email: user.email,
             role: user.role,
             status: user.status,
-            createdAt: user.created_at,
+            createdAt: user.created_at || user.createdAt,
             cvCount: cvs.filter(cv => cv.userId?.toString() === userId).length,
             analysisCount: analyses.filter(a => a.userId?.toString() === userId).length,
             interviewCount: interviews.filter(i => i.user_id?.toString() === userId).length,
