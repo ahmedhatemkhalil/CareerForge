@@ -8,6 +8,9 @@ import {
     syncUserSubscription,
 } from "../../services/subscription.service.js";
 
+const getFrontendUrl = () =>
+    (process.env.FRONTEND_URL || "http://localhost:5173").replace(/\/$/, "");
+
 export const createCheckoutSession = handleError(async (req, res) => {
     const user = await User.findById(req.user.id);
     if (!user) {
@@ -39,8 +42,8 @@ export const createCheckoutSession = handleError(async (req, res) => {
             },
         ],
 
-        success_url: `${process.env.FRONTEND_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.FRONTEND_URL}/payment/cancel`,
+        success_url: `${getFrontendUrl()}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${getFrontendUrl()}/pricing`,
     });
 
     res.json({url: session.url,});
@@ -98,7 +101,7 @@ export const createPortalSession = handleError(async (req, res) => {
     const session = await stripe.billingPortal.sessions.create(
         {
             customer: user.stripeCustomerId,
-            return_url: `${process.env.FRONTEND_URL}/pricing`,
+            return_url: `${getFrontendUrl()}/pricing`,
         }
     );
 

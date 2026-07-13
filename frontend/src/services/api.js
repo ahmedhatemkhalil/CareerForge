@@ -28,8 +28,11 @@ api.interceptors.response.use(
       requestUrl.includes("/auth/login") ||
       requestUrl.includes("/auth/signup") ||
       requestUrl.includes("/oauth/");
+    const isPaymentConfirmRequest = requestUrl.includes(
+      "/payments/confirm-checkout-session"
+    );
 
-    if (status === 401 && !isAuthRequest) {
+    if (status === 401 && !isAuthRequest && !isPaymentConfirmRequest) {
       import("@/stores/authStore").then(({ default: useAuthStore }) => {
         useAuthStore.getState().logout();
       });
