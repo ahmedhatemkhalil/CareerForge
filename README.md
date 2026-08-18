@@ -2,7 +2,7 @@
 
 **AI-powered career development platform** that helps job seekers analyze their CV against job descriptions, practice mock interviews, build personalized learning roadmaps, and manage their career journey in one place.
 
-**Live demo:** [https://career-forge.up.railway.app/](https://career-forge.up.railway.app/)
+
 
 ---
 
